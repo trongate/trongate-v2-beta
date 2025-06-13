@@ -108,6 +108,10 @@
       margin-top: 3em;
     }
 
+    .text-center {
+      text-align: center;
+    }
+
     a {
       color: var(--brand);
       text-decoration: none;
@@ -142,7 +146,7 @@
     </p>
 
     <p>
-      This page is yours to change. You can modify it, delete it, or make it the foundation of your next big idea.
+      This page is yours to change. You can modify it, delete it, or make it the foundation of your next big idea.  Don't forget to check out the documentation at <a href="https://trongate.io/documentation">https://trongate.io/documentation</a>
     </p>
 
     <div class="cta-buttons">
@@ -159,12 +163,8 @@
       <li><strong>Password:</strong> admin</li>
     </ul>
 
-    <a class="github-link" href="https://github.com/trongate/trongate-framework" target="_blank">
-      ⭐ Star Trongate on GitHub
-    </a>
-
     <footer>
-      <p>Let’s make PHP great again.</p>
+      <p class="text-center"><a class="github-link" href="https://github.com/trongate/trongate-framework" target="_blank">⭐ Please Give Trongate A Star on GitHub</a></p>
     </footer>
   </main>
 </body>
