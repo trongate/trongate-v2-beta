@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Class Core
  * Manages the serving of assets for the Trongate framework.
@@ -202,47 +201,19 @@ class Core {
         }
 
         $this->current_value = isset($segments[3]) ? $segments[3] : $this->current_value;
-
         $controller_path = '../modules/' . $this->current_module . '/controllers/' . $this->current_controller . '.php';
 
-        if ($controller_path === '../modules/api/controllers/Api.php') {
-            $controller_path = '../engine/Api.php';
-            require_once $controller_path;
-
-            $target_method = $this->current_method;
-            $this->current_controller = new $this->current_controller($this->current_module);
-
-            if (method_exists($this->current_controller, $this->current_method)) {
-                $this->current_controller->$target_method($this->current_value);
-                return;
-            } else {
-                $this->draw_error_page();
-            }
+        if (!file_exists($controller_path)) {
+            $controller_path = $this->attempt_init_child_controller($controller_path);
         }
 
-        switch (segment(1)) {
-            case 'dateformat':
-                $this->draw_date_format();
-                break;
+        require_once $controller_path;
 
-            case 'tgp_element_adder':
-                $this->draw_element_adder();
-                break;
-
-            default:
-                if (!file_exists($controller_path)) {
-                    $controller_path = $this->attempt_init_child_controller($controller_path);
-                }
-
-                require_once $controller_path;
-
-                if (strtolower(ENV) === 'dev') {
-                    $this->attempt_sql_transfer($controller_path);
-                }
-
-                $this->invoke_controller_method();
-                break;
+        if (strtolower(ENV) === 'dev') {
+            $this->attempt_sql_transfer($controller_path);
         }
+
+        $this->invoke_controller_method();
     }
 
     private function draw_date_format(): void {
@@ -285,37 +256,10 @@ class Core {
             $target_method = $this->current_method;
             $this->current_controller = new $this->current_controller($this->current_module);
             $this->current_controller->$target_method($this->current_value);
-        } else {
-            // If the specified method doesn't exist, try 'index' as fallback
-            if (method_exists($this->current_controller, 'index')) {
-                $this->current_controller = new $this->current_controller($this->current_module);
-                $this->current_controller->index($this->current_value);
-            } else {
-                $this->handle_standard_endpoints();
-            }
+        } elseif (method_exists($this->current_controller, 'index')) {
+            $this->current_controller = new $this->current_controller($this->current_module);
+            $this->current_controller->index($this->current_value);
         }
-    }
-
-    private function handle_standard_endpoints(): void {
-        $this->current_controller = 'Standard_endpoints';
-        $controller_path = '../engine/Standard_endpoints.php';
-        require_once $controller_path;
-
-        $se = new Standard_endpoints();
-        $endpoint_index = $se->attempt_find_endpoint_index();
-
-        if ($endpoint_index !== '') {
-            $target_method = $this->current_method;
-            if (is_numeric($target_method)) {
-                $se->attempt_serve_standard_endpoint($endpoint_index);
-            } else {
-                $se->$target_method($this->current_value);
-            }
-
-            return;
-        }
-
-        $this->draw_error_page();
     }
 
     /**
