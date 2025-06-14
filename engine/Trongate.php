@@ -11,6 +11,9 @@ class Trongate {
     // Instance cache for lazy loading
     private array $instances = [];
     
+    // Loaded modules cache
+    private array $loaded_modules = [];
+    
     // Core properties
     protected ?string $module_name = '';
     protected string $parent_module = '';
@@ -26,18 +29,19 @@ class Trongate {
     }
 
     /**
-     * Magic getter for lazy-loading core components.
+     * Magic getter for framework classes and loaded modules.
      *
-     * This method uses PHP's magic `__get()` functionality to return an instance of a core utility class,
-     * such as Model, Validation, File, Image, or Template. If the requested key matches one of the predefined
-     * components, the instance is created on first access and cached for future use. If the key is not recognised,
-     * an Exception is thrown.
-     *
-     * @param string $key The name of the component to retrieve ('model', 'validation', 'file', 'image', 'template').
-     * @return object The instance of the requested core component.
-     * @throws Exception If the requested key is not one of the recognised components.
+     * @param string $key The property name.
+     * @return object The class instance.
+     * @throws Exception If the property is not supported.
      */
     public function __get(string $key): object {
+        // Check if it's a loaded module first
+        if (isset($this->loaded_modules[$key])) {
+            return $this->loaded_modules[$key];
+        }
+
+        // Handle core framework classes with lazy loading
         return $this->instances[$key] ??= match($key) {
             'model' => new Model($this->module_name),
             'validation' => new Validation(),
@@ -80,17 +84,34 @@ class Trongate {
     }
 
     /**
-     * Loads a module using the Modules class.
-     *
-     * This method serves as an alternative way of invoking the load method from the Modules class.
-     * It simply instantiates a Modules object and calls its load method with the provided target module name.
+     * Loads a module and makes it available as a property.
      *
      * @param string $target_module The name of the target module.
      * @return void
      */
     protected function module(string $target_module): void {
-        $modules = new Modules;
-        $modules->load($target_module);
+        // Don't reload if already loaded
+        if (isset($this->loaded_modules[$target_module])) {
+            return;
+        }
+
+        // Build the controller path
+        $controller_class = ucfirst($target_module);
+        $controller_path = '../modules/' . $target_module . '/controllers/' . $controller_class . '.php';
+        
+        if (!file_exists($controller_path)) {
+            throw new Exception("Module controller not found: {$controller_path}");
+        }
+        
+        // Load and instantiate the module
+        require_once $controller_path;
+        
+        if (!class_exists($controller_class)) {
+            throw new Exception("Module class not found: {$controller_class}");
+        }
+        
+        // Store the module instance
+        $this->loaded_modules[$target_module] = new $controller_class($target_module);
     }
 
     /**

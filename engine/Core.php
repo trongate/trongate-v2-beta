@@ -159,6 +159,8 @@ class Core {
             $controller_instance->{$this->current_method}($this->current_value);
         } elseif (method_exists($controller_instance, 'index')) {
             $controller_instance->index($this->current_value);
+        } else {
+            $this->draw_error_page();
         }
     }
 
@@ -182,6 +184,146 @@ class Core {
             require_once('tg_transferer/index.php');
             die();
         }
+    }
+
+    /**
+     * Serve vendor assets.
+     *
+     * @return void
+     */
+    private function serve_vendor_asset(): void {
+        $vendor_file_path = explode('/vendor/', ASSUMED_URL)[1];
+        $vendor_file_path = '../vendor/' . $vendor_file_path;
+        
+        try {
+            $vendor_file_path = $this->sanitize_file_path($vendor_file_path, '../vendor/');
+            
+            if (file_exists($vendor_file_path)) {
+                if (strpos($vendor_file_path, '.css')) {
+                    $content_type = 'text/css';
+                } else {
+                    $content_type = 'text/plain';
+                }
+
+                header('Content-type: ' . $content_type);
+                $contents = file_get_contents($vendor_file_path);
+                echo $contents;
+                die();
+            } else {
+                die('Vendor file not found.');
+            }
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+    }
+
+    /**
+     * Serve module assets.
+     *
+     * @return void
+     */
+    private function serve_module_asset(): void {
+        $url_segments = SEGMENTS;
+
+        foreach ($url_segments as $url_segment_key => $url_segment_value) {
+            $pos = strpos($url_segment_value, MODULE_ASSETS_TRIGGER);
+
+            if (is_numeric($pos)) {
+                $target_module = str_replace(MODULE_ASSETS_TRIGGER, '', $url_segment_value);
+                $file_name = $url_segments[count($url_segments) - 1];
+
+                $target_dir = '';
+                for ($i = $url_segment_key + 1; $i < count($url_segments) - 1; $i++) {
+                    $target_dir .= $url_segments[$i];
+                    if ($i < count($url_segments) - 2) {
+                        $target_dir .= '/';
+                    }
+                }
+
+                $asset_path = '../modules/' . strtolower($target_module) . '/assets/' . $target_dir . '/' . $file_name;
+                
+                try {
+                    $asset_path = $this->sanitize_file_path($asset_path, '../modules/');
+                    
+                    if (is_file($asset_path)) {
+                        if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && 
+                            strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= filemtime($asset_path)) {
+                                header('Last-Modified: '.gmdate('D, d M Y H:i:s',  filemtime($asset_path)).' GMT', true, 304);
+                                die;
+                        }
+                        
+                        $content_type = mime_content_type($asset_path);
+
+                        if ($content_type === 'text/plain' || $content_type === 'text/html') {
+                            if (strpos($file_name, '.css') !== false) {
+                                $content_type = 'text/css';
+                            } elseif (strpos($file_name, '.js') !== false) {
+                                $content_type = 'text/javascript';
+                            }
+                        }
+
+                        if ($content_type === 'image/svg') {
+                            $content_type .= '+xml';
+                        }
+
+                        // Make sure it's not a PHP file or api.json
+                        if (strpos($content_type, 'php') !== false || $file_name === 'api.json') {
+                            http_response_code(403);
+                            die();
+                        }
+
+                        header('Content-type: ' . $content_type);
+                        header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($asset_path)) . ' GMT');
+                        readfile($asset_path);
+                        die;
+                    } 
+                } catch (Exception $e) {
+                    die($e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Sanitize file paths to prevent directory traversal.
+     *
+     * @param string $path The path to sanitize.
+     * @param string $base_dir The base directory to compare against.
+     * @param bool $is_child_module True if attempting to sanitize the path for a child module asset
+     * @return string The sanitized path.
+     * @throws Exception if the path is invalid.
+     */
+    private function sanitize_file_path(string $path, string $base_dir, bool $is_child_module = false): string {
+        $real_base_dir = realpath($base_dir);
+        $real_path = realpath($path);
+
+        if ( (!$real_path || strpos($real_path, $real_base_dir) !== 0) && !$is_child_module ) {
+
+            $real_path = $this->sanitize_file_path($path, $base_dir, true);
+
+        } else if ($is_child_module) {
+
+            $path_bits = explode('/',$path);
+            $path_bits[2] = str_replace('-','/',$path_bits[2]); // split target module into parent/child
+            $real_path = realpath(implode('/',$path_bits));
+
+            if (!$real_path || strpos($real_path, $real_base_dir) !== 0) {
+                http_response_code(404);
+                throw new Exception('Invalid file path.');
+            }
+        }
+
+        return $real_path;
+    }
+
+    /**
+     * Draw an error page.
+     *
+     * @return void
+     */
+    private function draw_error_page(): void {
+        load('error_404');
+        die(); //end of the line (all possible scenarios tried)
     }
 
 }
