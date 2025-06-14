@@ -1,36 +1,19 @@
 <?php
-
 /**
  * Trongate Base Controller Class
  * 
  * The foundation class that all application controllers extend.
  * Provides core functionality for templates, views, modules, and file uploads.
- * Rebuilt for maximum performance - no Dynamic_properties trait, explicit class loading.
  */
 class Trongate {
 
-    // Framework class instances (lazy-loaded)
-    private ?Model $model = null;
-    private ?Validation $validation = null;
-    private ?File $file = null;
-    private ?Image $image = null;
-    private ?Template $template = null;
+    // Instance cache for lazy loading
+    private array $instances = [];
     
     // Core properties
     protected ?string $module_name = '';
     protected string $parent_module = '';
     protected string $child_module = '';
-
-    /**
-     * Framework classes accessible via $this->property syntax
-     */
-    private const CORE_CLASSES = [
-        'model' => Model::class,
-        'validation' => Validation::class,
-        'file' => File::class,
-        'image' => Image::class,
-        'template' => Template::class,
-    ];
 
     /**
      * Constructor for Trongate class.
@@ -42,26 +25,21 @@ class Trongate {
     }
 
     /**
-     * Magic getter for framework classes - preserves $this->model syntax while avoiding Dynamic_properties overhead.
+     * Magic getter for framework classes - preserves $this->model syntax with simple lazy loading.
      *
      * @param string $key The property name.
      * @return object The class instance.
      * @throws Exception If the property is not supported.
      */
     public function __get(string $key): object {
-        if (!isset(self::CORE_CLASSES[$key])) {
-            throw new Exception("Undefined property: " . get_class($this) . "::$key");
-        }
-        
-        if ($this->$key === null) {
-            $class = self::CORE_CLASSES[$key];
-            // Model needs module name, others don't
-            $this->$key = $key === 'model' 
-                ? new $class($this->module_name)
-                : new $class();
-        }
-        
-        return $this->$key;
+        return $this->instances[$key] ??= match($key) {
+            'model' => new Model($this->module_name),
+            'validation' => new Validation(),
+            'file' => new File(),
+            'image' => new Image(),
+            'template' => new Template(),
+            default => throw new Exception("Undefined property: " . get_class($this) . "::$key")
+        };
     }
 
     /**
