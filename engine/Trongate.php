@@ -1,18 +1,36 @@
 <?php
 
 /**
- * Manages loading modules and rendering of HTML templates.
- * Also contains methods for assisting with file uploads.
- * @property-read Model $model exposes the Model class to intellisense
+ * Trongate Base Controller Class
+ * 
+ * The foundation class that all application controllers extend.
+ * Provides core functionality for templates, views, modules, and file uploads.
+ * Rebuilt for maximum performance - no Dynamic_properties trait, explicit class loading.
  */
 class Trongate {
 
-    use Dynamic_properties;
-
-    private ?Model $model;
+    // Framework class instances (lazy-loaded)
+    private ?Model $model = null;
+    private ?Validation $validation = null;
+    private ?File $file = null;
+    private ?Image $image = null;
+    private ?Template $template = null;
+    
+    // Core properties
     protected ?string $module_name = '';
     protected string $parent_module = '';
     protected string $child_module = '';
+
+    /**
+     * Framework classes accessible via $this->property syntax
+     */
+    private const CORE_CLASSES = [
+        'model' => Model::class,
+        'validation' => Validation::class,
+        'file' => File::class,
+        'image' => Image::class,
+        'template' => Template::class,
+    ];
 
     /**
      * Constructor for Trongate class.
@@ -24,28 +42,57 @@ class Trongate {
     }
 
     /**
+     * Magic getter for framework classes - preserves $this->model syntax while avoiding Dynamic_properties overhead.
+     *
+     * @param string $key The property name.
+     * @return object The class instance.
+     * @throws Exception If the property is not supported.
+     */
+    public function __get(string $key): object {
+        if (!isset(self::CORE_CLASSES[$key])) {
+            throw new Exception("Undefined property: " . get_class($this) . "::$key");
+        }
+        
+        if ($this->$key === null) {
+            $class = self::CORE_CLASSES[$key];
+            // Model needs module name, others don't
+            $this->$key = $key === 'model' 
+                ? new $class($this->module_name)
+                : new $class();
+        }
+        
+        return $this->$key;
+    }
+
+    /**
      * Renders a specific template view by calling a corresponding method in the Templates controller class.
      *
      * @param string $template_name The name of the template method to be called.
      * @param array $data An associative array containing data to be passed to the template method.
      * @return void
+     * @throws Exception If template controller or method is not found.
      */
     protected function template(string $template_name, array $data = []): void {
         $template_controller_path = '../templates/controllers/Templates.php';
+        
+        if (!file_exists($template_controller_path)) {
+            $template_controller_path = str_replace('../', APPPATH, $template_controller_path);
+            throw new Exception('ERROR: Unable to find Templates controller at ' . $template_controller_path . '.');
+        }
+        
         require_once $template_controller_path;
-
         $templates = new Templates;
 
-        if (method_exists($templates, $template_name)) {
-            if (!isset($data['view_file'])) {
-                $data['view_file'] = DEFAULT_METHOD;
-            }
-
-            $templates->$template_name($data);
-        } else {
+        if (!method_exists($templates, $template_name)) {
             $template_controller_path = str_replace('../', APPPATH, $template_controller_path);
-            die('ERROR: Unable to find ' . $template_name . ' method in ' . $template_controller_path . '.');
+            throw new Exception('ERROR: Unable to find ' . $template_name . ' method in ' . $template_controller_path . '.');
         }
+
+        if (!isset($data['view_file'])) {
+            $data['view_file'] = DEFAULT_METHOD;
+        }
+
+        $templates->$template_name($data);
     }
 
     /**
@@ -66,28 +113,26 @@ class Trongate {
      * Upload a picture file using the upload method from the Image class.
      *
      * This method serves as an alternative way of invoking the upload method from the Image class.
-     * It simply instantiates an Image object and calls its upload method with the provided configuration data.
+     * It simply uses the lazy-loaded Image instance and calls its upload method with the provided configuration data.
      *
      * @param array $config The configuration data for handling the upload.
      * @return array|null The information of the uploaded file.
      */
     protected function upload_picture(array $config): ?array {
-        $image = new Image;
-        return $image->upload($config);
+        return $this->image->upload($config);
     }
 
     /**
      * Upload a file using the upload method from the File class.
      *
      * This method serves as an alternative way of invoking the upload method from the File class.
-     * It simply instantiates a File object and calls its upload method with the provided configuration data.
+     * It simply uses the lazy-loaded File instance and calls its upload method with the provided configuration data.
      *
      * @param array $config The configuration data for handling the upload.
      * @return array|null The information of the uploaded file.
      */
     protected function upload_file(array $config): ?array {
-        $file = new File;
-        return $file->upload($config);
+        return $this->file->upload($config);
     }
 
     /**
@@ -101,6 +146,7 @@ class Trongate {
      *                                If set to true, the view content will be returned as a string; if set to false or null,
      *                                the view will be displayed on the browser. Default is null, which means the view will be displayed.
      * @return string|null If $return_as_str is true, the rendered view as a string; otherwise, null.
+     * @throws Exception If the view file is not found.
      */
     protected function view(string $view, array $data = [], ?bool $return_as_str = null): ?string {
         $return_as_str = $return_as_str ?? false;
@@ -127,47 +173,41 @@ class Trongate {
     }
 
     /**
-     * Get the path of a view file.
+     * Get the path of a view file with optimized fallback logic.
      *
      * @param string $view The name of the view file.
      * @param string|null $module_name Module name to which the view belongs.
      *
      * @return string The path of the view file.
-     * @throws \Exception If the view file does not exist.
+     * @throws Exception If the view file does not exist.
      */
     private function get_view_path(string $view, ?string $module_name): string {
-        try {
-            if ($this->parent_module !== '' && $this->child_module !== '') {
-                // Load view from child module
-                $view_path = APPPATH . "modules/$this->parent_module/$this->child_module/views/$view.php";
-            } else {
-                // Normal view loading process
-                $view_path = APPPATH . "modules/$module_name/views/$view.php";
-            }
+        $possible_paths = [];
 
+        // Priority 1: Child module path (if parent/child modules are set)
+        if ($this->parent_module !== '' && $this->child_module !== '') {
+            $possible_paths[] = APPPATH . "modules/{$this->parent_module}/{$this->child_module}/views/{$view}.php";
+        }
+
+        // Priority 2: Standard module path
+        $possible_paths[] = APPPATH . "modules/{$module_name}/views/{$view}.php";
+
+        // Priority 3: Derive module name from URL segment (for parent-child modules)
+        $segment_one = segment(1);
+        if (strpos($segment_one, '-') !== false && substr_count($segment_one, '-') === 1) {
+            $module_name_from_segment = str_replace('-', '/', $segment_one);
+            $possible_paths[] = APPPATH . "modules/{$module_name_from_segment}/views/{$view}.php";
+        }
+
+        // Check each path in order of priority
+        foreach ($possible_paths as $view_path) {
             if (file_exists($view_path)) {
                 return $view_path;
-            } else {
-                $error_message = $this->parent_module !== '' && $this->child_module !== '' ?
-                    "View '$view_path' does not exist for child view" :
-                    "View '$view_path' does not exist";
-                throw new Exception($error_message);
-            }
-        } catch (Exception $e) {
-            // Attempt to derive module name from URL segment
-            $segment_one = segment(1);
-            if (strpos($segment_one, '-') !== false && substr_count($segment_one, '-') === 1) {
-                $module_name_from_segment = str_replace('-', '/', $segment_one);
-                $view_path_from_segment = APPPATH . "modules/$module_name_from_segment/views/$view.php";
-                if (file_exists($view_path_from_segment)) {
-                    return $view_path_from_segment;
-                } else {
-                    throw new Exception("View '$view_path_from_segment' does not exist (derived from segment)");
-                }
-            } else {
-                throw $e; // Re-throw the original exception if unable to find view using segment
             }
         }
-    }
 
+        // No view found - throw exception with helpful error message
+        $attempted_paths = implode("\n- ", $possible_paths);
+        throw new Exception("View '{$view}' not found. Attempted paths:\n- {$attempted_paths}");
+    }
 }
