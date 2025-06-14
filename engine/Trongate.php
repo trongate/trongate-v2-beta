@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Trongate Base Controller Class
  * 
@@ -25,11 +26,16 @@ class Trongate {
     }
 
     /**
-     * Magic getter for framework classes - preserves $this->model syntax with simple lazy loading.
+     * Magic getter for lazy-loading core components.
      *
-     * @param string $key The property name.
-     * @return object The class instance.
-     * @throws Exception If the property is not supported.
+     * This method uses PHP's magic `__get()` functionality to return an instance of a core utility class,
+     * such as Model, Validation, File, Image, or Template. If the requested key matches one of the predefined
+     * components, the instance is created on first access and cached for future use. If the key is not recognised,
+     * an Exception is thrown.
+     *
+     * @param string $key The name of the component to retrieve ('model', 'validation', 'file', 'image', 'template').
+     * @return object The instance of the requested core component.
+     * @throws Exception If the requested key is not one of the recognised components.
      */
     public function __get(string $key): object {
         return $this->instances[$key] ??= match($key) {
