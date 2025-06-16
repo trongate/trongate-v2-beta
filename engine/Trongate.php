@@ -9,7 +9,7 @@
 class Trongate {
 
     // Instance cache for lazy loading
-    private array $instances = [];
+    public static array $instances = [];
     
     // Loaded modules cache
     private array $loaded_modules = [];
@@ -42,14 +42,27 @@ class Trongate {
         }
 
         // Handle core framework classes with lazy loading
-        return $this->instances[$key] ??= match($key) {
-            'model' => new Model($this->module_name),
-            'validation' => new Validation(),
-            'file' => new File(),
-            'image' => new Image(),
-            'template' => new Template(),
-            default => throw new Exception("Undefined property: " . get_class($this) . "::$key")
+        if (isset(self::$instances[$key])) {
+            $ref = self::$instances[$key];
+            $instance = $ref->get();
+
+            if ($instance) {
+                return $instance;
+            }
+        }
+
+        $instance = match ($key) {
+            'model'     => new Model($this->module_name),
+            'validation'=> new Validation(),
+            'file'      => new File(),
+            'image'     => new Image(),
+            'template'  => new Template(),
+            default     => throw new Exception("Undefined property: " . get_class($this) . "::$key"),
         };
+
+        self::$instances[$key] = WeakReference::create($instance);
+
+        return $instance;
     }
 
     /**
