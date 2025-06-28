@@ -1,13 +1,23 @@
 <?php
 class Code_generator extends Trongate {
 
+    private $api_base_url = 'http://localhost/trongate_live5/t2_api-code_generator/';
+
     public function index() {
     	$data = [
     		'view_module' => 'code_generator',
     		'view_file' => 'code_generator_home'
     	];
 
-        $this->view('code_generator', $data);
+        $this->view('code_generator_template', $data);
+    }
+
+    public function properties_builder() {
+        $this->view('properties_builder');
+    }
+
+    public function mod_maker() {
+        $this->view('mod_maker_options');
     }
 
     public function draw_options_page() {
@@ -28,89 +38,44 @@ class Code_generator extends Trongate {
         $this->view('enter_single_value', $data);
     }
 
-    public function submit_value() {
-        $from_url = post('from_url');
-        $posted_data = $_POST;
-
-        unset($posted_data['from_url']);
-        unset($posted_data['csrf_token']);
-
-        // Reset the array pointer to the first element
-        reset($posted_data);
-
-        // Get the first key and value
-        $posted_key = key($posted_data);
-        $posted_value = current($posted_data);
-
-        // Return as an associative array or use however needed
-        $result = $this->run_validation_tests($posted_key);
-
-        if ($result === false) {
-            $data['from_url'] = $from_url;
-            $this->view('validation_errors', $data);
-        } else {
-            $this->process_submitted_value($posted_key, $posted_value);
-        }
-    }
-
-    private function process_submitted_value($posted_key, $posted_value) {
-
-        // Display a blinking 'loading' message THEN.
-
-        // Choose nav label
-
-        // *** Choose icon *** (read from the URL)
-
-        // *** Properties Builder *** (read from the URL)
-
-        // Choose URL column
-
-        // Default order by
-
-        // GENERATE NEW MODULE
-
-        switch ($posted_key) {
-            case 'mod_name':
-
-                $this->process_submitted_mod_name($posted_value);
-                break;
-            
-            default:
-                echo 'ouch';
-                die();
-                break;
-        }
- 
-    }
-
-    private function process_submitted_mod_name($posted_value) {
-        $module_name_plural = 'Companies'; // Fetch this from the website URL!
-        
-    }
-
-    private function run_validation_tests($posted_key) {
-
-        switch ($posted_key) {
-            case 'mod_name':
-                $this->validation->set_rules('mod_name', 'module name', 'required');
-                break;
-            
-            default:
-                $this->validation->set_rules($posted_key, 'posted value', 'required');
-                break;
-        }
-
-
-        $result = $this->validation->run();
-        return $result;
-    }
-
     private function fetch_input_instructions($input_code) {
         $input_descriptions = [
             'mod_name' => 'Enter Module Name (singular)'
         ];
 
         return $input_descriptions[$input_code];
+    }
+
+    public function submit_mod_name() {
+
+        // Define the path to the modules directory
+        $path = rtrim(APPPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'modules';
+
+        // Validate directory existence and readability
+        if (!is_dir($path) || !is_readable($path)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Modules directory is not accessible']);
+            return;
+        }
+
+        // Get list of valid directories
+        $directories = array_filter(scandir($path), function($item) use ($path) {
+            return is_dir($path . DIRECTORY_SEPARATOR . $item) && !in_array($item, ['.', '..']);
+        });
+
+        $existing_modules = array_values($directories); // Reindex array
+
+        $params = [
+            'mod_name' => post('mod_name'),
+            'from_url' => post('from_url'),
+            'csrf_token' => post('csrf_token'),
+            'existing_modules' => $existing_modules
+        ];
+
+        $target_url = $this->api_base_url.'submit_mod_name';
+        $response = $this->perform_post_request($target_url, $params);
+        http_response_code($response['status_code']);
+        echo $response['response_body'];
     }
 
     private function fetch_codegen_options($options_code) {
@@ -127,6 +92,84 @@ class Code_generator extends Trongate {
         ];
 
         return $all_options['create_new_mod'];
+    }
+
+    /**
+     * Performs a POST request to the specified URL with optional parameters.
+     *
+     * @param string $url The URL to send the POST request to.
+     * @param array $params An associative array of POST data.
+     *
+     * @return array An array containing 'response_body', 'status_code', and 'curl_error'.
+     */
+    private function perform_post_request(string $url, array $params = []): array {
+        // Initialize cURL session
+        $ch = curl_init();
+        
+        // Set cURL options
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($params),    // Form-encoded POST data
+            CURLOPT_RETURNTRANSFER => true,                     // Return response as string
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/x-www-form-urlencoded'
+            ],
+            CURLOPT_TIMEOUT => 60,                              // Timeout after 60 seconds
+            CURLOPT_FOLLOWLOCATION => true,                     // Follow redirects
+            CURLOPT_MAXREDIRS => 5,
+        ]);
+        
+        // Execute request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        
+        // Close cURL handle
+        curl_close($ch);
+        
+        // Return structured result
+        return [
+            'response_body' => $response,
+            'status_code' => $http_code,
+            'curl_error' => $curl_error
+        ];
+    }
+
+    /**
+     * Performs a GET request to the specified URL.
+     *
+     * @param string $url The URL to send the GET request to.
+     *
+     * @return array An array containing 'response_body', 'status_code', and 'curl_error'.
+     */
+    private function perform_get_request(string $url): array {
+        // Initialize cURL session
+        $ch = curl_init();
+        
+        // Set cURL options
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,                     // Return response as string
+            CURLOPT_TIMEOUT => 30,                              // Timeout after 30 seconds
+            CURLOPT_FOLLOWLOCATION => true,                     // Follow redirects
+            CURLOPT_MAXREDIRS => 5,
+        ]);
+        
+        // Execute request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        
+        // Close cURL handle
+        curl_close($ch);
+        
+        // Return structured result
+        return [
+            'response_body' => $response,
+            'status_code' => $http_code,
+            'curl_error' => $curl_error
+        ];
     }
 
 }

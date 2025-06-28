@@ -2,9 +2,8 @@
 
 <?php
 $form_attr = [
-	'mx-post' => 'code_generator/submit_'.$input_code,
-	'mx-target' => '#center-stage',
-	'mx-target-loading' => '#loading-message'
+	'mx-post' => 'code_generator/submit_value',
+	'mx-target' => '#center-stage'
 ];
 
 echo form_open('#', $form_attr);
@@ -14,9 +13,3 @@ $from_url = str_replace(BASE_URL.'code_generator/', '', current_url());
 echo form_hidden('from_url', $from_url);
 echo form_close();
 ?>
-
-
-
-<div id="loading-message" style="display: none;">
-	<div class="spinner"></div>
-</div>

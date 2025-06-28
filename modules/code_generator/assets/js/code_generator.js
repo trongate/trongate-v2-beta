@@ -37,6 +37,10 @@ function formOnInput() {
     valueInputEl.focus();
 }
 
+function openPropertiesBuilder() {
+    parent.openPropertiesBuilder(1200, 300);
+}
+
 window.addEventListener('load', (ev) => {
 	const loaderEl = document.querySelector('.loader');
 	loaderEl.removeAttribute('style');

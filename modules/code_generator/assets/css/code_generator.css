@@ -156,3 +156,56 @@ button, .button {
     padding: 12px;
     margin-bottom: 22px;
 }
+
+.blink {
+  text-decoration: blink;
+  -webkit-animation-name: blinker;
+  -webkit-animation-duration: 0.5s;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: ease-in-out;
+  -webkit-animation-direction: alternate;
+}
+
+@-webkit-keyframes blinker {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  position: relative;
+  margin: 3.6em 0.6em;
+}
+
+.spinner::after {
+  animation: spinning 0.5s infinite linear;
+  width: 24px;
+  height: 24px;
+  background: 0 0;
+  border: 3px solid #A0A0FF;
+  border-radius: 50%;
+  border-right-color: transparent;
+  border-top-color: transparent;
+  content: "";
+  display: block;
+  opacity: 1;
+  padding: 0;
+  position: absolute;
+  z-index: 1;
+}
+
+@keyframes spinning {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

@@ -253,3 +253,35 @@ TG_ADMIN.init();
 // Make functions globally available
 window.openModal = window.openModal || TG_ADMIN._openModal;
 window.closeModal = window.closeModal || TG_ADMIN._closeModal;
+
+
+function openPropertiesBuilder(fixedWidth = 800, fixedHeight = 600) {
+    // Find the iframe
+    const iframe = document.querySelector('#trongate-iframe-modal iframe');
+    if (!iframe) {
+        console.error('Iframe not found in #trongate-iframe-modal');
+        return;
+    }
+    
+    // Find the modal container
+    const modalContent = document.querySelector('.trongate-iframe-modal-content');
+    if (!modalContent) {
+        console.error('Modal content container not found');
+        return;
+    }
+    
+    // Set the iframe source URL
+    iframe.src = 'code_generator/properties_builder';
+    
+    // Ensure modal is visible
+    const modal = document.getElementById('trongate-iframe-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+    
+    // Resize by adjusting parent container
+    modalContent.style.maxWidth = `${fixedWidth}px`;
+    modalContent.style.maxHeight = `${fixedHeight}px`;
+    modalContent.style.width = `${fixedWidth}px`;
+    modalContent.style.height = `${fixedHeight}px`;
+}
