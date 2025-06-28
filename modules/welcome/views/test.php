@@ -11,6 +11,7 @@
 	<div class="container">
 		<h1>Page Headline</h1>
 		<p>Lorem ipsum dolor sit amet, consectetur, adipisicing elit. Doloremque aspernatur doloribus excepturi sed facilis! Fuga nobis velit deleniti voluptatem architecto placeat, necessitatibus tenetur aliquid, esse ipsam, deserunt sequi iste. Ut!</p>
+
 		<p>
 			<button onclick="openModal('test-modal')">Open Modal</button>
 		</p>
@@ -30,6 +31,12 @@
 			<button onclick="closeModal()">OK</button>
 		</div>
 	</div>
+
+
+
+	</div>
+
+
 
 	<script src="js/app.js"></script>
 </body>

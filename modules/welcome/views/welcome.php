@@ -4,159 +4,35 @@
   <base href="<?= BASE_URL ?>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/trongate.css">
   <title>Welcome to Trongate</title>
-  <style>
-    :root {
-      --brand: #000080;
-      --text: #1a1a1a;
-      --muted: #666;
-      --bg: #fff;
-      --button-bg: #000080;
-      --button-alt: #333;
-      --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      padding: 2em;
-      line-height: 1.6;
-    }
-
-    main {
-      max-width: 720px;
-      margin: auto;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 2.5em;
-      color: var(--brand);
-      margin-bottom: 0.25em;
-    }
-
-    h2 {
-      font-size: 1.2em;
-      font-weight: normal;
-      color: var(--muted);
-      margin-bottom: 1.5em;
-    }
-
-    .datetime {
-      font-size: 0.85em;
-      color: var(--muted);
-      margin-bottom: 2em;
-      text-align: center;
-    }
-
-    p {
-      text-align: left;
-      margin-bottom: 1.5em;
-    }
-
-    strong {
-      color: var(--brand);
-    }
-
-    .cta-buttons {
-      margin: 2em 0;
-    }
-
-    button {
-      font-size: 1em;
-      padding: 0.75em 1.5em;
-      border: none;
-      border-radius: 4px;
-      margin: 0.5em;
-      cursor: pointer;
-      background: var(--button-bg);
-      color: white;
-      transition: background 0.3s ease;
-    }
-
-    button.alt {
-      background: var(--button-alt);
-    }
-
-    button:hover {
-      background: #222266;
-    }
-
-    ul {
-      list-style: none;
-      padding-left: 0;
-      text-align: left;
-      display: inline-block;
-      margin-top: 1em;
-      margin-bottom: 2em;
-    }
-
-    ul li {
-      margin-bottom: 0.75em;
-    }
-
-    footer {
-      font-size: 0.9em;
-      color: var(--muted);
-      margin-top: 3em;
-    }
-
-    .text-center {
-      text-align: center;
-    }
-
-    a {
-      color: var(--brand);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .github-link {
-      display: inline-block;
-      margin-top: 2em;
-      font-weight: bold;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-  </style>
 </head>
 <body>
   <main>
+    <div class="container">
     <h1>Welcome to Trongate</h1>
     <h2>You’re all set — let’s build something extraordinary</h2>
 
-<!-- This works! -->
-<p>
-  <button onclick="openModal('code_generator', 800, 600)">Open iFrame Modal</button>
-</p>  
+    <p>
+      <button onclick="openModal('test-modal')">Open Modal</button>
+    </p>
 
-<!-- This does not works -->
-<p>
-  <button onclick="openModal('code-generator')">Open Normal Modal</button>
-</p>    
+    <p>
+        <button onclick="openModal('code_generator', 800, 600)">Open iFrame Modal</button>
+    </p>
 
-<div class="modal" id="code-generator" style="display: none">
-  <div class="modal-heading">Hello</div>
-  <div class="modal-body">Goodbye</div>
+<div class="modal" id="test-modal" style="display: none">
+    <div class="modal-heading">Hello</div>
+    <div class="modal-body">
+        <p>Goodbye</p>
+    </div>
+    <div class="modal-footer">
+        <button class="alt" onclick="closeModal()">Cancel</button>
+        <button onclick="closeModal()">OK</button>
+    </div>
 </div>
 
-<script>
-console.log(document.getElementById('code-generator'));
-</script>
     <p class="datetime"><?= $formatted_datetime ?? $datetime ?></p>
 
     <p>
@@ -189,7 +65,9 @@ window.addEventListener('load', (ev) => {
 });
 </script>
 */
-?>
+?>      
+    </div>
+
 
 
 
