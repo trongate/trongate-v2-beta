@@ -1,30 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<base href="<?= BASE_URL ?>">
+	<base href="<?= $api_base_url ?>">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="code_generator_module/css/code_generator.css">
+	<link rel="stylesheet" href="<?= BASE_URL ?>css/trongate.css">
+	<link rel="stylesheet" href="<?= BASE_URL ?>code_generator_module/css/code_generator.css">
 	<script src="js/trongate-mx.min.js"></script>
-	<title>Code Generator</title>
+	<title>Document</title>
 </head>
 <body>
-	<div class="modal-container">
-	    <header>*** Trongate ***</header>
-	    <main>
-	        <div class="loader mx-indicator" style="display: none;"><img src="code_generator_module/images/loader.svg"></div>
-	        <div id="center-stage"><?= Template::display($data) ?></div>
-	    </main>
-	    <footer>
-	    	<div>*</div>
-	    	<div>hide</div>
-	    	<div>*</div>
-	    	<div onclick="renderLoader()">reset</div>
-	    	<div>*</div>
-	    	<div onclick="parent.closeModal()">quit</div>
-	    	<div>*</div>
-	    </footer>		
-	</div>
-<script src="code_generator_module/js/code_generator.js"></script>
+	<div class="spinner"></div>
+	<script>
+	const localBaseUrl = '<?= BASE_URL ?>';
+	const apiBaseUrl = '<?= $api_base_url ?>';
+	const cssPath = '<?= $api_base_url ?>t2_api-code_generator_module/css/code_generator.css';
+	const jsPath = '<?= $api_base_url ?>t2_api-code_generator_module/js/code_generator.js';
+	</script>
+	<script src="<?= BASE_URL ?>code_generator_module/js/code_generator.js"></script>
 </body>
 </html>

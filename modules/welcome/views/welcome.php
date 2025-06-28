@@ -14,12 +14,14 @@
     <h1>Welcome to Trongate</h1>
     <h2>You’re all set — let’s build something extraordinary</h2>
 
-    <p>
+    <p style="display: none;">
       <button onclick="openModal('test-modal')">Open Modal</button>
     </p>
 
     <p>
-        <button onclick="openModal('code_generator', 800, 600)">Open iFrame Modal</button>
+        <button onclick="openModal('code_generator', 800, 600)">Code Generator</button>
+        <button onclick="openModal('code_generator', 800, 600)">Query Builder</button>
+        <button onclick="openModal('code_generator', 800, 600)">Module Market</button>
     </p>
 
 <div class="modal" id="test-modal" style="display: none">
@@ -35,27 +37,7 @@
 
     <p class="datetime"><?= $formatted_datetime ?? $datetime ?></p>
 
-    <p>
-      You’ve just installed <strong>Trongate</strong>, a modern PHP framework engineered for performance, simplicity, and zero fluff. It’s fast, lean, and completely free from the bloat of over-engineered code or needless dependencies.
-    </p>
-
-    <p>
-      This page is yours to change. You can modify it, delete it, or make it the foundation of your next big idea.  Don't forget to check out the documentation at <a href="https://trongate.io/documentation">https://trongate.io/documentation</a>
-    </p>
-
-    <div class="cta-buttons">
-      <button onclick="window.location='tg-admin';">Admin Panel</button>
-      <button class="alt" onclick="window.location='https://trongate.io/documentation';">Documentation</button>
-    </div>
-
-    <p>
-      To begin, log into your <a href="tg-admin">admin panel</a>. Default credentials:
-    </p>
-
-    <ul>
-      <li><strong>Username:</strong> admin</li>
-      <li><strong>Password:</strong> admin</li>
-    </ul>
+  
 <?php
 /*
 <script>

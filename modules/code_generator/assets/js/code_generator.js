@@ -1,47 +1,32 @@
-function renderLoader() {
-    const main = document.querySelector('main');
-    Array.from(main.children).forEach(childEl => {
-        if (childEl.classList.contains('loader')) {
-            childEl.classList.remove('cloak');
-        } else {
-            childEl.classList.add('cloak');
-        }
-    });
+function fetchStarterContent() {
 
-	setTimeout(() => {
-		hideLoader();
-	}, 1000);
+	const targetUrl = localBaseUrl + 'code_generator/fetch_starter_content';
 
-}
+	const http = new XMLHttpRequest();
+	http.open('get', targetUrl);
+	http.setRequestHeader('Content-type', 'application/json');
+	http.send();
+	http.onload = function() {
+		console.log(http.status);
+		console.log(http.responseText);
+		const body = document.querySelector('body');
+		if (http.status === 200) {
+			const styleEl = document.createElement('link');
+			styleEl.rel = 'stylesheet';
+			styleEl.type = 'text/css';
+			styleEl.href = cssPath;
+			document.head.appendChild(styleEl);
 
-function hideLoader() {
-    const main = document.querySelector('main');
-    Array.from(main.children).forEach(childEl => {
-        if (childEl.classList.contains('loader')) {
-            childEl.classList.add('cloak');
-        } else {
-            childEl.classList.remove('cloak');
-        }
-    });
-}
+			const jsEl = document.createElement('script');
+			jsEl.src = jsPath;
+			body.appendChild(jsEl);
 
-function revealOptions() {
-    const codegenSelectContainer = document.querySelector('#codegen-select-container');
-    codegenSelectContainer.remove();
-    const optionsList = document.querySelector('.options-list');
-    optionsList.removeAttribute('style');
-}
+			body.innerHTML = http.responseText;
+		}
+	}
 
-function formOnInput() {
-    const valueInputEl = document.querySelector('.value-input');
-    valueInputEl.focus();
-}
-
-function openPropertiesBuilder() {
-    parent.openPropertiesBuilder(1200, 300);
 }
 
 window.addEventListener('load', (ev) => {
-	const loaderEl = document.querySelector('.loader');
-	loaderEl.removeAttribute('style');
+    fetchStarterContent();
 });
