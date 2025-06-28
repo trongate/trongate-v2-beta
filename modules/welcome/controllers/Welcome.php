@@ -11,4 +11,8 @@ class Welcome extends Trongate {
 		$this->view('welcome', $data);
 	}
 
+	public function test() {
+		$this->view('test');
+	}
+
 }

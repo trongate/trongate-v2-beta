@@ -139,6 +139,24 @@
     <h1>Welcome to Trongate</h1>
     <h2>You’re all set — let’s build something extraordinary</h2>
 
+<!-- This works! -->
+<p>
+  <button onclick="openModal('code_generator', 800, 600)">Open iFrame Modal</button>
+</p>  
+
+<!-- This does not works -->
+<p>
+  <button onclick="openModal('code-generator')">Open Normal Modal</button>
+</p>    
+
+<div class="modal" id="code-generator" style="display: none">
+  <div class="modal-heading">Hello</div>
+  <div class="modal-body">Goodbye</div>
+</div>
+
+<script>
+console.log(document.getElementById('code-generator'));
+</script>
     <p class="datetime"><?= $formatted_datetime ?? $datetime ?></p>
 
     <p>
@@ -162,10 +180,23 @@
       <li><strong>Username:</strong> admin</li>
       <li><strong>Password:</strong> admin</li>
     </ul>
+<?php
+/*
+<script>
+window.addEventListener('load', (ev) => {
+   const button = document.querySelector('button');
+   button.click();
+});
+</script>
+*/
+?>
+
+
 
     <footer>
       <p class="text-center"><a class="github-link" href="https://github.com/trongate/trongate-framework" target="_blank">⭐ Please Give Trongate A Star on GitHub</a></p>
     </footer>
   </main>
+  <script src="js/admin.js"></script>
 </body>
 </html>
