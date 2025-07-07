@@ -1,0 +1,32 @@
+main.js has this:   --- 
+
+function watchPage(targetWindow) {
+  var contents = targetWindow.webContents
+  contents.executeJavaScript(`document.title = 0`)
+  .then(() => {
+    var windowWatcher =  setInterval(() => {
+        var pageTitle = contents.getTitle()
+
+        if (pageTitle == 'h') {
+          initHide();
+        }
+
+        if (pageTitle == '1') {
+            clearInterval(windowWatcher)
+            readWindow(targetWindow)
+        } else if (pageTitle == 'x') {
+            //stop interval and close secondary window
+            clearInterval(windowWatcher)
+            secondaryWindow.close()
+            secondaryWindow = null;
+            setTimeout(() => {
+              forceReset();
+            }, 2000);
+            
+        }
+    }, 1000)
+  })
+}
+
+
+--- This means that every second we check to see if the pageTitle has been changed to 1.  If it has, we close the iframe!

@@ -8,11 +8,40 @@ class Code_generator extends Trongate {
         $this->view('code_generator_template', $data);
     }
 
+    public function choose_url_slug() {
+    	// http://localhost/t2/code_generator/choose_url_slug
+
+    	$data = [
+    		'starter_content_url' => $this->api_base_url.'t2_api-code_generator/choose_url_slug',
+    		'api_base_url' => $this->api_base_url
+    	];
+
+    	// Continue from here...
+    	json($data, true);
+    }
+
     public function fetch_starter_content() {
     	$target_url = $this->api_base_url.'t2_api-code_generator/home';
     	$response = $this->perform_get_request($target_url);
     	http_response_code($response['status_code']);
     	echo $response['response_body'];
+    }
+
+    public function fetch_mod_list() {
+        $module_dir = APPPATH.DIRECTORY_SEPARATOR.'modules';
+        $directories = [];
+
+        if (is_dir($module_dir)) {
+            foreach (scandir($module_dir) as $item) {
+                $full_path = $module_dir . DIRECTORY_SEPARATOR . $item;
+                if ($item !== '.' && $item !== '..' && is_dir($full_path)) {
+                    $directories[] = strtolower($item);
+                }
+            }
+        }
+
+        http_response_code(200);
+        echo json_encode($directories);
     }
 
 	/**
@@ -60,6 +89,29 @@ class Code_generator extends Trongate {
 	        'status_code' => $http_code,
 	        'curl_error' => $curl_error
 	    ];
+	}
+
+	public function properties_builder() {
+	    $target_url = $this->api_base_url . 'desktop_app_api/properties_builder';
+	    $response = $this->perform_get_request($target_url);
+
+	    if (!empty($response['curl_error'])) {
+	        // Handle cURL-level error
+	        http_response_code(500);
+	        echo json_encode(['error' => 'Request failed: ' . $response['curl_error']]);
+	        return;
+	    }
+
+	    if ($response['status_code'] !== 200) {
+	        // Handle non-success HTTP codes
+	        http_response_code($response['status_code']);
+	        echo json_encode(['error' => 'API returned HTTP code ' . $response['status_code']]);
+	        return;
+	    }
+
+	    // Set correct content type if expecting JSON
+	    header('Content-Type: text/html; charset=utf-8');
+	    echo $response['response_body'];
 	}
 
 	/**
