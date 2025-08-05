@@ -42,14 +42,29 @@ class Trongate {
         }
 
         // Handle core framework classes with lazy loading
-        return $this->instances[$key] ??= match($key) {
-            'model' => new Model($this->module_name),
-            'validation' => new Validation(),
-            'file' => new File(),
-            'image' => new Image(),
-            'template' => new Template(),
-            default => throw new Exception("Undefined property: " . get_class($this) . "::$key")
+        if (isset($this->instances[$key])) {
+            $ref = $this->instances[$key];
+            $instance = $ref->get();
+
+            if ($instance) {
+                return $instance;
+            } else {
+              unset($this->instances[$key]);
+            }
+        }
+
+        $instance = match ($key) {
+            'model'     => new Model($this->module_name),
+            'validation'=> new Validation(),
+            'file'      => new File(),
+            'image'     => new Image(),
+            'template'  => new Template(),
+            default     => throw new Exception("Undefined property: " . get_class($this) . "::$key"),
         };
+
+        $this->instances[$key] = WeakReference::create($instance);
+
+        return $instance;
     }
 
     /**
