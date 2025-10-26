@@ -105,13 +105,13 @@ class Trongate_administrators extends Trongate {
 
                 if (is_numeric($update_id)) {
                     // Update existing administrator record.
-                    $this->model->update($update_id, $data);
+                    $this->db->update($update_id, $data);
                     set_flashdata('The record was successfully updated');
                 } else {
                     // Create new administrator record.
                     $this->module('trongate_users');
                     $data['trongate_user_id'] = $this->trongate_users->_create_user(1);
-                    $this->model->insert($data);
+                    $this->db->insert($data);
                     set_flashdata('The record was successfully created');
                 }
 
@@ -141,12 +141,12 @@ class Trongate_administrators extends Trongate {
 
         if (($submit === 'Delete Record Now') && (is_numeric($update_id))) {
             // Get the trongate_user_id associated with the administrator record.
-            $user_obj = $this->model->get_where($update_id, 'trongate_administrators');
+            $user_obj = $this->db->get_where($update_id, 'trongate_administrators');
             $trongate_user_id = $user_obj->trongate_user_id;
 
             // Delete records from 'trongate_users' and 'trongate_administrators' tables.
-            $this->model->delete($trongate_user_id, 'trongate_users');
-            $this->model->delete($update_id, 'trongate_administrators');
+            $this->db->delete($trongate_user_id, 'trongate_users');
+            $this->db->delete($update_id, 'trongate_administrators');
             set_flashdata('The record was successfully deleted');
         }
 
@@ -156,14 +156,14 @@ class Trongate_administrators extends Trongate {
 
     /**
      * Manages the display of the administrator records within the 'trongate_administrators' table.
-     * Retrieves necessary data such as admin ID, username rows from the model, and loads the management view.
+     * Retrieves necessary data such as admin ID, username rows from the database, and loads the management view.
      *
      * @return void
      */
     public function manage(): void {
         $token = $this->_make_sure_allowed();
         $data['my_admin_id'] = $this->get_my_id($token);
-        $data['rows'] = $this->model->get('username', 'trongate_administrators');
+        $data['rows'] = $this->db->get('username', 'trongate_administrators');
         $data['view_module'] = 'trongate_administrators';
         $data['view_file'] = 'manage';
         $this->load_template($data);
@@ -267,7 +267,7 @@ class Trongate_administrators extends Trongate {
 
                 //generate trongatetoken for 1st trongate_administrator record on tbl
                 $sql = 'select * from trongate_administrators order by id limit 0,1';
-                $rows = $this->model->query($sql, 'object');
+                $rows = $this->db->query($sql, 'object');
 
                 if ($rows === false) {
                     redirect(BASE_URL . 'trongate_administrators/missing_tbl_msg');
@@ -332,7 +332,7 @@ class Trongate_administrators extends Trongate {
     public function username_check(string $str): string|bool {
         //NOTE: You may wish to add other rules of your own here! 
         $update_id =  (int) segment(3);
-        $result = $this->model->get_one_where('username', $str, 'trongate_administrators');
+        $result = $this->db->get_one_where('username', $str, 'trongate_administrators');
         $error_msg = 'The username that you submitted is not available.';
 
         if (gettype($result) === 'object') {
@@ -359,7 +359,7 @@ class Trongate_administrators extends Trongate {
         $submitted_password = post('password');
         $error_msg = 'You did not enter a correct username and/or or password.';
 
-        $result = $this->model->get_one_where('username', $submitted_username, 'trongate_administrators');
+        $result = $this->db->get_one_where('username', $submitted_username, 'trongate_administrators');
         if (gettype($result) === 'object') {
             $hashed_password = $result->password;
             $is_password_good = $this->verify_hash($submitted_password, $hashed_password);
@@ -398,7 +398,7 @@ class Trongate_administrators extends Trongate {
                        ON trongate_tokens.user_id = trongate_users.id 
                 WHERE trongate_tokens.token = :token 
                 ORDER BY trongate_tokens.id DESC LIMIT 0,1';
-        $result = $this->model->query_bind($sql, $params, 'object');
+        $result = $this->db->query_bind($sql, $params, 'object');
         if (gettype($result) === 'array') {
             $id = $result[0]->id;
         } else {
@@ -414,7 +414,7 @@ class Trongate_administrators extends Trongate {
      * @return array|false Returns an array containing fetched data or false if no data is found.
      */
     private function get_data_from_db(int $update_id) {
-        $result_obj = $this->model->get_where($update_id);
+        $result_obj = $this->db->get_where($update_id);
         if (gettype($result_obj) === 'object') {
             $data = (array) $result_obj;
         } else {
@@ -443,7 +443,7 @@ class Trongate_administrators extends Trongate {
      */
     private function log_user_in(string $username): void {
         $this->module('trongate_tokens');
-        $user_obj = $this->model->get_one_where('username', $username);
+        $user_obj = $this->db->get_one_where('username', $username);
         $trongate_user_id = $user_obj->trongate_user_id;
         $token_data['user_id'] = $trongate_user_id;
 
@@ -470,7 +470,7 @@ class Trongate_administrators extends Trongate {
     private function delete_tokens_for_user(int $trongate_user_id): void {
         $params['user_id'] = $trongate_user_id;
         $sql = 'delete from trongate_tokens where user_id = :user_id';
-        $this->model->query_bind($sql, $params);
+        $this->db->query_bind($sql, $params);
 
         //let's delete expired tokens too
         $this->delete_expired_tokens();
@@ -484,7 +484,7 @@ class Trongate_administrators extends Trongate {
     private function delete_expired_tokens(): void {
         $params['nowtime'] = time();
         $sql = 'delete from trongate_tokens where expiry_date<:nowtime';
-        $this->model->query_bind($sql, $params);
+        $this->db->query_bind($sql, $params);
     }
 
     /**

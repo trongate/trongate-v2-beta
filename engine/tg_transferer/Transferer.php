@@ -53,10 +53,11 @@ class Transferer {
     }
 
     /**
-     * Checks if the given SQL file contents contain any dangerous SQL commands.
+     * Checks if the given SQL file contents contain any potentially dangerous SQL commands.
+     * Note: This is for warning purposes only and does not prevent execution.
      *
      * @param string $file_contents The contents of the SQL file to check.
-     * @return bool Returns false if dangerous SQL commands are found, otherwise true.
+     * @return bool Returns false if potentially dangerous SQL commands are found, otherwise true.
      */
     public function check_sql(string $file_contents): bool {
 
@@ -66,6 +67,14 @@ class Transferer {
         $dangerous_strings[] = 'update ';
         $dangerous_strings[] = 'truncate ';
         $dangerous_strings[] = 'delete from';
+        $dangerous_strings[] = 'alter ';
+        $dangerous_strings[] = 'grant ';
+        $dangerous_strings[] = 'revoke ';
+        $dangerous_strings[] = 'create user';
+        $dangerous_strings[] = 'drop user';
+        $dangerous_strings[] = 'load data infile';
+        $dangerous_strings[] = 'into outfile';
+        $dangerous_strings[] = 'into dumpfile';
 
         foreach ($dangerous_strings as $dangerous_string) {
             $contains_dangerous_string = $this->contains_needle($dangerous_string, $file_contents);
@@ -101,31 +110,43 @@ class Transferer {
      * @return void
      */
     private function run_sql(string $sql): void {
-        $model_file = '../engine/Model.php';
+        $db_file = '../engine/DB.php';
 
         $rand_str = make_rand_str(32);
         $sql = str_replace('Tz8tehsWsTPUHEtzfbYjXzaKNqLmfAUz', $rand_str, $sql);
 
-        require_once $model_file;
-        $model = new Model;
-        $model->exec($sql);
+        require_once $db_file;
+        $db = new DB;
+        $db->exec($sql);
         http_response_code(200);
         echo 'Finished.';
     }
 
     /**
-     * Deletes the specified file if it exists and is writable.
-     * If the file does not exist or is not writable, it sends a 403 HTTP response code.
+     * Deletes the specified file if it exists, is writable, and is within the modules directory.
+     * If the file does not exist, is not writable, or is outside the modules directory,
+     * it sends a 403 HTTP response code.
      *
      * @param string $filepath The path to the file to be deleted.
      * @return void
      */
     private function delete_file(string $filepath): void {
-        if ((file_exists($filepath)) && (is_writable($filepath))) {
-            unlink($filepath);
+        // Validate the file is within modules directory
+        $modules_path = realpath('../modules/');
+        $real_filepath = realpath($filepath);
+
+        // Check if path resolution failed or file is outside modules directory
+        if ($real_filepath === false || strpos($real_filepath, $modules_path) !== 0) {
+            http_response_code(403);
+            echo 'Invalid file path: ' . $filepath;
+            die();
+        }
+
+        if (is_writable($real_filepath)) {
+            unlink($real_filepath);
         } else {
             http_response_code(403);
-            echo $filepath;
+            echo $real_filepath;
             die();
         }
     }

@@ -96,7 +96,7 @@ class Trongate_tokens extends Trongate {
             foreach ($tokens_to_delete as $token) {
                 $params['token'] = $token;
                 $sql = 'delete from trongate_tokens where token = :token';
-                $this->model->query_bind($sql, $params);
+                $this->db->query_bind($sql, $params);
             }
         }
 
@@ -122,7 +122,7 @@ class Trongate_tokens extends Trongate {
             $data['user_id'] = $user_id;
         }
 
-        $this->model->query_bind($sql, $data);
+        $this->db->query_bind($sql, $data);
     }
 
     /**
@@ -159,7 +159,7 @@ class Trongate_tokens extends Trongate {
 
         $where_clause = implode(' OR ', array_map(fn($key) => "token = :$key", array_keys($params)));
         $sql = 'SELECT user_id FROM trongate_tokens WHERE ' . $where_clause;
-        $rows = $this->model->query_bind($sql, $params, 'object');
+        $rows = $this->db->query_bind($sql, $params, 'object');
         return isset($rows[0]) ? $rows[0]->user_id : false;
     }
 
@@ -218,7 +218,7 @@ class Trongate_tokens extends Trongate {
         }
 
         // Execute the query and return the result
-        $rows = $this->model->query_bind($sql, $params, 'object');
+        $rows = $this->db->query_bind($sql, $params, 'object');
         return isset($rows[0]) ? $rows[0] : false;
     }
 
@@ -272,7 +272,7 @@ class Trongate_tokens extends Trongate {
             unset($params['set_cookie']);
         }
 
-        $this->model->insert($params, 'trongate_tokens');
+        $this->db->insert($params, 'trongate_tokens');
 
         if (isset($data['set_cookie'])) {
             setcookie('trongatetoken', $random_string, $data['expiry_date'], '/');
@@ -305,7 +305,7 @@ class Trongate_tokens extends Trongate {
 
         // Check if the token exists
         $sql = 'SELECT * FROM trongate_tokens WHERE token = :token LIMIT 1';
-        $tokens = $this->model->query_bind($sql, ['token' => $old_token], 'object');
+        $tokens = $this->db->query_bind($sql, ['token' => $old_token], 'object');
 
         if (empty($tokens)) {
             http_response_code(404); // Not Found
@@ -322,7 +322,7 @@ class Trongate_tokens extends Trongate {
             'token' => $new_token
         ];
 
-        $this->model->update($token->id, $update_data, 'trongate_tokens');
+        $this->db->update($token->id, $update_data, 'trongate_tokens');
 
         // Return the new token
         http_response_code(200); // OK
@@ -356,7 +356,7 @@ class Trongate_tokens extends Trongate {
                     AND 
                             trongate_users.user_level_id = :user_level_id';
             $sql .= ' AND expiry_date > :nowtime ';
-            $rows = $this->model->query_bind($sql, $params, 'object');
+            $rows = $this->db->query_bind($sql, $params, 'object');
 
             if (count($rows) > 0) {
                 $token = $rows[0]->token;
@@ -409,7 +409,7 @@ class Trongate_tokens extends Trongate {
                     ' . $where_condition . ' 
                     ' . $and_condition;
             $sql .= ' AND expiry_date > :nowtime ';
-            $rows = $this->model->query_bind($sql, $params, 'object');
+            $rows = $this->db->query_bind($sql, $params, 'object');
 
             if (count($rows) > 0) {
                 $token = $rows[0]->token;
@@ -439,7 +439,7 @@ class Trongate_tokens extends Trongate {
                             trongate_tokens 
                     ' . $where_condition;
             $sql .= ' AND expiry_date > :nowtime ';
-            $rows = $this->model->query_bind($sql, $params, 'object');
+            $rows = $this->db->query_bind($sql, $params, 'object');
 
             if (count($rows) > 0) {
                 $token = $rows[0]->token;

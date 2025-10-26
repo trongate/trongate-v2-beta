@@ -22,7 +22,7 @@ class Modules {
         $target_module = $debris[0];
         $target_controller = ucfirst($target_module);
         $target_method = $debris[1];
-        $controller_path = '../modules/' . $target_module . '/controllers/' . $target_controller . '.php';
+        $controller_path = '../modules/' . $target_module . '/' . $target_controller . '.php';
 
         if (file_exists($controller_path)) {
             require_once($controller_path);
@@ -36,7 +36,7 @@ class Modules {
                     $parent_module = $bits[0];
                     $target_module = $bits[1];
                     $target_controller = ucfirst($target_module);
-                    $controller_path = '../modules/' . $parent_module . '/' . $target_module . '/controllers/' . $target_controller . '.php';
+                    $controller_path = '../modules/' . $parent_module . '/' . $target_module . '/' . $target_controller . '.php';
                 }
             }
         }
@@ -54,13 +54,13 @@ class Modules {
      */
     public function load(string $target_module): void {
         $target_controller = ucfirst($target_module);
-        $target_controller_path = '../modules/' . $target_module . '/controllers/' . $target_controller . '.php';
+        $target_controller_path = '../modules/' . $target_module . '/' . $target_controller . '.php';
 
         if (!file_exists($target_controller_path)) {
             $child_module = $this->get_child_module($target_module);
-            $target_controller_path = '../modules/' . $target_module . '/' . $child_module . '/controllers/' . ucfirst($child_module) . '.php';
-            $ditch = '-' . $child_module . '/' . $child_module . '/controllers';
-            $replace = '/' . $child_module . '/controllers';
+            $target_controller_path = '../modules/' . $target_module . '/' . $child_module . '/' . ucfirst($child_module) . '.php';
+            $ditch = '-' . $child_module . '/' . $child_module;
+            $replace = '/' . $child_module;
             $target_controller_path = str_replace($ditch, $replace, $target_controller_path);
             $target_module = $child_module;
         }

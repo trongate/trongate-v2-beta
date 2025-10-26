@@ -27,7 +27,7 @@ class Trongate_comments extends Trongate {
                 FROM trongate_comments 
                 INNER JOIN trongate_users ON trongate_comments.user_id = trongate_users.id 
                 INNER JOIN trongate_administrators ON trongate_users.id = trongate_administrators.trongate_user_id';
-        $all_admins = $this->model->query($sql, 'object');
+        $all_admins = $this->db->query($sql, 'object');
 
         $admin_users = [];
         foreach ($all_admins as $admin_user) {

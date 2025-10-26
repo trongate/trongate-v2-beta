@@ -5,7 +5,7 @@
  * fetching, inserting, updating, and resequencing records. This class is 
  * also used by Trongate's Module Import Wizard for executing SQL statements.
  */
-class Model {
+class DB {
 
     private $host = HOST;
     private $port = '';
@@ -22,7 +22,7 @@ class Model {
     private $current_module;
 
     /**
-     * Constructor for the Model class.
+     * Constructor for the DB class.
      *
      * @param string|null $current_module (optional) The current module name. Default is null.
      */

@@ -1,9 +1,7 @@
-1).  Code Generator.   --- BASIC VERSION TO BE FINISHED BY END OF WEDNESDAY.
+1).  Ditch controllers sub directories.
 
-2).  Module Market.   ---- BASIC VERSION TO BE FINISHED BY END OF SUNDAY.
+2).  Rename 'Model' class to 'Db'.
 
-3).  Query Builder. --- FINISH BY THURSDAY
+3).  Build model functionality.
 
-4).  API Explorer. --- ??? ONE DAY ?
-
-5).  Trongate Pages. --- ??? ONE DAY ?
+4).

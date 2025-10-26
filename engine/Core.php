@@ -79,7 +79,7 @@ class Core {
      * @return string The path to the controller file
      */
     private function get_controller_path(): string {
-        $controller_path = '../modules/' . $this->current_module . '/controllers/' . $this->current_controller . '.php';
+        $controller_path = '../modules/' . $this->current_module . '/' . $this->current_controller . '.php';
 
         if (file_exists($controller_path)) {
             return $controller_path;
@@ -114,7 +114,7 @@ class Core {
             $child_module = strtolower($bits[1]);
             $this->current_controller = ucfirst($bits[1]);
             
-            $controller_path = '../modules/' . $parent_module . '/' . $child_module . '/controllers/' . ucfirst($bits[1]) . '.php';
+            $controller_path = '../modules/' . $parent_module . '/' . $child_module . '/' . ucfirst($bits[1]) . '.php';
             
             if (file_exists($controller_path)) {
                 return $controller_path;
@@ -136,7 +136,7 @@ class Core {
             $this->current_controller = ucfirst($intercept_bits[0]);
             $this->current_method = $intercept_bits[1];
             
-            $controller_path = '../modules/' . $this->current_module . '/controllers/' . $this->current_controller . '.php';
+            $controller_path = '../modules/' . $this->current_module . '/' . $this->current_controller . '.php';
             
             if (file_exists($controller_path)) {
                 return $controller_path;
@@ -171,7 +171,7 @@ class Core {
      * @return void
      */
     private function attempt_sql_transfer(string $controller_path): void {
-        $ditch = 'controllers/' . $this->current_controller . '.php';
+        $ditch = $this->current_controller . '.php';
         $dir_path = str_replace($ditch, '', $controller_path);
 
         $files = array();

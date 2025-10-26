@@ -43,7 +43,7 @@ class Trongate {
 
         // Handle core framework classes with lazy loading
         return $this->instances[$key] ??= match($key) {
-            'model' => new Model($this->module_name),
+            'db' => new DB($this->module_name),
             'validation' => new Validation(),
             'file' => new File(),
             'image' => new Image(),
@@ -61,7 +61,7 @@ class Trongate {
      * @throws Exception If template controller or method is not found.
      */
     protected function template(string $template_name, array $data = []): void {
-        $template_controller_path = '../templates/controllers/Templates.php';
+        $template_controller_path = '../templates/Templates.php';
         
         if (!file_exists($template_controller_path)) {
             $template_controller_path = str_replace('../', APPPATH, $template_controller_path);
@@ -97,7 +97,7 @@ class Trongate {
 
         // Build the controller path
         $controller_class = ucfirst($target_module);
-        $controller_path = '../modules/' . $target_module . '/controllers/' . $controller_class . '.php';
+        $controller_path = '../modules/' . $target_module . '/' . $controller_class . '.php';
         
         if (!file_exists($controller_path)) {
             throw new Exception("Module controller not found: {$controller_path}");
