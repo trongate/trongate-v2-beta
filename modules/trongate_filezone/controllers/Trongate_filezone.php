@@ -29,7 +29,7 @@ class Trongate_filezone extends Trongate {
 
         if ($settings['upload_to_module'] === true) {
             $target_module = (isset($settings['targetModule']) ? $settings['targetModule'] : segment(1));
-            $picture_directory_path = APPPATH . 'modules/' . $target_module . '/assets/' . $destination . '/' . $update_id;
+            $picture_directory_path = APPPATH . 'modules/' . $target_module . '/' . $destination . '/' . $update_id;
             $dir = str_replace('\\', '/', $picture_directory_path);
             $module_assets_dir = BASE_URL . $target_module . MODULE_ASSETS_TRIGGER;
             $target_dir = $module_assets_dir . '/' . $destination . '/' . $update_id;
@@ -123,7 +123,7 @@ class Trongate_filezone extends Trongate {
         $target_image_name = $first_chunk . $correct_last_bit;
 
         if ($settings['upload_to_module'] === true) {
-            $target_dir = APPPATH . 'modules/' . $target_module . '/assets/' . $destination . '/' . $update_id . '/';
+            $target_dir = APPPATH . 'modules/' . $target_module . '/' . $destination . '/' . $update_id . '/';
             $target_dir = str_replace('\\', '/', $target_dir);
         } else {
             $target_dir = $destination . '/' . $update_id . '/';
@@ -189,7 +189,7 @@ class Trongate_filezone extends Trongate {
         }
 
         if ($filezone_settings['upload_to_module'] === true) {
-            $target_dir = APPPATH . 'modules/' . $target_module . '/assets/' . $destination . '/' . $update_id;
+            $target_dir = APPPATH . 'modules/' . $target_module . '/' . $destination . '/' . $update_id;
         } else {
             $target_dir = APPPATH . 'public/' . $destination . '/' . $update_id;
         }
@@ -214,7 +214,7 @@ class Trongate_filezone extends Trongate {
 
         if ($filezone_settings['upload_to_module'] === true) {
             $target_module = (isset($filezone_settings['targetModule']) ? $filezone_settings['targetModule'] : segment(1));
-            $module_assets_dir = APPPATH . 'modules/' . $target_module . '/assets';
+            $module_assets_dir = APPPATH . 'modules/' . $target_module;
             $picture_directory_path = $module_assets_dir . '/' . $pictures_directory . '/' . $update_id;
         } else {
             $picture_directory_path = APPPATH . 'public/' . $pictures_directory . '/' . $update_id;
@@ -303,7 +303,7 @@ class Trongate_filezone extends Trongate {
             $ditch = $target_module . MODULE_ASSETS_TRIGGER . '/';
             $replace = '';
             $picture_path = str_replace($ditch, $replace, $picture_path);
-            $picture_path = APPPATH . 'modules/' . $target_module . '/assets/' . $picture_path;
+            $picture_path = APPPATH . 'modules/' . $target_module . '/' . $picture_path;
         } else {
             $picture_path = APPPATH . 'public/' . $picture_path;
         }

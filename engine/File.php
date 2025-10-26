@@ -23,7 +23,7 @@ class File {
      * @param array $config An associative array containing upload configuration options:
      *                      - 'destination': (string) The target directory for the uploaded file.
      *                      - 'target_module': (string) The target module name (defaults to the current segment).
-     *                      - 'upload_to_module': (bool) Whether to upload to the module's assets directory (default: false).
+     *                      - 'upload_to_module': (bool) Whether to upload to the module directory (default: false).
      *                      - 'make_rand_name': (bool) Whether to generate a random filename (default: false).
      * @return array An associative array containing details about the uploaded file:
      *               - 'file_name': (string) The name of the uploaded file.
@@ -63,8 +63,8 @@ class File {
             $file_info = $this->generate_secure_filename($upload['name'], $make_rand_name);
 
             // Set target path
-            $target_path = $upload_to_module ? 
-                '../modules/' . $target_module . '/assets/' . $destination :
+            $target_path = $upload_to_module ?
+                '../modules/' . $target_module . '/' . $destination :
                 $destination;
 
             // Ensure unique filename
@@ -94,28 +94,28 @@ class File {
     * @param string $directory The target directory path
     * @param string $base_name The base filename without extension
     * @param string $extension The file extension including the dot (e.g. '.jpg')
-    * 
+    *
     * @return string The unique file path that does not exist in the directory
     */
     private function ensure_unique_path(string $directory, string $base_name, string $extension): string {
         $counter = 1;
         $final_path = $directory . '/' . $base_name . $extension;
-        
+
         while (file_exists($final_path)) {
             $final_path = $directory . '/' . $base_name . '_' . $counter . $extension;
             $counter++;
         }
-        
+
         return $final_path;
     }
 
     /**
      * Retrieves metadata about a file.
-     * 
-     * This method provides information about a file including its size, 
+     *
+     * This method provides information about a file including its size,
      * last modification time, and permissions. Additionally, it now returns the file name
      * and MIME type.
-     * 
+     *
      * @param string $file_path The path to the file.
      * @return array Returns an array with file metadata.
      * @throws Exception if the file does not exist.
@@ -147,7 +147,7 @@ class File {
      * Creates a new directory at the specified path.
      *
      * This method allows for the creation of nested directories if they do not exist.
-     * 
+     *
      * @param string $directory_path The path where the directory should be created.
      * @param int $permissions The permissions to set for the directory, in octal notation (e.g., 0755).
      * @param bool $recursive Whether to create nested directories if necessary.
@@ -265,7 +265,7 @@ class File {
      *
      * This method prepares and sends headers based on the parameters to either initiate a file download
      * from the server's local storage or display it inline. It checks if the file exists and is readable before proceeding.
-     * 
+     *
      * @param string $file_path The path or URL of the file.
      * @param bool $as_attachment Determines whether to force the file download (true) or display inline (false).
      * @throws Exception If the file does not exist or cannot be read.
@@ -362,7 +362,7 @@ class File {
 
     /**
      * Copies a file from one location to another.
-     * 
+     *
      * @param string $source_path The path to the source file.
      * @param string $destination_path The path to the destination where the file will be copied.
      * @return bool Returns true on success, or false on failure.
@@ -388,7 +388,7 @@ class File {
 
     /**
      * Moves a file from one location to another.
-     * 
+     *
      * @param string $source_path The path to the source file.
      * @param string $destination_path The path to the destination where the file will be moved.
      * @return bool Returns true on success, or false on failure.
@@ -416,14 +416,14 @@ class File {
     * Validates the upload destination path and ensures it exists and is accessible.
     *
     * @param string $destination The target upload directory path
-    * @param bool $upload_to_module Whether to upload to a module's assets directory (default: false)
+    * @param bool $upload_to_module Whether to upload to a module directory (default: false)
     * @param string $target_module The target module name if uploading to module (default: '')
-    * 
+    *
     * @throws Exception If:
     *                   - Destination is empty
     *                   - Target path is not a directory
     *                   - Path validation fails for non-module uploads
-    * 
+    *
     * @return void
     */
     private function validate_upload_path(string $destination, bool $upload_to_module = false, string $target_module = ''): void {
@@ -432,7 +432,7 @@ class File {
         }
 
         if ($upload_to_module === true) {
-            $target_path = '../modules/' . $target_module . '/assets/' . $destination;
+            $target_path = '../modules/' . $target_module . '/' . $destination;
         } else {
             $target_path = $destination;
         }

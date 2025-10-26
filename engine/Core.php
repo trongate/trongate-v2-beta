@@ -240,7 +240,7 @@ class Core {
                     }
                 }
 
-                $asset_path = '../modules/' . strtolower($target_module) . '/assets/' . $target_dir . '/' . $file_name;
+                $asset_path = '../modules/' . strtolower($target_module) . '/' . $target_dir . '/' . $file_name;
                 
                 try {
                     $asset_path = $this->sanitize_file_path($asset_path, '../modules/');
