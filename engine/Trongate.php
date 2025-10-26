@@ -44,6 +44,7 @@ class Trongate {
         // Handle core framework classes with lazy loading
         return $this->instances[$key] ??= match($key) {
             'db' => new DB($this->module_name),
+            'model' => new Model($this->module_name),
             'validation' => new Validation(),
             'file' => new File(),
             'image' => new Image(),
