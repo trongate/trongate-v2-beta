@@ -42,15 +42,27 @@ class Trongate {
         }
 
         // Handle core framework classes with lazy loading
-        return $this->instances[$key] ??= match($key) {
+        $core_instance = match($key) {
             'db' => new DB($this->module_name),
             'model' => new Model($this->module_name),
             'validation' => new Validation(),
             'file' => new File(),
             'image' => new Image(),
             'template' => new Template(),
-            default => throw new Exception("Undefined property: " . get_class($this) . "::$key")
+            default => null
         };
+
+        if ($core_instance !== null) {
+            return $this->instances[$key] ??= $core_instance;
+        }
+
+        // If not a core class, try to load it as a module (automatic module loading)
+        try {
+            $this->module($key);
+            return $this->loaded_modules[$key];
+        } catch (Exception $e) {
+            throw new Exception("Undefined property: " . get_class($this) . "::$key");
+        }
     }
 
     /**
@@ -99,9 +111,10 @@ class Trongate {
         // Build the controller path
         $controller_class = ucfirst($target_module);
         $controller_path = '../modules/' . $target_module . '/' . $controller_class . '.php';
-        
+
+        // If standard path doesn't exist, try child module
         if (!file_exists($controller_path)) {
-            throw new Exception("Module controller not found: {$controller_path}");
+            $controller_path = $this->try_child_module_path($target_module, $controller_class);
         }
         
         // Load and instantiate the module
@@ -113,6 +126,32 @@ class Trongate {
         
         // Store the module instance
         $this->loaded_modules[$target_module] = new $controller_class($target_module);
+    }
+
+    /**
+     * Try to find a child module controller.
+     *
+     * @param string $target_module The target module name.
+     * @param string $controller_class The controller class name.
+     * @return string The path to the controller file.
+     * @throws Exception If the controller cannot be found.
+     */
+    private function try_child_module_path(string $target_module, string $controller_class): string {
+        $bits = explode('-', $target_module);
+
+        if (count($bits) === 2 && strlen($bits[1]) > 0) {
+            $parent_module = strtolower($bits[0]);
+            $child_module = strtolower($bits[1]);
+            $controller_class = ucfirst($child_module);
+
+            $controller_path = '../modules/' . $parent_module . '/' . $child_module . '/' . $controller_class . '.php';
+
+            if (file_exists($controller_path)) {
+                return $controller_path;
+            }
+        }
+
+        throw new Exception("Module controller not found: {$target_module}");
     }
 
     /**

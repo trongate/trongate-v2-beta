@@ -24,20 +24,15 @@ class Modules {
         $target_method = $debris[1];
         $controller_path = '../modules/' . $target_module . '/' . $target_controller . '.php';
 
-        if (file_exists($controller_path)) {
-            require_once($controller_path);
-        } else {
-
-            //attempt to find child module 
+        if (!file_exists($controller_path)) {
+            // Attempt to find child module
             $bits = explode('-', $target_module);
 
-            if (count($bits) === 2) {
-                if (strlen($bits[1]) > 0) {
-                    $parent_module = $bits[0];
-                    $target_module = $bits[1];
-                    $target_controller = ucfirst($target_module);
-                    $controller_path = '../modules/' . $parent_module . '/' . $target_module . '/' . $target_controller . '.php';
-                }
+            if (count($bits) === 2 && strlen($bits[1]) > 0) {
+                $parent_module = $bits[0];
+                $child_module = $bits[1];
+                $target_controller = ucfirst($child_module);
+                $controller_path = '../modules/' . $parent_module . '/' . $child_module . '/' . $target_controller . '.php';
             }
         }
 
@@ -57,16 +52,26 @@ class Modules {
         $target_controller_path = '../modules/' . $target_module . '/' . $target_controller . '.php';
 
         if (!file_exists($target_controller_path)) {
-            $child_module = $this->get_child_module($target_module);
-            $target_controller_path = '../modules/' . $target_module . '/' . $child_module . '/' . ucfirst($child_module) . '.php';
-            $ditch = '-' . $child_module . '/' . $child_module;
-            $replace = '/' . $child_module;
-            $target_controller_path = str_replace($ditch, $replace, $target_controller_path);
-            $target_module = $child_module;
+            // Try child module path
+            $bits = explode('-', $target_module);
+
+            if (count($bits) === 2 && strlen($bits[1]) > 0) {
+                $parent_module = strtolower($bits[0]);
+                $child_module = strtolower($bits[1]);
+                $target_controller = ucfirst($child_module);
+                $target_controller_path = '../modules/' . $parent_module . '/' . $child_module . '/' . $target_controller . '.php';
+                $target_module = $child_module;
+            }
+
+            if (!file_exists($target_controller_path)) {
+                http_response_code(404);
+                echo 'ERROR: Unable to locate ' . $target_module . ' module!';
+                die();
+            }
         }
 
         require_once $target_controller_path;
-        $this->modules[$target_module] = new $target_module($target_module);
+        $this->modules[$target_module] = new $target_controller($target_module);
     }
 
     /**
@@ -80,29 +85,5 @@ class Modules {
         $file = new File;
         $existing_modules = $file->list_directory($target_path, $recursive);
         return $existing_modules;
-    }
-
-    /**
-     * Retrieves the child module from the target module name.
-     *
-     * @param string $target_module The target module name.
-     * @return ?string The child module name, or null if not found.
-     */
-    private function get_child_module(string $target_module): ?string {
-        $bits = explode('-', $target_module);
-
-        if (count($bits) === 2) {
-            if (strlen($bits[1]) > 0) {
-                $child_module = $bits[1];
-            }
-        }
-
-        if (!isset($child_module)) {
-            http_response_code(404);
-            echo 'ERROR: Unable to locate ' . $target_module . ' module!';
-            die();
-        }
-
-        return $child_module;
     }
 }
