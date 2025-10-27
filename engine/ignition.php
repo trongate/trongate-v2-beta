@@ -37,7 +37,7 @@ function get_segments(): array {
     }
 
     $assumed_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-    $assumed_url = attempt_add_custom_routes($assumed_url);
+    $assumed_url = attempt_custom_routing($assumed_url);
 
     $data['assumed_url'] = $assumed_url;
 
@@ -52,38 +52,47 @@ function get_segments(): array {
 }
 
 /**
- * Optimized route matching using cached regex patterns.
+ * Cached custom-route matching
  *
- * @param string $target_url The original target URL to potentially replace.
+ * @param string $url The original target URL to potentially replace.
  * @return string Returns the updated URL if a custom route match is found, otherwise returns the original URL.
  */
-function attempt_add_custom_routes(string $target_url): string {
-    static $compiled_routes = null;
-    
-    // Compile routes once and cache
-    if ($compiled_routes === null) {
-        $compiled_routes = array();
-        foreach (CUSTOM_ROUTES as $pattern => $destination) {
-            $regex = '/^' . str_replace(array('/', '(:num)', '(:any)'), array('\/', '(\d+)', '([^\/]+)'), $pattern) . '$/';
-            $compiled_routes[] = array('regex' => $regex, 'destination' => $destination);
+function attempt_custom_routing(string $url): string {
+    static $routes = [];
+
+    if (empty($routes)) {
+        if (!defined('CUSTOM_ROUTES') || empty(CUSTOM_ROUTES)) {
+            return $url;
+        }
+
+        foreach (CUSTOM_ROUTES as $pattern => $dest) {
+            $regex = '#^' . strtr($pattern, [
+                '/' => '\/',
+                '(:num)' => '(\d+)',
+                '(:any)' => '([^\/]+)'
+            ]) . '$#';
+            $routes[] = [$regex, $dest];
         }
     }
-    
-    $target_url = rtrim($target_url, '/');
-    $target_segments_str = str_replace(BASE_URL, '', $target_url);
-    
-    foreach ($compiled_routes as $route) {
-        if (preg_match($route['regex'], $target_segments_str, $matches)) {
-            $new_url = $route['destination'];
-            // Replace $1, $2, etc. with captured parameters
-            for ($i = 1; $i < count($matches); $i++) {
-                $new_url = str_replace('$' . $i, $matches[$i], $new_url);
+
+    $path = ltrim(parse_url($url, PHP_URL_PATH) ?: '/', '/');
+    $base_path = ltrim(parse_url(BASE_URL, PHP_URL_PATH) ?: '/', '/');
+
+    if ($base_path !== '' && strpos($path, $base_path) === 0) {
+        $path = substr($path, strlen($base_path));
+    }
+
+    foreach ($routes as [$regex, $dest]) {
+        if (preg_match($regex, $path, $matches)) {
+            $match_count = count($matches);
+            for ($i = 1; $i < $match_count; $i++) {
+                $dest = str_replace('$' . $i, $matches[$i], $dest);
             }
-            return rtrim(BASE_URL . $new_url, '/');
+            return rtrim(BASE_URL . $dest, '/');
         }
     }
-    
-    return $target_url;
+
+    return $url;
 }
 
 // Define core constants
