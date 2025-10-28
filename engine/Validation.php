@@ -709,11 +709,13 @@ class Validation {
         $chars = substr($test_to_run, 0, 9);
         if ($chars === 'callback_') {
             $target_module = ucfirst($this->url_segment(1));
+            $module_name = strtolower($target_module); // Get the lowercase module name
             $target_method = str_replace('callback_', '', $test_to_run);
 
             if (!class_exists($target_module)) {
                 $modules_bits = explode('-', $target_module);
                 $target_module = ucfirst(end($modules_bits));
+                $module_name = strtolower(end($modules_bits));
             }
 
             if (class_exists($target_module)) {
@@ -722,11 +724,10 @@ class Validation {
                     // STATIC METHOD
                     $outcome = $target_module::$target_method($posted_value);
                 } else {
-                    // INSTANTIATED
-                    $callback = new $target_module;
+                    // INSTANTIATED - Pass the module name to the constructor
+                    $callback = new $target_module($module_name);
                     $outcome = $callback->$target_method($posted_value);
                 }
-
                 if (is_string($outcome)) {
                     $outcome = str_replace('{label}', $label, $outcome);
                     $this->form_submission_errors[$key][] = $outcome;

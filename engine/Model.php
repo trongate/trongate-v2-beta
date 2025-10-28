@@ -6,20 +6,6 @@
  * Provides automatic loading and method delegation to module-specific model files.
  * Also serves as the data access layer, providing database connections for both
  * the default database and alternative database groups.
- *
- * When a method is called on $this->model from a controller, this class automatically
- * loads the corresponding <Module>_model file and forwards the method call to it.
- *
- * Alternative database groups (e.g., 'analytics', 'legacy') can ONLY be accessed
- * from within model files, not from controllers. This enforces proper separation
- * of concerns and keeps data access logic centralized in model files.
- *
- * Example in controller:
- *   $data = $this->model->get_users();
- *
- * Example in Users_model.php:
- *   $users = $this->db->get('id', 'users');              // Default database
- *   $analytics = $this->analytics->get('id', 'events');  // Alternative database
  */
 class Model {
 
