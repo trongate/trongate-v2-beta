@@ -4,25 +4,33 @@
  * Model Base Class
  *
  * Provides automatic loading and method delegation to module-specific model files.
+ * Also serves as the data access layer, providing database connections for both
+ * the default database and alternative database groups.
+ *
  * When a method is called on $this->model from a controller, this class automatically
  * loads the corresponding <Module>_model file and forwards the method call to it.
  *
- * Example:
- * In Users.php controller:
+ * Alternative database groups (e.g., 'analytics', 'legacy') can ONLY be accessed
+ * from within model files, not from controllers. This enforces proper separation
+ * of concerns and keeps data access logic centralized in model files.
+ *
+ * Example in controller:
  *   $data = $this->model->get_users();
  *
- * This will automatically load Users_model.php and call its get_users() method.
+ * Example in Users_model.php:
+ *   $users = $this->db->get('id', 'users');              // Default database
+ *   $analytics = $this->analytics->get('id', 'events');  // Alternative database
  */
 class Model {
 
     // Cache for loaded model instances
     private array $loaded_models = [];
 
+    // Cache for DB instances (default and alternative database groups)
+    private array $db_instances = [];
+
     // The module that instantiated this Model instance
     private ?string $current_module = null;
-
-    // DB instance (lazy loaded)
-    private ?DB $db_instance = null;
 
     /**
      * Constructor for Model class.
@@ -34,20 +42,38 @@ class Model {
     }
 
     /**
-     * Magic method to provide access to the DB class from within model files.
-     * This allows Mdl_* files to use $this->db for database operations.
+     * Magic method to provide access to database connections from within model files.
      *
-     * @param string $key The property name.
-     * @return DB The DB instance.
-     * @throws Exception If the property is not 'db'.
+     * This method handles:
+     * 1. Primary database access via $this->db (always available)
+     * 2. Alternative database groups via $this->groupname (e.g., $this->analytics)
+     *
+     * Alternative database groups can ONLY be accessed from model files, not controllers.
+     * This enforces proper architectural separation.
+     *
+     * @param string $key The property name (e.g., 'db', 'analytics', 'legacy').
+     * @return DB The DB instance for the requested database group.
+     * @throws Exception If the property is not a valid database connection.
      */
     public function __get(string $key): DB {
-        if ($key === 'db') {
-            // Lazy load the DB instance
-            return $this->db_instance ??= new DB($this->current_module);
+        // Check if already instantiated (cache hit)
+        if (isset($this->db_instances[$key])) {
+            return $this->db_instances[$key];
         }
 
-        throw new Exception("Undefined property: Model::$key");
+        // Handle primary database (always accessible)
+        if ($key === 'db') {
+            return $this->db_instances[$key] = new DB($this->current_module);
+        }
+
+        // Handle alternative database groups
+        // Check if this key corresponds to a configured database group
+        if ($this->is_database_group($key)) {
+            return $this->db_instances[$key] = new DB($this->current_module, $key);
+        }
+
+        // Not a valid database connection
+        throw new Exception("Undefined property: Model::$key. If '{$key}' is meant to be a database group, ensure it is configured in /config/database.php");
     }
 
     /**
@@ -83,6 +109,17 @@ class Model {
 
         // Call the method and return the result
         return call_user_func_array([$model_instance, $method], $arguments);
+    }
+
+    /**
+     * Check if a property key corresponds to a configured database group.
+     * This checks the global $databases array defined in /config/database.php
+     *
+     * @param string $key The property name to check.
+     * @return bool True if it's a valid database group, false otherwise.
+     */
+    private function is_database_group(string $key): bool {
+        return isset($GLOBALS['databases'][$key]);
     }
 
     /**

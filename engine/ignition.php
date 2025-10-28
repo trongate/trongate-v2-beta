@@ -8,6 +8,12 @@ require_once '../config/database.php';
 require_once '../config/site_owner.php';
 require_once '../config/themes.php';
 
+// Make the $databases array globally accessible
+// This is required for multi-database functionality
+if (isset($databases)) {
+    $GLOBALS['databases'] = $databases;
+}
+
 // Streamlined autoloader
 spl_autoload_register(function ($class_name) {
     $file = __DIR__ . '/' . $class_name . '.php';
@@ -104,7 +110,7 @@ $data = get_segments();
 define('SEGMENTS', $data['segments']);
 define('ASSUMED_URL', $data['assumed_url']);
 
-// Helper files  
+// Helper files
 require_once 'tg_helpers/flashdata_helper.php';
 require_once 'tg_helpers/form_helper.php';
 require_once 'tg_helpers/string_helper.php';

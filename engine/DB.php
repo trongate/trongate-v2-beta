@@ -4,14 +4,16 @@
  * Provides database interaction functionalities including
  * fetching, inserting, updating, and resequencing records. This class is 
  * also used by Trongate's Module Import Wizard for executing SQL statements.
+ *
+ * Supports multiple database connections via the $databases array in /config/database.php
  */
 class DB {
 
-    private $host = HOST;
-    private $port = '';
-    private $user = USER;
-    private $pass = PASSWORD;
-    private $dbname = DATABASE;
+    private $host;
+    private $port;
+    private $user;
+    private $pass;
+    private $dbname;
     private $charset = 'utf8mb4';  // Default charset (utf8mb4)
 
     private $dbh;
@@ -25,22 +27,42 @@ class DB {
      * Constructor for the DB class.
      *
      * @param string|null $current_module (optional) The current module name. Default is null.
+     * @param string|null $db_group (optional) The database group name from $databases array. Default is 'default'.
+     * @throws Exception If the database group is not configured.
      */
-    public function __construct(?string $current_module = null) {
+    public function __construct(?string $current_module = null, ?string $db_group = null) {
 
-        if (DATABASE === '') {
+        // Default to 'default' group if none specified
+        $db_group = $db_group ?? 'default';
+
+        // Load configuration from $databases array
+        if (!isset($GLOBALS['databases'][$db_group])) {
+            throw new Exception("Database group '{$db_group}' is not configured in /config/database.php");
+        }
+
+        $config = $GLOBALS['databases'][$db_group];
+
+        // Set connection parameters
+        $this->host = $config['host'];
+        $this->port = $config['port'] ?? '3306';
+        $this->user = $config['user'];
+        $this->pass = $config['password'];
+        $this->dbname = $config['database'];
+        $this->current_module = $current_module;
+
+        // If database name is empty, return without connecting
+        if ($this->dbname === '') {
             return;
         }
 
-        $this->port = (defined('PORT') ? PORT : '3306');
-        $this->current_module = $current_module;
-
+        // Build DSN and connection options
         $dsn = 'mysql:host=' . $this->host . ';port=' . $this->port . ';dbname=' . $this->dbname . ';charset=' . $this->charset;
         $options = array(
             PDO::ATTR_PERSISTENT => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         );
 
+        // Establish database connection
         try {
             $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
         } catch (PDOException $e) {
@@ -357,7 +379,7 @@ class DB {
 
         // Build the SQL query
         $sql = "SELECT COUNT(*) AS total_rows FROM $target_tbl WHERE $column $operator :$column";
-        
+
         // Debugging
         if ($this->debug) {
             $this->show_query($sql, [$column => $value], $this->query_caveat);
@@ -549,7 +571,7 @@ class DB {
 
         // Construct the SQL query
         $sql = "DELETE FROM `$target_tbl` WHERE id = :id";
-        
+
         // Prepare data for execution
         $data = ['id' => $id];
 
@@ -734,7 +756,7 @@ class DB {
             $this->query($sql);
             return true;
         }
-        
+
         try {
             // Begin transaction
             $this->dbh->beginTransaction();
@@ -774,7 +796,7 @@ class DB {
 
             // Commit transaction
             $this->dbh->commit();
-            
+
             $sql = 'ALTER TABLE '.$table_name.' AUTO_INCREMENT = 1';
             $this->query($sql);
 
@@ -798,7 +820,7 @@ class DB {
      * @param array $records An array containing associative arrays representing records to be inserted.
      * @return int The number of records successfully inserted.
      * @throws PDOException If an error occurs during the database operation.
-     * 
+     *
      * @note This method should only be used in controlled environments and not exposed to untrusted users.
      */
     public function insert_batch(string $table, array $records): int {
