@@ -35,23 +35,17 @@ function get_segments(): array {
     $pseudo_url = rtrim($pseudo_url, '/');
     $bits = explode('/', $pseudo_url);
     $num_bits = count($bits);
-
     if ($num_bits > 1) {
         $num_segments_to_ditch = $num_bits - 1;
     } else {
         $num_segments_to_ditch = 0;
     }
-
     $assumed_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     $assumed_url = attempt_custom_routing($assumed_url);
-
     $data['assumed_url'] = $assumed_url;
-
     $assumed_url = str_replace('://', '', $assumed_url);
     $assumed_url = rtrim($assumed_url, '/');
-
     $segments = explode('/', $assumed_url);
-
     // Remove base segments efficiently
     $data['segments'] = array_slice($segments, $num_segments_to_ditch);
     return $data;
@@ -65,12 +59,10 @@ function get_segments(): array {
  */
 function attempt_custom_routing(string $url): string {
     static $routes = [];
-
     if (empty($routes)) {
         if (!defined('CUSTOM_ROUTES') || empty(CUSTOM_ROUTES)) {
             return $url;
         }
-
         foreach (CUSTOM_ROUTES as $pattern => $dest) {
             $regex = '#^' . strtr($pattern, [
                 '/' => '\/',
@@ -80,14 +72,11 @@ function attempt_custom_routing(string $url): string {
             $routes[] = [$regex, $dest];
         }
     }
-
     $path = ltrim(parse_url($url, PHP_URL_PATH) ?: '/', '/');
     $base_path = ltrim(parse_url(BASE_URL, PHP_URL_PATH) ?: '/', '/');
-
     if ($base_path !== '' && strpos($path, $base_path) === 0) {
         $path = substr($path, strlen($base_path));
     }
-
     foreach ($routes as [$regex, $dest]) {
         if (preg_match($regex, $path, $matches)) {
             $match_count = count($matches);
@@ -97,13 +86,40 @@ function attempt_custom_routing(string $url): string {
             return rtrim(BASE_URL . $dest, '/');
         }
     }
-
     return $url;
 }
 
 // Define core constants
 define('APPPATH', str_replace("\\", "/", dirname(dirname(__FILE__)) . '/'));
 define('REQUEST_TYPE', $_SERVER['REQUEST_METHOD']);
+
+/* --------------------------------------------------------------
+ * Interceptor execution (early hooks)
+ * -------------------------------------------------------------- */
+if (defined('INTERCEPTORS') && is_array(INTERCEPTORS)) {
+    foreach (INTERCEPTORS as $module => $method) {
+        $controller_path = APPPATH . "modules/{$module}/" . ucfirst($module) . '.php';
+
+        if (!is_file($controller_path)) {
+            throw new RuntimeException("Interceptor controller not found: {$controller_path}");
+        }
+
+        require_once $controller_path;
+
+        $class = ucfirst($module);
+        if (!class_exists($class, false)) {
+            throw new RuntimeException("Interceptor class {$class} not defined");
+        }
+
+        $instance = new $class($module);
+
+        if (!is_callable([$instance, $method])) {
+            throw new RuntimeException("Interceptor method {$class}::{$method} is not callable");
+        }
+
+        $instance->{$method}();
+    }
+}
 
 // Process URL and routing
 $data = get_segments();
