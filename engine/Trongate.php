@@ -108,13 +108,17 @@ class Trongate {
             return;
         }
 
-        // Build the controller path
+        // Build the controller path and class name
         $controller_class = ucfirst($target_module);
         $controller_path = '../modules/' . $target_module . '/' . $controller_class . '.php';
+        $is_child_module = false;
 
         // If standard path doesn't exist, try child module
         if (!file_exists($controller_path)) {
-            $controller_path = $this->try_child_module_path($target_module, $controller_class);
+            $child_module_info = $this->try_child_module_path($target_module);
+            $controller_path = $child_module_info['path'];
+            $controller_class = $child_module_info['class']; // Use the correct child module class name
+            $is_child_module = true;
         }
         
         // Load and instantiate the module
@@ -124,30 +128,44 @@ class Trongate {
             throw new Exception("Module class not found: {$controller_class}");
         }
         
-        // Store the module instance
-        $this->loaded_modules[$target_module] = new $controller_class($target_module);
+        // Create the module instance
+        $module_instance = new $controller_class($target_module);
+        
+        // Store the module instance using the original target_module as key
+        $this->loaded_modules[$target_module] = $module_instance;
+        
+        // For child modules, also store under the child module name for easy access
+        if ($is_child_module) {
+            $bits = explode('-', $target_module);
+            if (count($bits) === 2) {
+                $child_module_name = strtolower($bits[1]);
+                $this->loaded_modules[$child_module_name] = $module_instance;
+            }
+        }
     }
 
     /**
      * Try to find a child module controller.
      *
      * @param string $target_module The target module name.
-     * @param string $controller_class The controller class name.
-     * @return string The path to the controller file.
+     * @return array An array containing 'path' and 'class' keys.
      * @throws Exception If the controller cannot be found.
      */
-    private function try_child_module_path(string $target_module, string $controller_class): string {
+    private function try_child_module_path(string $target_module): array {
         $bits = explode('-', $target_module);
 
         if (count($bits) === 2 && strlen($bits[1]) > 0) {
             $parent_module = strtolower($bits[0]);
             $child_module = strtolower($bits[1]);
-            $controller_class = ucfirst($child_module);
+            $controller_class = ucfirst($child_module); // This is the correct class name
 
             $controller_path = '../modules/' . $parent_module . '/' . $child_module . '/' . $controller_class . '.php';
 
             if (file_exists($controller_path)) {
-                return $controller_path;
+                return [
+                    'path' => $controller_path,
+                    'class' => $controller_class
+                ];
             }
         }
 
