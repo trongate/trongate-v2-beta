@@ -22,10 +22,16 @@ class Trongate {
     /**
      * Constructor for Trongate class.
      * 
-     * @param string|null $module_name The name of the module to use, or null for default module.
+     * Initializes the module name by using the provided module name parameter
+     * or automatically detecting it from the child class name if not provided.
+     * This ensures proper module name resolution for model loading and other
+     * module-specific operations.
+     *
+     * @param string|null $module_name The name of the module to use, 
+     *                                or null to auto-detect from class name.
      */
     public function __construct(?string $module_name = null) {
-        $this->module_name = $module_name;
+        $this->module_name = $module_name ?? strtolower(get_class($this));
     }
 
     /**
