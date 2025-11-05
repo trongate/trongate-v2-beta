@@ -14,15 +14,21 @@
 class Core {
 
     protected $current_module = DEFAULT_MODULE;
-    protected $current_controller = DEFAULT_CONTROLLER;
+    protected $current_controller;
     protected $current_method = DEFAULT_METHOD;
     protected $current_value = '';
+    
+    // Cached reflection property for performance
+    private static $module_name_property = null;
 
     /**
      * Constructor for the Core class.
      * Depending on the URL, serves either vendor assets, controller content, or module assets.
      */
     public function __construct() {
+        // Initialize controller name based on module name
+        $this->current_controller = ucfirst($this->current_module);
+
         if (strpos(ASSUMED_URL, '/vendor/')) {
             $this->serve_vendor_asset();
         } elseif (strpos(ASSUMED_URL, MODULE_ASSETS_TRIGGER) === false) {
@@ -44,6 +50,7 @@ class Core {
         if (isset($segments[1])) {
             $module_with_no_params = explode('?', $segments[1])[0];
             $this->current_module = !empty($module_with_no_params) ? strtolower($module_with_no_params) : $this->current_module;
+            // Derive controller name from module name
             $this->current_controller = ucfirst($this->current_module);
         }
 
@@ -133,6 +140,7 @@ class Core {
         if (defined('INTERCEPT_404')) {
             $intercept_bits = explode('/', INTERCEPT_404);
             $this->current_module = $intercept_bits[0];
+            // Derive controller name from module name
             $this->current_controller = ucfirst($intercept_bits[0]);
             $this->current_method = $intercept_bits[1];
             
@@ -155,10 +163,19 @@ class Core {
         $controller_class = $this->current_controller;
         $controller_instance = new $controller_class($this->current_module);
 
+        // Ensure module_name is set (handles cases where custom constructors don't call parent)
+        // Uses cached Reflection for optimal performance
+        if (self::$module_name_property === null) {
+            self::$module_name_property = new ReflectionProperty(Trongate::class, 'module_name');
+            self::$module_name_property->setAccessible(true);
+        }
+        
+        if (empty(self::$module_name_property->getValue($controller_instance))) {
+            self::$module_name_property->setValue($controller_instance, $this->current_module);
+        }
+
         if (method_exists($controller_instance, $this->current_method)) {
             $controller_instance->{$this->current_method}($this->current_value);
-        } elseif (method_exists($controller_instance, 'index')) {
-            $controller_instance->index($this->current_value);
         } else {
             $this->draw_error_page();
         }
