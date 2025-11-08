@@ -1,1 +1,1 @@
-<?= $page->page_content ?>
+<div style="width: 840px; margin: 0 auto;"><?= $page_obj->page_content ?></div>

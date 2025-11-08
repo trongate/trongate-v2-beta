@@ -68,4 +68,24 @@ class Documentation_model extends Model {
     	var_dump($book_obj); die();
     }
 
+    public function extract_page_obj($data, $target_chapter_url_string, $target_page_url_string) {
+
+        $chapters = $data['chapters'];
+        foreach($chapters as $chapter) {
+            $chapter_url_string = $chapter->chapter_url_string;
+            if ($chapter_url_string === $target_chapter_url_string) {
+                $chapter_pages = $chapter->pages;
+                foreach($chapter_pages as $chapter_page) {
+                    $page_url_string = $chapter_page->page_url_string;
+                    if ($page_url_string === $target_page_url_string) {
+                        return $chapter_page;
+                    }
+                }
+                
+            }
+        }
+
+        return false;
+    }
+
 }

@@ -20,5 +20,6 @@
     </div>
     <?= Modules::run('documentation/_render_theme_color_css', $theme_color) ?>
 <script src="js/prism.js"></script>
+<script src="js/docs-ahoy.js"></script>
 </body>
 </html>
