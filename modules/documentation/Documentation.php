@@ -102,7 +102,7 @@ class Documentation extends Trongate {
         $data['breadcrumbs'] = [
             ['title' => 'Home', 'url' => BASE_URL],
             ['title' => 'Documentation', 'url' => BASE_URL . 'documentation'],
-            ['title' => $first_chapter->book_title, 'url' => BASE_URL . 'documentation/'.segment(2).'/' . segment(3)],
+            ['title' => $first_chapter->book_title, 'url' => BASE_URL . 'documentation/'.segment(2)],
             ['title' => 'Table of Contents', 'url' => current_url()]
         ];
 
@@ -122,18 +122,19 @@ class Documentation extends Trongate {
         $first_chapter = $chapters[0];
 
         $data['chapters'] = $chapters;
-        $data['breadcrumbs'] = [
-            ['title' => 'Home', 'url' => BASE_URL],
-            ['title' => 'Documentation', 'url' => BASE_URL . 'documentation'],
-            ['title' => $first_chapter->book_title, 'url' => BASE_URL . 'documentation/'.segment(2).'/' . segment(3)],
-            ['title' => 'Table of Contents', 'url' => current_url()]
-        ];
-
         $data['page_obj'] = $this->model->extract_page_obj($data, segment(3), segment(4));
 
         if ($data['page_obj'] === false) {
             redirect('documentation');
         }
+
+        $data['breadcrumbs'] = [
+            ['title' => 'Home', 'url' => BASE_URL],
+            ['title' => 'Documentation', 'url' => BASE_URL . 'documentation'],
+            ['title' => $first_chapter->book_title, 'url' => BASE_URL . 'documentation/'.segment(2)],
+            ['title' => $data['page_obj']->chapter_title, 'url' => BASE_URL . 'documentation/'.segment(2).'/'.segment(3)],
+            ['title' => 'Table of Contents', 'url' => current_url()]
+        ];
 
         $data['cover'] = $first_chapter->cover ?? '';
         $data['view_file'] = 'page_content';

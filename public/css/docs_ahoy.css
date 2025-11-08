@@ -5,6 +5,11 @@ h3 {
 	font-size: 19px;
 }
 
+h2 {
+  margin-top: 2em;
+  font-size: 35px;
+}
+
 h3 a {
 	text-decoration: none;
 }
@@ -531,7 +536,7 @@ code {
   background: #141414;
   border: none;
   border-radius: 0;
-  font-size: 100%;
+  font-size: 1.2em;
 }
 
 pre > code {

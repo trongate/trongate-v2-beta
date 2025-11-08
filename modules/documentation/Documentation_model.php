@@ -72,6 +72,7 @@ class Documentation_model extends Model {
                     $page_url_string = $chapter_page->page_url_string;
                     if ($page_url_string === $target_page_url_string) {
                         $chapter_page->page_content = $this->hide_code_blocks($chapter_page->page_content);
+                        $chapter_page->chapter_title = $chapter->chapter_title;
                         return $chapter_page;
                     }
                 }
