@@ -61,13 +61,6 @@ class Documentation_model extends Model {
         return array_values($chapters);
     }
 
-    public function fetch_page_obj($params) {
-    	// Get the book record.
-    	//echo $params['book_url_string']; die();
-    	$book_obj = $this->live5->get_one_where('url_string', $params['book_url_string'], 'documentation_books');
-    	var_dump($book_obj); die();
-    }
-
     public function extract_page_obj($data, $target_chapter_url_string, $target_page_url_string) {
 
         $chapters = $data['chapters'];
@@ -78,6 +71,7 @@ class Documentation_model extends Model {
                 foreach($chapter_pages as $chapter_page) {
                     $page_url_string = $chapter_page->page_url_string;
                     if ($page_url_string === $target_page_url_string) {
+                        $chapter_page->page_content = $this->hide_code_blocks($chapter_page->page_content);
                         return $chapter_page;
                     }
                 }
@@ -86,6 +80,44 @@ class Documentation_model extends Model {
         }
 
         return false;
+    }
+
+    /**
+     * Hides code blocks in the comment by replacing them with a hidden <div> element.
+     *
+     * This function searches for code blocks marked with the [code]...[/code] tags. It ensures that only
+     * properly matched code blocks are processed and replaces them with a hidden <div> element containing
+     * the code content. If any nested code blocks are found, they are ignored and left unchanged.
+     *
+     * @param string $comment The comment containing the [code]...[/code] tags to be processed.
+     * @return string The processed comment with code blocks hidden inside <div> elements.
+     */
+    private function hide_code_blocks(string $comment): string {
+        // First, validate and process only properly matched code blocks
+        $pattern = '/\[code(?:=(\w+))?\]((?:(?!\[code).)*?)\[\/code\]/si';
+        $processed_comment = preg_replace_callback($pattern, function ($matches) {
+            // Get the language (default to PHP if not specified)
+            $language = isset($matches[1]) ? strtolower($matches[1]) : 'php';
+            
+            // Normalize JavaScript variations
+            if (in_array($language, ['js', 'javascript', 'javascript'])) {
+                $language = 'javascript';
+            }
+            
+            // Get the code content
+            $code_content = $matches[2];
+            
+            // Only create code block if we don't have nested tags
+            if (strpos($code_content, '[code') === false && strpos($code_content, '[/code]') === false) {
+                return '<div class="code-block-pending" style="display: none" data-language="' . 
+                       htmlspecialchars($language) . '">' . $code_content . '</div>';
+            }
+            
+            // If we found nested tags, return the original content unchanged
+            return $matches[0];
+        }, $comment);
+        
+        return $processed_comment;
     }
 
 }

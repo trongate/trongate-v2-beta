@@ -350,9 +350,25 @@ label > .label-body {
   background-color: #c5404022;
 }
 
+.code-sample {
+  width: 90%;
+  margin: 0 auto 1em auto;
+  overflow: auto; 
+}
 
+.code-block-header {
+    margin-top: 1em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: .6em 1em 0 1em;
+}
 
-
+.copy-icon-container {
+  cursor: pointer;
+  font-size: 1em;
+}
 
 
 
@@ -510,16 +526,17 @@ li {
 /* Code
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 code {
-  padding: .2rem .5rem;
-  margin: 0 .2rem;
-  font-size: 90%;
+  margin: 0;
   white-space: nowrap;
-  background: #F1F1F1;
-  border: 1px solid #E1E1E1;
-  border-radius: 4px; }
+  background: #141414;
+  border: none;
+  border-radius: 0;
+  font-size: 100%;
+}
+
 pre > code {
   display: block;
-  padding: 1rem 1.5rem;
+  padding: 0;
   white-space: pre; }
 
 
