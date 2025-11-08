@@ -7,9 +7,35 @@ class Welcome extends Trongate {
      * @return void
      */
     public function index(): void {
-        $data['datetime'] = date('l jS \of F Y \a\t H:i');
-        $this->view('welcome', $data);
+        $this->view('stealth_homepage');
     }
+
+    public function render_latest_version() {
+        echo 'Latest: <a href="'.GITHUB_URL.'" target="_blank">1.3.3063</a>';
+    }
+
+    public function learn_trongate() {
+        $data['resources'] = [
+            [
+                'title' => 'Documentation',
+                'url' => 'docs',
+                'description' => 'Dive into the official Trongate documentation - a clear, example-rich guide that walks you through every part of the framework. From setup to advanced concepts, you’ll find practical explanations designed to help you master Trongate with confidence.'
+            ],
+            [
+                'title' => 'Discussion Forums',
+                'url' => 'https://trongate.io/forums',
+                'description' => 'Join the Trongate discussion forums and get help from fellow Trongate developers. Ask questions, share solutions, or explore tips and tricks - the community is here to support you every step of the way.'
+            ],
+            [
+                'title' => 'Complete API Reference Guide',
+                'url' => 'https://trongate.io/documentation/reference',
+                'description' => 'Every module, function, and helper - all in one place! This exhaustive reference guide helps you unlock the full potential of the Trongate framework with ease.'
+            ]
+        ];
+
+        $this->view('learn_trongate', $data);
+    }
+
 
     public function test() {
         $this->view('test');
