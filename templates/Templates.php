@@ -2,6 +2,31 @@
 class Templates extends Trongate {
 
     /**
+     * Loads the 'stealth' view with provided data.
+     *
+     * @param mixed $data Data array to be passed to the view.
+     * @return void
+     */
+    public function stealth($data): void {
+        $data['additional_includes_top'] = $this->_build_additional_includes($data['additional_includes_top'] ?? []);
+        $data['additional_includes_btm'] = $this->_build_additional_includes($data['additional_includes_btm'] ?? []);
+        load('stealth', $data);
+    }
+
+    /**
+     * Loads the 'docs_ahoy' view with provided data.
+     *
+     * @param mixed $data Data array to be passed to the view.
+     * @return void
+     */
+    public function docs_ahoy($data): void {
+        $data['theme_color'] = (isset($data['theme_color'])) ? $data['theme_color'] : 'blue';
+        $data['additional_includes_top'] = $this->_build_additional_includes($data['additional_includes_top'] ?? []);
+        $data['additional_includes_btm'] = $this->_build_additional_includes($data['additional_includes_btm'] ?? []);
+        load('docs_ahoy', $data);
+    }
+
+    /**
      * Loads the 'public' view with provided data.
      *
      * @param mixed $data Data array to be passed to the view.

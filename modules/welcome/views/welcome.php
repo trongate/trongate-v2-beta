@@ -4,7 +4,8 @@
   <base href="<?= BASE_URL ?>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="css/trongate.css">
+  <link rel="stylesheet" href="css/trongate_lean.css">
+  <link rel="stylesheet" href="css/milligram.min.css">
   <title>Welcome to Trongate</title>
 
 </head>
