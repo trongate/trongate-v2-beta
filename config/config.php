@@ -1,6 +1,6 @@
 <?php
 //The main config file
-define('BASE_URL', 'http://localhost/trongate_live6/');
+define('BASE_URL', 'http://localhost/trongate/');
 define('ENV', 'dev');
 define('DEFAULT_MODULE', 'welcome');
 define('DEFAULT_METHOD', 'index');
