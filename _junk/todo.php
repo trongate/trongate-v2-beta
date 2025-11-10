@@ -1,8 +1,7 @@
-1).  Ditch controllers sub directories.   DONE
+FIX CUSTOM ROUTING
 
-2).  Rename 'Model' class to 'Db'.   DONE
+* Get docs nav working.
 
-3).  Build model functionality.
+* Get the iframe feature working for code samples etc.
 
-4).  i).  Ditch 'assets' directory.
-      ii).  Make sure PHP files are not served by asset manager.
+* Nail the routing chapter.

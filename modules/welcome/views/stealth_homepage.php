@@ -13,7 +13,6 @@
     <section class="text-center container">
         <img src="images/trongate_logo_black.webp" alt="Trongate PHP framework logo">
         <h1 class="text-center mt-0">The Native PHP Framework</h1>
-        <p class="text-center sm cxloak"><?= anchor('native_php', 'What is Native PHP?', array('class' => 'ul')) ?></p>
 
         <div class="hp-links">
             <div>
@@ -28,7 +27,11 @@
                       ])
                     ];
                     ?>
-                    <li><?= anchor('#', 'Learn Trongate', $attr) ?></li>
+                    <li><?php 
+                    //anchor('#', 'Learn Trongate', $attr);
+                    echo anchor('documentation', 'Documentation');
+                    ?></li>
+                    <li><?= anchor('learning-zone', 'The Learning Zone') ?></li>
                     <li><?= anchor('#', 'Discussion Forums') ?></li>
                     <li><?= anchor('#', 'Sponsors') ?></li>
                 </ul>
@@ -37,6 +40,7 @@
                 <ul>
                     <li><?= anchor('https://github.com/trongate/trongate-framework/', 'Download Trongate', array('target' => '_blank')) ?></li>
                     <li><?= anchor('coming_soon', 'Module Market') ?></li>
+                    <li><?= anchor('https://github.com/trongate/trongate-framework', 'The GitHub Repo', array('target' => '_blank')) ?></li>
                     <li><?= anchor('#', 'Get In Touch') ?></li>
                 </ul>
             </div>

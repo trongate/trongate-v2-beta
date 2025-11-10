@@ -30,7 +30,8 @@ class Documentation extends Trongate {
         $docs_books = $this->model->fetch_docs_books();
         $data['docs_books'] = !empty($docs_books) ? $docs_books : [];
         $data['theme_color'] = 'blue'; // Valid values are; blue, green, orange, purple
-        $data['view_file'] = 'documentation_home';
+        $data['view_module'] = 'documentation';
+        $data['view_file'] = 'documentation_home'; // <--- New line!
         $this->template('docs_ahoy', $data);
     }
 
@@ -128,12 +129,18 @@ class Documentation extends Trongate {
             redirect('documentation');
         }
 
+        $data['chapter_url_string'] = segment(3);
+        $data['current_page_number'] = (int) $data['page_obj']->page_number;
+        $next_prev_array = $this->model->build_prev_next_array($data);
+        $data['prev_url'] = $next_prev_array['prev_url'];
+        $data['next_url'] = $next_prev_array['next_url'];
+
         $data['breadcrumbs'] = [
             ['title' => 'Home', 'url' => BASE_URL],
             ['title' => 'Documentation', 'url' => BASE_URL . 'documentation'],
             ['title' => $first_chapter->book_title, 'url' => BASE_URL . 'documentation/'.segment(2)],
             ['title' => $data['page_obj']->chapter_title, 'url' => BASE_URL . 'documentation/'.segment(2).'/'.segment(3)],
-            ['title' => 'Table of Contents', 'url' => current_url()]
+            ['title' => $data['page_obj']->headline, 'url' => current_url()]
         ];
 
         $data['cover'] = $first_chapter->cover ?? '';
