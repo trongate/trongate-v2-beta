@@ -13,6 +13,16 @@ class Templates extends Trongate {
         load('stealth', $data);
     }
 
+    public function c64($data) {
+        $data['additional_includes_top'] = $this->_build_additional_includes($data ?? []);
+        $data['additional_includes_btm'] = $this->_build_additional_includes($data ?? [], 'btm');
+        load('c64', $data);
+    }
+
+    function properties_builder_da($data) {
+        load('properties_builder_da', $data);
+    }
+
     /**
      * Loads the 'docs_ahoy' view with provided data.
      *

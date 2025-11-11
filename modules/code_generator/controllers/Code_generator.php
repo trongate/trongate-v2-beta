@@ -1,7 +1,7 @@
 <?php
 class Code_generator extends Trongate {
 
-	private $api_base_url = 'http://localhost/trongate_live5/';
+	private $api_base_url = 'http://localhost/trongate_live6/';
 
     public function index() {
     	$data['api_base_url'] = $this->api_base_url;
@@ -12,7 +12,7 @@ class Code_generator extends Trongate {
     	// http://localhost/t2/code_generator/choose_url_slug
 
     	$data = [
-    		'starter_content_url' => $this->api_base_url.'t2_api-code_generator/choose_url_slug',
+    		'starter_content_url' => $this->api_base_url.'desktop_app_api-code_generator/choose_url_slug',
     		'api_base_url' => $this->api_base_url
     	];
 
@@ -21,7 +21,7 @@ class Code_generator extends Trongate {
     }
 
     public function fetch_starter_content() {
-    	$target_url = $this->api_base_url.'t2_api-code_generator/home';
+    	$target_url = $this->api_base_url.'desktop_app_api-code_generator/home';
     	$response = $this->perform_get_request($target_url);
     	http_response_code($response['status_code']);
     	echo $response['response_body'];
