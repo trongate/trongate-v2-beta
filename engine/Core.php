@@ -235,17 +235,7 @@ class Core {
     }
 
     /**
-     * Serve module assets - CORRECTED VERSION
-     *
-     * This corrected version fixes the MIME type detection issue where CSS files
-     * containing class names like ".text-center" were being misidentified as
-     * assembly language files (text/x-asm) by PHP's mime_content_type() function.
-     *
-     * Key improvements:
-     * 1. Prioritizes file extension for MIME type determination
-     * 2. Only uses mime_content_type() as a fallback for unknown extensions
-     * 3. Prevents misidentification of CSS/JS files
-     * 4. Includes comprehensive support for common web asset types
+     * Serve module assets.
      *
      * @return void
      */
@@ -259,30 +249,207 @@ class Core {
                 $target_module = str_replace(MODULE_ASSETS_TRIGGER, '', $url_segment_value);
                 $file_name = $url_segments[count($url_segments) - 1];
 
+                // ============================================================
+                // URL Decoding & Initial Validation
+                // ============================================================
+                
+                // Decode URL-encoded characters to catch encoded traversal attacks
+                $target_module = urldecode($target_module);
+                $file_name = urldecode($file_name);
+                
+                // Check for null byte injection attacks
+                if (strpos($target_module, "\0") !== false || strpos($file_name, "\0") !== false) {
+                    http_response_code(400);
+                    die('Invalid request');
+                }
+                
+                // Validate module name - only alphanumeric, hyphens, underscores allowed
+                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $target_module)) {
+                    http_response_code(400);
+                    die('Invalid module name');
+                }
+                
+                // Validate filename - prevent directory traversal in filename itself
+                if (strpos($file_name, '..') !== false || 
+                    strpos($file_name, './') !== false || 
+                    strpos($file_name, '\\') !== false) {
+                    http_response_code(400);
+                    die('Invalid file name');
+                }
+
+                // Build target directory path with validation
                 $target_dir = '';
                 for ($i = $url_segment_key + 1; $i < count($url_segments) - 1; $i++) {
-                    $target_dir .= $url_segments[$i];
+                    $segment = urldecode($url_segments[$i]);
+                    
+                    // Validate each directory segment for traversal attempts
+                    if (strpos($segment, '..') !== false || 
+                        strpos($segment, "\0") !== false ||
+                        strpos($segment, '\\') !== false) {
+                        http_response_code(400);
+                        die('Invalid path');
+                    }
+                    
+                    $target_dir .= $segment;
                     if ($i < count($url_segments) - 2) {
                         $target_dir .= '/';
                     }
                 }
 
+                // ============================================================
+                // Require Subdirectories
+                // ============================================================
+                
+                if (empty($target_dir)) {
+                    http_response_code(403);
+                    die('Access denied: assets must be in subdirectories');
+                }
+
+                // ============================================================
+                // Directory Allowlist
+                // ============================================================
+                
+                // Define allowed asset directories
+                $allowed_asset_dirs = [
+                    'assets',      // catch-all for miscellaneous assets
+                    'css',
+                    'js',
+                    'javascript',
+                    'images',
+                    'img',
+                    'fonts',
+                    'media',
+                    'audio',
+                    'video',
+                    'files',
+                    'downloads',
+                    'documents',
+                    'icons',
+                    'svg'
+                ];
+                
+                // Extract first directory from path
+                $dir_parts = explode('/', $target_dir);
+                $first_dir = strtolower($dir_parts[0]);
+                
+                // Validate first directory is in allowlist
+                if (!in_array($first_dir, $allowed_asset_dirs, true)) {
+                    http_response_code(403);
+                    die('Access denied: directory not allowed');
+                }
+
+                // Build asset path
                 $asset_path = '../modules/' . strtolower($target_module) . '/' . $target_dir . '/' . $file_name;
                 
                 try {
+                    // Sanitize path (handles realpath resolution and traversal)
                     $asset_path = $this->sanitize_file_path($asset_path, '../modules/');
                     
                     if (is_file($asset_path)) {
-                        // Handle browser caching
+                        
+                        // ============================================================
+                        // Post-Sanitization Path Validation
+                        // ============================================================
+                        
+                        // Verify final path is still within modules directory
+                        $real_modules_path = realpath('../modules/');
+                        if (strpos($asset_path, $real_modules_path) !== 0) {
+                            http_response_code(403);
+                            die('Access denied: path outside modules directory');
+                        }
+                        
+                        // Block symbolic links
+                        if (is_link($asset_path)) {
+                            http_response_code(403);
+                            die('Access denied: symbolic links not allowed');
+                        }
+                        
+                        // ============================================================
+                        // File Extension & Type Validation
+                        // ============================================================
+                        
+                        // Get file extension (case-insensitive)
+                        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+                        $file_name_lower = strtolower($file_name);
+                        
+                        // Require file extension
+                        if (empty($file_extension)) {
+                            http_response_code(403);
+                            die('Access denied: no file extension');
+                        }
+                        
+                        // Comprehensive list of forbidden extensions
+                        $forbidden_extensions = [
+                            // PHP variants
+                            'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps',
+                            'pht', 'phar', 'inc',
+                            // Server-side scripts
+                            'sh', 'bash', 'cgi', 'pl', 'py', 'rb', 'asp', 'aspx', 'jsp',
+                            // Configuration and sensitive files
+                            'sql', 'env', 'ini', 'conf', 'config',
+                            // Server configuration
+                            'htaccess', 'htpasswd',
+                            // Backup/temp files
+                            'bak', 'backup', 'old', 'tmp', 'temp', 'swp',
+                            // Executables
+                            'exe', 'dll', 'so', 'bat', 'cmd', 'com'
+                        ];
+                        
+                        // Block forbidden extensions
+                        if (in_array($file_extension, $forbidden_extensions, true)) {
+                            http_response_code(403);
+                            die('Access denied: forbidden file type');
+                        }
+                        
+                        // Block files with PHP in extension chain (e.g., file.php.txt)
+                        if (preg_match('/\.php[^\/]*$/i', $file_name)) {
+                            http_response_code(403);
+                            die('Access denied: forbidden file type');
+                        }
+                        
+                        // Block specific sensitive filenames
+                        $sensitive_files = [
+                            'api.json',
+                            '.env',
+                            '.env.local',
+                            '.env.production',
+                            '.htaccess',
+                            '.htpasswd',
+                            'config.php',
+                            'database.php',
+                            'config.ini',
+                            'settings.php',
+                            'composer.json',
+                            'composer.lock',
+                            'package.json',
+                            'package-lock.json'
+                        ];
+                        
+                        if (in_array($file_name_lower, $sensitive_files, true)) {
+                            http_response_code(403);
+                            die('Access denied: sensitive file');
+                        }
+                        
+                        // Block hidden files (starting with .)
+                        if (strpos(basename($file_name), '.') === 0) {
+                            http_response_code(403);
+                            die('Access denied: hidden file');
+                        }
+                        
+                        // ============================================================
+                        // Browser Cache Headers
+                        // ============================================================
+                        
                         if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && 
                             strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= filemtime($asset_path)) {
                                 header('Last-Modified: '.gmdate('D, d M Y H:i:s',  filemtime($asset_path)).' GMT', true, 304);
                                 die;
                         }
                         
-                        // Determine content type based on file extension FIRST (FIXED)
-                        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
+                        // ============================================================
+                        // MIME Type Detection
+                        // ============================================================
+                        
                         $content_type = match($file_extension) {
                             // Text-based formats
                             'css' => 'text/css',
@@ -291,6 +458,7 @@ class Core {
                             'xml' => 'application/xml',
                             'txt' => 'text/plain',
                             'html', 'htm' => 'text/html',
+                            'md' => 'text/markdown',
                             
                             // Images
                             'svg' => 'image/svg+xml',
@@ -301,6 +469,7 @@ class Core {
                             'ico' => 'image/x-icon',
                             'bmp' => 'image/bmp',
                             'tiff', 'tif' => 'image/tiff',
+                            'avif' => 'image/avif',
                             
                             // Fonts
                             'woff' => 'font/woff',
@@ -315,30 +484,65 @@ class Core {
                             'webm' => 'video/webm',
                             'ogg' => 'audio/ogg',
                             'wav' => 'audio/wav',
+                            'avi' => 'video/x-msvideo',
+                            'mov' => 'video/quicktime',
                             
                             // Documents
                             'pdf' => 'application/pdf',
+                            'doc' => 'application/msword',
+                            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'xls' => 'application/vnd.ms-excel',
+                            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'ppt' => 'application/vnd.ms-powerpoint',
+                            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                            
+                            // Archives
+                            'zip' => 'application/zip',
+                            'rar' => 'application/x-rar-compressed',
+                            'tar' => 'application/x-tar',
+                            'gz' => 'application/gzip',
                             
                             // Fallback to mime_content_type for unknown extensions
                             default => mime_content_type($asset_path)
                         };
 
-                        // Security check: Block PHP files and api.json
-                        if (strpos($content_type, 'php') !== false || 
-                            $file_extension === 'php' || 
-                            $file_name === 'api.json') {
+                        // ============================================================
+                        // Content Type Validation
+                        // ============================================================
+                        
+                        // Block dangerous content types
+                        if (strpos(strtolower($content_type), 'php') !== false) {
                             http_response_code(403);
-                            die();
+                            die('Access denied: forbidden content type');
                         }
 
-                        // Send headers and file content
+                        // ============================================================
+                        // Send Headers and Content
+                        // ============================================================
+                        
+                        // Content type header
                         header('Content-type: ' . $content_type);
+                        
+                        // Caching header
                         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($asset_path)) . ' GMT');
+                        
+                        // Standard headers
+                        header('X-Frame-Options: SAMEORIGIN');
+                        header('X-Content-Type-Options: nosniff');
+                        
+                        // SVG-specific: Content Security Policy
+                        if ($file_extension === 'svg') {
+                            header("Content-Security-Policy: script-src 'none'; object-src 'none'; sandbox");
+                        }
+                        
+                        // Send file content
                         readfile($asset_path);
                         die;
                     } 
                 } catch (Exception $e) {
-                    die($e->getMessage());
+                    // Don't expose internal paths in error messages
+                    http_response_code(404);
+                    die('Asset not found');
                 }
             }
         }
