@@ -1,5 +1,61 @@
 <?php
 /**
+ * Simple memoization function for caching values across function calls.
+ *
+ * This function provides a persistent cache that survives multiple function calls.
+ * It supports three modes of operation:
+ * 
+ * 1. Retrieve entire cache (no arguments)
+ * 2. Cache callable results using object hash as key
+ * 3. Get/set values by string key
+ *
+ * @param string|callable|null $key The cache key (string), a callable to cache, or null to return entire cache.
+ * @param mixed $value The value to cache. If a Closure, it will be executed and its result cached.
+ * @param mixed $default The default value to return if the key doesn't exist in cache.
+ * 
+ * @return mixed Returns:
+ *               - The entire cache array if $key is null
+ *               - The cached result of the callable (memoized by object hash)
+ *               - The cached value for the given key, or $default if not found
+ *               - The newly set value if $value is provided
+ *
+ * @example
+ * // Store a value
+ * memo('user_id', 123);
+ * 
+ * // Retrieve a value
+ * $userId = memo('user_id'); // Returns 123
+ * 
+ * // Use default if not found
+ * $count = memo('count', default: 0); // Returns 0 if 'count' not set
+ * 
+ * // Cache expensive callable results
+ * $result = memo(fn() => expensiveOperation());
+ * 
+ * // Store using Closure
+ * memo('config', fn() => loadConfig());
+ * 
+ * // Get entire cache
+ * $allCached = memo();
+ */
+function memo(string|callable|null $key = null, mixed $value = null, mixed $default = null): mixed {
+    static $cache = [];
+    
+    if ($key === null) return $cache;
+    
+    if (is_callable($key)) {
+        $hash = spl_object_hash($key);
+        return $cache[$hash] ??= $key();
+    }
+    
+    if ($value !== null) {
+        return $cache[$key] = ($value instanceof Closure) ? $value() : $value;
+    }
+    
+    return $cache[$key] ?? $default;
+}
+
+/**
  * Outputs the given data as JSON in a prettified format, suitable for debugging and visualization.
  * This function is especially useful during development for inspecting data structures in a readable JSON format directly in the browser. 
  * It optionally allows terminating the script immediately after output, useful in API development for stopping further processing.
