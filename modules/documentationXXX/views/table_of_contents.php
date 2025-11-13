@@ -10,16 +10,13 @@
                         <?php if (!empty($chapter->pages)): ?>
                             <ul class="toc-list-items">
                                 <?php foreach ($chapter->pages as $index => $page): ?>
-                                    <?php 
-                                        $page_num = $page->page_number; // Display page number
-                                    ?>
                                     <li>
                                         <div>
                                             <a href="<?= $page->page_url ?>">
                                                 <?= out($page->headline) ?>
                                             </a>
                                         </div>
-                                        <div><?= $page_num ?></div>
+                                        <div><?= $page->global_page_number ?></div>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
@@ -40,11 +37,9 @@
         color: #222;
         font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
-
     .page-container {
         background-color: #fbfbfb;
     }
-
     .card {
         background-color: #fff;
         margin-bottom: 1.5rem;

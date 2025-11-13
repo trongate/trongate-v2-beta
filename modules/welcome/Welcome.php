@@ -1,8 +1,8 @@
 <?php
 class Welcome extends Trongate {
 
-    public function test() {
-        $this->view('test');
+    public function demo() {
+        $this->view('demo');
     }
 
     /**

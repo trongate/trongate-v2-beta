@@ -235,7 +235,17 @@ class Core {
     }
 
     /**
-     * Serve module assets.
+     * Serve module assets - CORRECTED VERSION
+     *
+     * This corrected version fixes the MIME type detection issue where CSS files
+     * containing class names like ".text-center" were being misidentified as
+     * assembly language files (text/x-asm) by PHP's mime_content_type() function.
+     *
+     * Key improvements:
+     * 1. Prioritizes file extension for MIME type determination
+     * 2. Only uses mime_content_type() as a fallback for unknown extensions
+     * 3. Prevents misidentification of CSS/JS files
+     * 4. Includes comprehensive support for common web asset types
      *
      * @return void
      */
@@ -263,32 +273,65 @@ class Core {
                     $asset_path = $this->sanitize_file_path($asset_path, '../modules/');
                     
                     if (is_file($asset_path)) {
+                        // Handle browser caching
                         if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && 
                             strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= filemtime($asset_path)) {
                                 header('Last-Modified: '.gmdate('D, d M Y H:i:s',  filemtime($asset_path)).' GMT', true, 304);
                                 die;
                         }
                         
-                        $content_type = mime_content_type($asset_path);
+                        // Determine content type based on file extension FIRST (FIXED)
+                        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-                        if ($content_type === 'text/plain' || $content_type === 'text/html') {
-                            if (strpos($file_name, '.css') !== false) {
-                                $content_type = 'text/css';
-                            } elseif (strpos($file_name, '.js') !== false) {
-                                $content_type = 'text/javascript';
-                            }
-                        }
+                        $content_type = match($file_extension) {
+                            // Text-based formats
+                            'css' => 'text/css',
+                            'js' => 'text/javascript',
+                            'json' => 'application/json',
+                            'xml' => 'application/xml',
+                            'txt' => 'text/plain',
+                            'html', 'htm' => 'text/html',
+                            
+                            // Images
+                            'svg' => 'image/svg+xml',
+                            'jpg', 'jpeg' => 'image/jpeg',
+                            'png' => 'image/png',
+                            'gif' => 'image/gif',
+                            'webp' => 'image/webp',
+                            'ico' => 'image/x-icon',
+                            'bmp' => 'image/bmp',
+                            'tiff', 'tif' => 'image/tiff',
+                            
+                            // Fonts
+                            'woff' => 'font/woff',
+                            'woff2' => 'font/woff2',
+                            'ttf' => 'font/ttf',
+                            'eot' => 'application/vnd.ms-fontobject',
+                            'otf' => 'font/otf',
+                            
+                            // Audio/Video
+                            'mp3' => 'audio/mpeg',
+                            'mp4' => 'video/mp4',
+                            'webm' => 'video/webm',
+                            'ogg' => 'audio/ogg',
+                            'wav' => 'audio/wav',
+                            
+                            // Documents
+                            'pdf' => 'application/pdf',
+                            
+                            // Fallback to mime_content_type for unknown extensions
+                            default => mime_content_type($asset_path)
+                        };
 
-                        if ($content_type === 'image/svg') {
-                            $content_type .= '+xml';
-                        }
-
-                        // Make sure it's not a PHP file or api.json
-                        if (strpos($content_type, 'php') !== false || $file_name === 'api.json') {
+                        // Security check: Block PHP files and api.json
+                        if (strpos($content_type, 'php') !== false || 
+                            $file_extension === 'php' || 
+                            $file_name === 'api.json') {
                             http_response_code(403);
                             die();
                         }
 
+                        // Send headers and file content
                         header('Content-type: ' . $content_type);
                         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', filemtime($asset_path)) . ' GMT');
                         readfile($asset_path);
