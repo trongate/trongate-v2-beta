@@ -10,7 +10,7 @@
 
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
-    <link rel="stylesheet" href="css/docs_ahoy.css">
+    <link rel="stylesheet" href="documentation_module/css/docs_ahoy.css">
     <title>Document</title>
 </head>
 <body>

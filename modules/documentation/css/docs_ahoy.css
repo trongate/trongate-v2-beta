@@ -122,6 +122,10 @@ img {
     text-align: center;
 }
 
+.text-right {
+  text-align: right;
+}
+
 .blink {
     text-decoration: blink;
     -webkit-animation-name: blinker;
