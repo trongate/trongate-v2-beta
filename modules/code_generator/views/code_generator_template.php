@@ -15,8 +15,8 @@
 	<script>
 	const localBaseUrl = '<?= BASE_URL ?>';
 	const apiBaseUrl = '<?= $api_base_url ?>';
-	const cssPath = '<?= $api_base_url ?>t2_api-code_generator_module/css/code_generator.css';
-	const jsPath = '<?= $api_base_url ?>t2_api-code_generator_module/js/code_generator.js';
+	const cssPath = '<?= $api_base_url ?>desktop_app_api-code_generator_module/css/code_generator.css';
+	const jsPath = '<?= $api_base_url ?>desktop_app_api-code_generator_module/js/code_generator.js';
 	</script>
 	<script src="<?= BASE_URL ?>code_generator_module/js/code_generator.js"></script>
 </body>

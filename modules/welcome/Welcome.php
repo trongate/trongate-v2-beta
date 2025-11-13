@@ -1,6 +1,10 @@
 <?php
 class Welcome extends Trongate {
 
+    public function test() {
+        $this->view('test');
+    }
+
     /**
      * Renders the (default) homepage for public access.
      *
@@ -34,11 +38,6 @@ class Welcome extends Trongate {
         ];
 
         $this->view('learn_trongate', $data);
-    }
-
-
-    public function test() {
-        $this->view('test');
     }
 
     /**

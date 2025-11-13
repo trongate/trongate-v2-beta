@@ -1,11 +1,19 @@
 <?php
-class T2_api extends Trongate {
+class Desktop_app_api extends Trongate {
 
     private $codegen_templates = ['c64'];
 
-    public function __construct() {
-        $this->set_cors_headers();
-    }
+	public function __construct() {
+	    // CORS: Let everyone in
+	    header('Access-Control-Allow-Origin: *');
+	    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+	    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, trongate-mx-request, X-Window-Type');
+	    // Handle preflight (OPTIONS) requests
+	    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+	        http_response_code(204);
+	        exit;
+	    }
+	}
 
     /**
      * Display the home page with navigation menu.
@@ -177,11 +185,6 @@ class T2_api extends Trongate {
         echo '<div class="cloak api-response">'.json_encode($response).'</div>';
     }
 
-    public function conf_add_nav_icon() {
-        // Draw 'select nav label' element.
-        $this->render_with_optional_template('conf_add_nav_icon');
-    }
-
     /**
      * Display the module properties configuration confirmation page.
      *
@@ -194,6 +197,20 @@ class T2_api extends Trongate {
      */
     public function lets_add_properties_conf(): void {
         $this->render_with_optional_template('lets_add_properties_conf');
+    }
+
+    /**
+     * Renders the Properties Builder webpage.
+     *
+     * This method loads the 'properties_builder_da' template with the
+     * 'properties_builder' view file. The page allows users to choose
+     * properties for modules that are to be generated.
+     *
+     * @return void
+     */
+    public function properties_builder(): void {
+        $data['view_file'] = 'properties_builder';
+        $this->template('properties_builder_da', $data);
     }
 
     /**
@@ -243,6 +260,21 @@ class T2_api extends Trongate {
     }
 
     /**
+     * Display the "Order By" selection interface for the module.
+     *
+     * Renders a form allowing users to select the property by which records
+     * should be ordered in the module's database table. This step occurs after
+     * the URL column has been selected (if any) and module properties have been defined.
+     * Users can optionally choose an ordering preference or skip this step.
+     * Supports optional template wrapping via query parameter.
+     *
+     * @return void
+     */
+    public function choose_order_by(): void {
+        $this->render_with_optional_template('choose_order_by');
+    }
+
+    /**
      * Handle the submission of the selected URL column from the frontend.
      *
      * This method retrieves the selected column via a POST request, validates it,
@@ -270,21 +302,6 @@ class T2_api extends Trongate {
 
         // Output JSON response wrapped in a cloak div
         echo '<div class="cloak api-response">' . json_encode($response) . '</div>';
-    }
-
-    /**
-     * Display the "Order By" selection interface for the module.
-     *
-     * Renders a form allowing users to select the property by which records
-     * should be ordered in the module's database table. This step occurs after
-     * the URL column has been selected (if any) and module properties have been defined.
-     * Users can optionally choose an ordering preference or skip this step.
-     * Supports optional template wrapping via query parameter.
-     *
-     * @return void
-     */
-    public function choose_order_by(): void {
-        $this->render_with_optional_template('choose_order_by');
     }
 
     /**
@@ -324,40 +341,6 @@ class T2_api extends Trongate {
         } else {
             $this->view($view_file);
         }
-    }
-
-    /**
-     * Set CORS (Cross-Origin Resource Sharing) headers for API requests.
-     *
-     * This method configures the necessary HTTP headers to allow cross-origin requests
-     * from third-party websites. It handles preflight OPTIONS requests and caches
-     * the CORS policy for improved performance.
-     *
-     * @return void
-     */
-    private function set_cors_headers(): void {
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-        header('Access-Control-Max-Age: 3600');
-
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit();
-        }
-    }
-
-    /**
-     * Return an error response and terminate execution
-     *
-     * @param string $message The error message to return
-     * @return void
-     */
-    private function return_error(string $message): void {
-        http_response_code(202);
-        $data['message'] = $message;
-        $this->view('error_element', $data);
-        die();
     }
 
 }

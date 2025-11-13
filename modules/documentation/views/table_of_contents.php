@@ -40,6 +40,11 @@
         color: #222;
         font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
+
+    .page-container {
+        background-color: #fbfbfb;
+    }
+
     .card {
         background-color: #fff;
         margin-bottom: 1.5rem;
@@ -60,7 +65,6 @@
         align-items: center;
         padding: 0.75rem 0;
         border-bottom: 1px dotted #ccc;
-        font-size: 1rem;
     }
     .toc-list-items li:last-child {
         border-bottom: none;
