@@ -14,7 +14,7 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="page-container">
+    <div class="docs-container">
         <?= Template::partial('partials/breadcrumbs', $data) ?>
         <?= Template::display($data) ?>
     </div>

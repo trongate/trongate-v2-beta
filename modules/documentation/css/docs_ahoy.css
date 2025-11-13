@@ -1,23 +1,36 @@
 body {
     background-color: #f7f5f3;
+    background: var(--background-gradient);
     color: #222;
     font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 .docs-container {
+    padding-top: 1em;
     width: 94%;
     margin: 0 auto;
     max-width: 1200px;
+    min-height: 100vh;
+    background-color: white;
 }
 
 h1 {
     text-align: center;
 }
 
-.docs-books {
+.docs-booksx {
     margin-top: 3em;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    gap: 1em;
+}
+
+.docs-book {
+    margin-top: 3em;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 1em;
 }
 
@@ -35,7 +48,12 @@ h1 {
 }
 
 .breadcrumb-container {
-    margin: 1em auto;
+    background-color: red;
+    width: 90%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .breadcrumb {
@@ -82,17 +100,6 @@ a.alt:hover {
 .breadcrumb li:last-child {
     color: #555;
     font-weight: normal;
-}
-
-.page-container {
-    background-color: #fff;
-    width: 94%;
-    margin: 0 auto;
-    max-width: 1200px;
-    min-height: 100vh;
-    padding: 1em 7em;
-    -webkit-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
-    box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
 }
 
 h2 {
