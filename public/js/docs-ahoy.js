@@ -1,3 +1,7 @@
+function jumpToUrl(url) {
+    window.location.href = url;
+}
+
 window.makeAlertsFantasticola = window.makeAlertsFantasticola || ((alertEls = document.querySelectorAll('.alert')) => {
     const alertTypes = {
         'alert-info': { headline: 'Just To Let You Know...', icon: 'fa-info-circle' },

@@ -1,7 +1,5 @@
-FIX CUSTOM ROUTING
+* Get prism working for the functions.
 
-* Get docs nav working.
+* Consider making all the code samples looking amazing.
 
-* Get the iframe feature working for code samples etc.
-
-* Nail the routing chapter.
+* Get those other (awkward) directories working.

@@ -117,7 +117,19 @@ class Model {
      */
     private function load_model(string $module_name): void {
         // Build the model class name and file path
-        $model_class = ucfirst($module_name) . '_model';
+        // Handle child modules (format: parent-child)
+        if (strpos($module_name, '-') !== false) {
+            $bits = explode('-', $module_name);
+            if (count($bits) === 2) {
+                $child_module = $bits[1];
+                $model_class = ucfirst($child_module) . '_model';
+            } else {
+                $model_class = ucfirst($module_name) . '_model';
+            }
+        } else {
+            $model_class = ucfirst($module_name) . '_model';
+        }
+        
         $model_path = $this->get_model_path($module_name, $model_class);
 
         // Require the model file

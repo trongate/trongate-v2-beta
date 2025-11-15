@@ -1,4 +1,4 @@
-<h1>Documentation</h1>
+<h1 class="text-center mt-1">Documentation</h1>
 <div class="docs-books">
     <?php
     foreach ($books as $book) {

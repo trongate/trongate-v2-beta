@@ -30,7 +30,7 @@ class Templates extends Trongate {
      * @return void
      */
     public function docs_ahoy($data): void {
-        $data['theme_color'] = (isset($data['theme_color'])) ? $data['theme_color'] : 'blue';
+        $data['theme'] = (isset($data['theme'])) ? $data['theme'] : 'blue';
         $data['additional_includes_top'] = $this->_build_additional_includes($data['additional_includes_top'] ?? []);
         $data['additional_includes_btm'] = $this->_build_additional_includes($data['additional_includes_btm'] ?? []);
         load('docs_ahoy', $data);

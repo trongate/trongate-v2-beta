@@ -1,0 +1,137 @@
+body {
+    background-color: #f7f5f3;
+    color: #222;
+    font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.docs-container {
+    width: 94%;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.docs-books {
+    margin-top: 3em;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1em;
+}
+
+.docs-books > div .cover {
+    max-width: 80%;
+    margin: 0 auto;
+}
+
+.docs-books > div h3 {
+    text-align: center;
+}
+
+.cover {
+    cursor: pointer;
+}
+
+.breadcrumb-container {
+    margin: 1em auto;
+}
+
+.breadcrumb {
+    list-style: none !important;
+    padding: 0 0 1.3em 0;
+    margin: 0 0 2.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px #E1E1E1 solid;
+}
+
+.breadcrumb li {
+    margin-bottom: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    line-height: normal !important;
+    list-style: none !important;
+}
+
+.breadcrumb li + li::before {
+    content: "›";
+    padding: 0 0.8rem;
+    color: #bbb;
+    font-size: 1.6rem;
+    display: inline-block;
+}
+
+a, .breadcrumb a {
+    color: var(--primary);
+    display: inline-block;
+}
+
+a:hover, .breadcrumb a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+a.button:hover,
+a.alt:hover {
+    text-decoration: none;
+}
+
+.breadcrumb li:last-child {
+    color: #555;
+    font-weight: normal;
+}
+
+.page-container {
+    background-color: #fff;
+    width: 94%;
+    margin: 0 auto;
+    max-width: 1200px;
+    min-height: 100vh;
+    padding: 1em 7em;
+    -webkit-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
+    box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
+}
+
+h2 {
+    margin-top: 2em;
+    font-size: 37px;
+    letter-spacing: 1px;
+}
+
+h3 {
+    margin-top: .6em;
+    font-family: arial, sans-serif;
+    font-weight: bold;
+    font-size: 19px;
+}
+
+.highlight {
+    background-color: yellow;
+    padding: 2px 4px;
+}
+
+img { 
+    max-width: 100%; 
+    height: auto; 
+}
+
+.text-center {
+    text-align: center;
+}
+
+.blink {
+    text-decoration: blink;
+    -webkit-animation-name: blinker;
+    -webkit-animation-duration: 0.5s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-direction: alternate;
+}
+
+@-webkit-keyframes blinker {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

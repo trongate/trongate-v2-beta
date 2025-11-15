@@ -1,69 +1,72 @@
 body {
-    background-color: #f7f5f3;
-    background: var(--background-gradient);
-    color: #222;
-    font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  color: #111;
+  line-height: 1.6;
+  font-weight: 400;
+  font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #222;
+  background: var(--background-gradient);
+  font-size: 1.1rem;
 }
 
 .docs-container {
-    padding-top: 1em;
-    width: 94%;
-    margin: 0 auto;
-    max-width: 1200px;
-    min-height: 100vh;
-    background-color: white;
+	min-height: 100vh;
+	width: 94%;
+	max-width: 1200px;
+	margin: 0 auto;
+	background-color: #fefefe;
+	border-left: 1px #E1E1E1 solid;
+	border-right: 1px #E1E1E1 solid;
+  padding-bottom: 3em;
+}
+
+.docs-container .card {
+	background-color: #fff;
 }
 
 h1 {
-    text-align: center;
+	font-size: 24px;
+	text-align: center;
+  margin: 1em 0;
 }
 
-.docs-booksx {
-    margin-top: 3em;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1em;
+a {
+	color: var(--primary);
 }
 
-.docs-book {
-    margin-top: 3em;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1em;
+h2 {
+	font-size: 19px;
 }
 
-.docs-books > div .cover {
-    max-width: 80%;
-    margin: 0 auto;
+h3 {
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 18px;
+  line-height: 1.3;
 }
 
-.docs-books > div h3 {
-    text-align: center;
+h3 a {
+  text-decoration: none;
 }
 
-.cover {
-    cursor: pointer;
+h3 a:hover {
+  text-decoration: underline;
 }
 
 .breadcrumb-container {
-    background-color: red;
-    width: 90%;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+	padding: .6em 1em;
+	border-bottom: 1px #E1E1E1 solid;
 }
 
-.breadcrumb {
-    list-style: none !important;
-    padding: 0 0 1.3em 0;
-    margin: 0 0 2.5rem 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    border-bottom: 1px #E1E1E1 solid;
+.breadcrumb-container ul {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  list-style-type: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: .9em;
 }
 
 .breadcrumb li {
@@ -75,74 +78,294 @@ h1 {
 }
 
 .breadcrumb li + li::before {
-    content: "›";
-    padding: 0 0.8rem;
-    color: #bbb;
-    font-size: 1.6rem;
-    display: inline-block;
+  content: "›";
+  padding: 0 0.8rem .16em 0.8rem;
+  color: #bbb;
+  font-size: 1.6rem;
+  display: inline-block;
 }
 
-a, .breadcrumb a {
-    color: var(--primary);
-    display: inline-block;
+.page-content {
+	width: 94%;
+	margin: 1em auto;
+	overflow-x: auto;
 }
 
-a:hover, .breadcrumb a:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
+.page-nav-btns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 auto;
 }
 
-a.button:hover,
-a.alt:hover {
-    text-decoration: none;
+.page-nav-btns .button {
+  margin-top: 0;
 }
 
-.breadcrumb li:last-child {
-    color: #555;
-    font-weight: normal;
+.alt {
+	border-color: #333;
 }
 
-h2 {
-    margin-top: 2em;
-    font-size: 37px;
-    letter-spacing: 1px;
+button, .button {
+	border-radius: 4px;
+	font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: .1rem;
+	line-height: 38px;
+	font-weight: 600;
+	font-size: 12px;
+	padding: 0 30px;
+	line-height: 2.8em;
 }
 
-h3 {
-    margin-top: .6em;
-    font-family: arial, sans-serif;
-    font-weight: bold;
-    font-size: 19px;
+.docs-books {
+	display: grid;
+	gap: 1em;
+	grid-template-columns: 1fr;
+	width: 96%;
+	margin: 2em auto;
 }
 
-.highlight {
-    background-color: yellow;
-    padding: 2px 4px;
+.docs-books .cover {
+	cursor: pointer;
 }
 
-img { 
-    max-width: 100%; 
-    height: auto; 
+.docs-page {
+  display: grid;
+  gap: 1em;
+  grid-template-columns: 1fr 3fr;
 }
 
-.text-center {
-    text-align: center;
+code {
+  padding: .2rem .5rem;
+  margin: 0 .2rem;
+  font-size: 90%;
+  white-space: nowrap;
+  background: #F1F1F1;
+  border: 1px solid #E1E1E1;
+  border-radius: 4px; 
 }
 
-.text-right {
-  text-align: right;
+pre code {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
-.blink {
-    text-decoration: blink;
-    -webkit-animation-name: blinker;
-    -webkit-animation-duration: 0.5s;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-timing-function: ease-in-out;
-    -webkit-animation-direction: alternate;
+.alert {
+  display: flex;
+  flex-direction: column;
+  max-width: 760px;
+  margin: 2em auto 1em auto;
 }
 
-@-webkit-keyframes blinker {
-    from { opacity: 1; }
-    to { opacity: 0; }
+.alert>div {
+  padding: 22px;
+}
+
+.alert-heading {
+  font-family: Georgia, serif;
+  background-color: #333;
+  font-size: 21px;
+  font-weight: bold;
+  line-height: 1em;
+  color: #fff;
+  border-radius: 9px 9px 0 0;
+}
+
+.alert-body {
+  border: 3px #333 solid;
+  font-family: verdana;
+  font-size: 14px;
+  border-radius: 0 0 9px 9px;
+  background-color: #fff;
+}
+
+.alert button.alt:hover,
+.alert .alt:hover {
+    background-color: #fff;
+    text-shadow: none;
+}
+
+.alert-info>div:nth-child(1) {
+  background-color: var(--primary-darker);
+}
+
+.alert-info>div:nth-child(2) {
+  border-color: var(--primary-darker);
+  background-color: #f7f7ff;
+}
+
+.alert-success>div:nth-child(1) {
+  background-color: #31a131;
+}
+
+.alert-success>div:nth-child(2) {
+  border-color: #31a131;
+  background-color: #31a13111;
+}
+
+.alert-success button,
+.alert-success .button {
+    background-color: #31a131;
+    border: 1px #2f6f2f solid;
+    color: #eee;
+}
+
+.alert-success button:hover,
+.alert-success .button:hover {
+    background-color: #2f6f2f;
+    border: 1px #2f6f2f solid;
+    color: #fff;
+}
+
+.alert-success button.alt,
+.alert-success .alt {
+    background-color: transparent;
+    border: 1px #378537 solid;
+    color: #2f6f2f;
+}
+
+.alert-success button.alt:hover,
+.alert-success .alt:hover {
+    background-color: #fff;
+    border: 1px #2f6f2f solid;
+    color: #2f6f2f;
+}
+
+.alert-warning>div:nth-child(1) {
+  background-color: #c58340;
+}
+
+.alert-warning>div:nth-child(2) {
+  border-color: #c58340;
+  background-color: #c5834022;
+}
+
+.alert-warning button,
+.alert-warning .button {
+    background-color: #c58340;
+    border: 1px #b17c46 solid;
+    color: #eee;
+}
+
+.alert-warning button:hover,
+.alert-warning .button:hover {
+    background-color: #b17c46;
+    border: 1px #b17c46 solid;
+    color: #fff;
+}
+
+.alert-warning button.alt,
+.alert-warning .alt {
+    background-color: transparent;
+    border: 1px #b17c46 solid;
+    color: #b17c46;
+}
+
+.alert-warning button.alt:hover,
+.alert-warning .alt:hover {
+    background-color: #fff;
+    border: 1px #b17c46 solid;
+    color: #b17c46;
+}
+
+.alert-danger>div:nth-child(1) {
+  background-color: #c54040;
+}
+
+.alert-danger>div:nth-child(2) {
+  border-color: #c54040;
+  background-color: #c5404022;
+}
+
+.code-sample {
+  width: 100%;
+  margin: 0 auto 1em auto;
+  overflow: auto; 
+  max-width: 760px;
+}
+
+.code-block-header {
+    margin-top: 1em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: .6em 1em 0 1em;
+}
+
+.copy-icon-container {
+  cursor: pointer;
+  font-size: 1em;
+}
+
+button.feature-ref-btn {
+  text-transform: none;
+  padding: .3em 1em;
+  font-size: .9em;
+  line-height: 1.1em;
+  margin-top: 3px;
+}
+
+button.feature-ref-btn .fa {
+  font-size: 1.1em;
+}
+
+
+
+@media screen and (min-width: 550px) {
+  h1 {
+  	font-size: 27px;
+  }
+
+  h2 {
+  	font-size: 23px;
+  }
+
+  h3 {
+  	font-size: 18px;
+  }
+
+   .docs-books {
+  	grid-template-columns: 1fr 1fr;
+  }
+
+}
+
+@media screen and (min-width: 760px) {
+  h1 {
+  	font-size: 30px;
+  }
+
+  h2 {
+  	font-size: 26px;
+  }
+
+  h3 {
+  	font-size: 19px;
+  }
+
+   .docs-books {
+  	grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+
+@media screen and (min-width: 1000px) {
+  h1 {
+  	font-size: 33px;
+  }
+
+}
+
+@media screen and (min-width: 1200px) {
+  h1 {
+  	font-size: 37px;
+  }
+
+   .docs-books {
+  	grid-template-columns: repeat(4, 1fr);
+  }
 }
