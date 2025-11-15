@@ -1,0 +1,180 @@
+<h1>Child Modules</h1>
+
+<p>Trongate lets you have modules <b>inside</b> modules.  Yes, really!</p>
+<p>Drop a module inside another → Boom! → it’s a <strong>child</strong>.</p>
+<p>No registration. No routes. No ceremony.</p>
+
+<hr>
+
+<h2>The Structure</h2>
+
+[code]
+modules/
+  shop/
+    Shop.php
+    product_reviews/           ← child module
+      Product_reviews.php
+      Product_reviews_model.php
+      views/
+[/code]
+
+<p><code>product_reviews</code> is a <strong>child module</strong> of <code>shop</code>.</p>
+<p>Drop it in. Done.</p>
+
+<hr>
+
+
+
+<h2>URL Routing</h2>
+
+<p>Just use the hyphen format, <code>parent-child</code>.  For example:</p>
+
+[code]
+https://yoursite.com/shop-product_reviews/display
+[/code]
+
+<div class="alert alert-info">
+<p>With the URL path of <code>shop-product_reviews/display</code> Trongate finds <code>modules/shop/product_reviews/Product_reviews.php</code> and runs <code>display()</code>.</p>
+</div>
+
+<hr>
+
+<h2>Loading Child Modules From Code</h2>
+
+<p>From a controller:</p>
+
+[code=php]
+$this->product_reviews->get_latest($product_id);
+[/code]
+
+<p>From a view:</p>
+
+[code=vf]
+&lt;?= Modules::run('shop-product_reviews/display', $product_id) ?&gt;
+[/code]
+
+<div class="alert alert-info">
+    <p>Trongate auto-loads child modules just like regular modules.</p>
+</div>
+
+<hr>
+
+<h2>Models Work Too!</h2>
+
+<p>Child modules can get their own models:</p>
+
+[code]
+modules/
+  shop/
+    Shop.php
+    product_reviews/
+      Product_reviews.php
+      Product_reviews_model.php    ← works perfectly
+[/code]
+
+<p>From the child controller:</p>
+
+[code=php]
+&lt;?php
+class Product_reviews extends Trongate {
+
+    function get_latest($product_id) {
+        $reviews = $this->model->fetch_recent($product_id, 5);
+        json($reviews);
+    }
+
+}
+[/code]
+
+<p>The model:</p>
+
+[code=php]
+&lt;?php
+class Product_reviews_model extends Model {
+
+    function fetch_recent($product_id, $limit) {
+        $sql = "SELECT * FROM reviews 
+                WHERE product_id = ? 
+                ORDER BY created_at DESC 
+                LIMIT ?";
+        return $this->db->query_bind($sql, [$product_id, $limit]);
+    }
+
+}
+[/code]
+
+<hr>
+
+<h2>Child Module Assets</h2>
+
+<p>CSS. JS. Images. They all work in child modules too!</p>
+
+[code]
+modules/
+  father/
+    son/
+      js/
+        son.js
+      css/
+        son.css
+      images/
+        logo.png
+[/code]
+
+<p>Reference them like this:</p>
+
+[code=html]
+&lt;script src="father-son_module/js/son.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="father-son_module/css/son.css"&gt;
+&lt;img src="father-son_module/images/logo.png"&gt;
+[/code]
+
+<div class="alert alert-success">
+    <p><strong>No BASE_URL needed.</strong> Relative paths just work.</p>
+    <p>The <code>_module</code> trigger handles everything.</p>
+</div>
+
+<p>Example controller:</p>
+
+[code=php]
+&lt;?php
+class Son extends Trongate {
+
+    function greeting() {
+        echo '&lt;script src="father-son_module/js/son.js"&gt;&lt;/script&gt;';
+    }
+
+}
+[/code]
+
+<p>Visit <code>/father-son/greeting</code> → JavaScript loads and executes.</p>
+
+<div class="alert alert-info">
+    <p>The module assets trigger is defined in <code>config/config.php</code>:</p>
+    [code=php]define('MODULE_ASSETS_TRIGGER', '_module');[/code]
+    <p>Change it if you want. But why would you?</p>
+</div>
+
+<h2>When to Use Child Modules</h2>
+
+<ul>
+    <li><strong>Feature belongs to a parent:</strong> reviews for products, comments for blog posts</li>
+    <li><strong>Tight coupling:</strong> makes no sense without the parent</li>
+    <li><strong>Logical grouping:</strong> keeps related code together</li>
+</ul>
+
+
+<h2>When NOT to Use Child Modules</h2>
+
+<ul>
+    <li><strong>Standalone feature:</strong> just make a regular module</li>
+    <li><strong>Shared across modules:</strong> extract to its own module</li>
+    <li><strong>Deep nesting urges:</strong> you're overthinking it</li>
+</ul>
+
+<div class="alert alert-success">
+    <p><strong>Pro tip:</strong> One level of nesting is usually enough.</p>
+    <p>If you're tempted to nest deeper, <b>don't</b>. Refactor instead.</p>
+</div>
+
+<p class="text-center mt-3"><strong>Nest it. Ship it. Celebrate.</strong></p>

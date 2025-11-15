@@ -46,6 +46,12 @@ class Templates extends Trongate {
         load('public', $data);
     }
 
+    function bootstrappy($data) {
+        $data['additional_includes_top'] = $this->_build_additional_includes($data['additional_includes_top'] ?? []);
+        $data['additional_includes_btm'] = $this->_build_additional_includes($data['additional_includes_btm'] ?? []);
+        load('bootstrappy', $data);
+    }
+
     /**
      * Loads the 'error_404' view with provided data.
      *

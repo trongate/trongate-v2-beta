@@ -1,0 +1,66 @@
+<section>
+    <h1>Flashdata Helpers</h1>
+    <p>Trongate includes flashdata helper functions for displaying one-time messages. Flashdata is session data that is available only for the next request before being automatically removed. This is useful for informational messages like "The record was successfully created". The following functions are available from the Flashdata Helper:</p>
+    <hr>
+    <ul id="feature-ref-list" class="mt-2">
+        <li>
+            <span class="feature-ref">set_flashdata()</span>
+            <span class="sm">Store a one-time message in the session</span>
+        </li>
+        <li>
+            <span class="feature-ref">flashdata()</span>
+            <span class="sm">Display and clear flashdata message</span>
+        </li>
+    </ul>
+
+    <h2>Setting Flashdata</h2>
+    <p>Flashdata can be set using the <span class="feature-ref">set_flashdata()</span> function. You can pass your message directly into the function:</p>
+[code=php]
+set_flashdata("The record was successfully updated");
+[/code]
+
+    <div class="alert alert-info">
+        <p><strong>Typical Usage Pattern:</strong> Flashdata is commonly set after a form submission or data operation, followed by a redirect to another page where the message will be displayed:</p>
+[code=php]
+// After successfully creating a record
+set_flashdata("The record was successfully created");
+redirect("admin/records");
+[/code]
+    </div>
+
+    <h2>Displaying Flashdata</h2>
+    <p>Flashdata can be displayed by calling <span class="feature-ref">flashdata()</span> from within a view file:</p>
+[code=php]
+flashdata();
+[/code]
+
+    <div class="alert alert-warning">
+        <p><strong>Automatic Removal:</strong> The message will be displayed once and then automatically removed from the session. If you call <code>flashdata()</code> again on a subsequent page load, nothing will be displayed.</p>
+    </div>
+
+    <p>Below is an example of a view file that contains the flashdata() method.</p>
+    <figure>
+        <img src="images/26/flashdatwBKu.png" alt="screenshot" style="width:100%">
+        <figcaption>Screenshot from a text editor, demonstrating flashdata being added below page headline.</figcaption>
+    </figure>
+
+    <h2>Customizing Flashdata Display</h2>
+    <p>By default, flashdata messages will be displayed as green text within a paragraph. However, you can change the format of your flashdata by adding optional opening and closing tags as arguments. For example:</p>
+[code=php]
+flashdata('&lt;p style="color: lime; font-weight: bold;"&gt;', '&lt;/p&gt;');
+[/code]
+
+    <p>Or use custom CSS classes:</p>
+[code=php]
+flashdata('&lt;div class="alert alert-success"&gt;', '&lt;/div&gt;');
+[/code]
+
+    <div class="alert alert-success">
+        <p><strong>Global Configuration:</strong> You can define <code>FLASHDATA_OPEN</code> and <code>FLASHDATA_CLOSE</code> constants in your configuration to set default HTML wrappers for all flashdata messages throughout your application:</p>
+[code=php]
+define('FLASHDATA_OPEN', '&lt;div class="alert alert-success"&gt;');
+define('FLASHDATA_CLOSE', '&lt;/div&gt;');
+[/code]
+        <p>When these constants are defined, all flashdata messages will automatically use these wrappers unless you explicitly pass different opening and closing tags to the <code>flashdata()</code> function.</p>
+    </div>
+</section>

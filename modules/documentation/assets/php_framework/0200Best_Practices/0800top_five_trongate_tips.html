@@ -1,0 +1,200 @@
+<h1>Top Five Tips for Mastering Trongate</h1>
+
+<section class="tips-intro">
+  <p class="sm">Here are five top tips to help you on your way to Trongate framework mastery, by David Connelly.</p>
+</section>
+
+<section class="tips-grid">
+
+  <details>
+    <summary>1. Build Self-Contained Modules</summary>
+    <p>From a strictly technical perspective, Trongate's greatest strength is its architecture. It's the only PHP framework I'm aware of that enables developers to build modules that are entirely <b>self-contained</b>. This means a module can include far more than just PHP code. With Trongate, modules can contain CSS, JavaScript, images – and even other modules!</p>
+
+    <p>One of the common mistakes I've observed is when developers say things like, "I've built 'X'" (where 'X' might be a forum, an invoicing system, or some other impressive feature).</p>
+
+    <p>Technically, what they've built (as far as I can tell!) is outstanding – both in terms of code quality and usability. Unfortunately, all too often, the code is not self-contained. So, instead of encapsulating the entire feature within a single module, developers end up spreading it across multiple modules. This makes reusability difficult and rules out any chance of having the code featured on <a href="https://trongate.io/module-market" target="_blank">The Module Market</a>.</p>
+
+    <p>The solution is simple. <b>Make your modules self-contained.</b> In particular, take the time to understand how to <a href="https://trongate.io/documentation/display/php_framework/parent-and-child-modules/understanding-parent-and-child-modules" target="_blank">nest modules within modules</a>. Once you start building this way, you'll never look back.</p>
+  </details>
+
+  <details>
+    <summary>2. Never Modify the "Engine" Directory</summary>
+    <p>At the heart of Trongate lies the <code>engine</code> directory. This folder contains all the core files and essential inner workings that power the framework. It's the DNA of Trongate – the low-level code that handles everything from routing and controllers to view rendering and security helpers.</p>
+
+    <p>As tempting as it might be to tweak or "improve" something within the <code>engine</code> directory, I strongly advise against it. Modifying this directory can lead to instability, break future updates, and make your app incompatible with tools and modules built by others in the Trongate community.</p>
+
+    <p>Trongate is designed to be extended, not altered at its core. If you find yourself wanting to change how something works, ask yourself: "Can I solve this by building a custom module or overriding behaviour through the normal application structure?" In nearly all cases, the answer will be yes.</p>
+
+    <p>There is, however, one small exception to this rule: the <code>$debug</code> setting found near the top of the <code>Model.php</code> file. By default, this is set to <code>false</code>. During development, you might find it helpful to temporarily set <code>$debug</code> to <code>true</code> in order to inspect the SQL queries being executed by the Model class. This can be an effective way to troubleshoot or optimise your data layer. Just be sure to return it to <code>false</code> before moving to a production environment, as leaving it enabled can expose sensitive query information.</p>
+
+    <p>So remember: trust the engine, and don't mess around with it. It's the foundation that makes everything else work as expected.</p>
+  </details>
+
+  <details>
+    <summary>3. Expect Third-Party Dependencies to Break!</summary>
+
+    <p>I wasn't sure whether to title this tip:</p>
+
+    <p><b><i>"It's okay to use third-party libraries."</i></b></p>
+
+    <p>or,</p>
+
+    <p><b><i>"Avoid using third-party libraries."</i></b></p>
+
+    <p>Confused?</p>
+
+    <p>Allow me to elaborate.</p>
+
+    <p>One of the misconceptions about the Trongate framework is that it doesn't support third-party code. I'm referring to tools and resources like Packagist, CSS frameworks, JavaScript libraries, and similar external assets.</p>
+
+    <p>Nothing could be further from the truth. Trongate was built to integrate smoothly with third-party resources, including Packagist. Not only do we cover this in the documentation (and <a href="https://trongate.io/documentation/display/php_framework/controllers/using-packagist-with-trongate" target="_blank">here</a> is the link!), but the Trongate website <i>itself</i> uses a variety of third-party libraries.</p>
+
+    <p>So let me be crystal clear: Trongate works beautifully with third-party code. There's a wealth of valuable tools out there, and you're absolutely welcome to use them alongside Trongate.</p>
+
+    <p>However, experience has taught me a valuable lesson – relying on third-party code introduces risk. Specifically, it compromises stability.</p>
+
+    <p>Here's a real-world example.</p>
+
+    <p>The Trongate website currently uses a third-party library for handling "social auth" logins. I implemented the system, but I didn't write the underlying third-party code.</p>
+
+    <p>Just a few days ago, I encountered a couple of issues related to the login system. Whether those issues stemmed from flaws in the third-party code or were just momentary glitches remains to be seen. Time will tell.</p>
+
+    <p>Speaking personally, I use third-party code all the time. However, I do so with a clear expectation: <b>at some point, it will probably break</b>. You may call that pessimism. I call it preparation. Maintaining a healthy scepticism about third-party dependencies can save you from both a false sense of security and a mountain of frustration when something suddenly stops working.</p>
+
+    <p>So yes, use third-party code – but use it with caution. And above all, <b>expect it to break</b>.</p>
+
+    <p>And while we're on the subject of stability, let me remind you that Trongate is PHP's only "v1 forever" framework. It's the only framework I know of that puts stability at the very top of its priority list.</p>
+
+    <p>I can't promise that Trongate will never break – no software can offer that. But I can say this: Trongate is the only framework I'm aware of that was designed from the ground up to make stability its highest priority.</p>
+  </details>
+
+  <details>
+    <summary>4. Ask for Help</summary>
+    <p>I remember – a number of years ago – I posted a tutorial series on YouTube covering another PHP framework (not Trongate). I will refrain from naming the framework because none of the people behind that PHP framework are here to defend themselves. However, it's an excellent framework and I really like it. The code (which I've looked at) is outstanding and it's packed with great features. I'm a fan!</p>
+
+    <p>After recording about ten or so videos, I ran into some technical issue that I needed to figure out. This was probably about six years ago, and my memory on the topic is weak. However, I think it was something to do with uploading images. Regardless of whether or not that was the <i>particular</i> issue, I remember that I just needed a quick word of advice pertaining to this <i>one thing</i> that wasn't made clear in the documentation.</p>
+
+    <p>Anyway, to cut a long and miserable story short, I remember hanging around a discussion forum for three or four days trying to get help. I couldn't get any!</p>
+
+    <p>Because I hadn't posted much content, I felt like an intruder (perhaps that's my fault and not theirs!). In any event, I ended up offering cash for questions – and even that never worked. Nobody would take my money! So, I took my tutorials down and I gave up on that particular framework. That was hugely disappointing for me, at the time.</p>
+
+    <p>That type of scenario will <b>never</b> happen with Trongate.</p>
+
+    <p>We have <a href="https://trongate.io/forums" target="_blank">online discussion forums</a>. We also have some incredibly kind, generous, and positively charged people who love helping others. If you run into any issues or you just need a word of advice, use these resources. It's why they're there.</p>
+
+    <p>If you reach out for help, I promise - nobody will ever tell you to "go and read the manual". As strongly as possible, I want to encourage you to reach out and ask for help, if and when you need it.</p>
+
+    <p>Oh, and if you'd like to reach out to me <i>personally</i>, you can contact me via <a href="https://trongate.io/contactus" target="_blank">this page</a>.</p>
+  </details>
+
+  <details>
+    <summary>5. Post Tutorials</summary>
+    <p>If I had to choose just one method for mastering a subject – whether it's a framework, a language, or a skill – I'd say this:</p>
+
+    <p><b>Teach it.</b></p>
+
+    <p>There's something transformative that happens when you step into the role of teacher. Concepts that once seemed fuzzy become crystal clear. You spot gaps in your understanding that you didn't know were there. Best of all, you begin to think more critically, more precisely, and more creatively.</p>
+
+    <p>So here's my challenge to you: <b>post a tutorial</b>.</p>
+
+    <p>Don't wait until you've "mastered" Trongate. Don't wait until you've built something big or finished some monumental app. Start where you are. Share what you know.  Start today!</p>
+
+    <p>Your tutorial could be a blog post, a YouTube video, a tweet thread, or even a complete online course. It doesn't have to be polished or perfect – it just has to be honest and thoughtful. I can assure you, there are plenty of developers out there who will appreciate it.</p>
+
+    <p>By the way, we have a <a href="https://www.youtube.com/@trongate" target="_blank">YouTube channel</a>, and we're actively looking for contributors. If you've ever wanted to make your mark, help others, or simply give back to the community, this is your chance. We (and I speak on behalf of all the folks at "Team Trongate") would love to have you on board.</p>
+
+    <p>I don't care if you've never posted a tutorial before and I don't care if you've never written a line of code in your life.  Often, people who have little experience post the best tutorials because they speak on a level that most people can understand.  <b>Therefore, If you'd like to get on board as a person who <i>teaches</i> Trongate then I want to positively encourage you to get involved.</b></p>
+
+    <p>Interested in getting involved?  Don't waste another minute.  <a href="https://trongate.io/contactus">Get in touch!</a></p>
+  </details>
+
+  <details>
+      <summary>BONUS TIP: If The Docs Are Rubbish, Blame Me</summary>
+      <p>Building a framework is relatively easy. Writing documentation, on the other hand, is a nightmare. If you find anything in these docs confusing, unclear, or just not quite right – it's not your fault. It's mine. I take full responsibility.</p>
+
+      <p>If you spot an error, notice something missing, or think a section could be better explained, your feedback is invaluable. Your feedback helps to make these docs clearer and more useful for everyone.</p>
+
+      <p>So, I hope I'm very clear.  If there's <i>anything</i> in the Trongate documentation that is confusing for you, do <b>not</b> allow that challenge to harm your self-esteem.  Instead, just blame me.  It's my fault.  Not yours.</p>
+        
+      <p>Please <a href="https://github.com/trongate/trongate-docs" target="_blank" rel="noopener noreferrer">report issues or suggest improvements on GitHub</a>. That's the best way to help improve the documentation quickly.</p>
+
+      <p>Not comfortable with GitHub? No problem — you can also <a href="https://trongate.io/contactus">get in touch via this contact form</a>.</p>
+
+      <p>Your voice matters and your feedback is welcome.</p>
+
+      <p>I've just realised this is the final page. So, I feel strangely obligated to end with something deep and meaningful. That being the case, I have to say — I really like it when you go to a Chinese restaurant and they give you those little fortune cookies. You crack them open and inside is a mysterious message, usually something weirdly vague yet oddly profound. Those are good, aren’t they?</p>
+
+      <p>May the code be with you!</p>
+
+      <p>DC</p>
+  </details>
+
+</section>
+
+<style>
+    :root {
+        --tips-grid-color: #2c3e50;
+        --accent-color: #3498db;
+        --bg-color: #f8f9fa;
+        --text-color: #333;
+    }
+
+    h1 {
+        color: var(--tips-grid-color);
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .tips-intro {
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        font-size: .833em;
+    }
+
+    .tips-grid details {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .tips-grid details:hover {
+        transform: translateY(-4px);
+    }
+
+    .tips-grid summary {
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0.5rem;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tips-grid summary::marker {
+        color: var(--accent-color);
+    }
+
+    .tips-grid details[open] summary {
+        color: var(--accent-color);
+    }
+
+    .tips-grid p {
+        margin: 1.6rem 0;
+        padding: 0 1rem;
+    }
+
+    .tips-grid details:focus-within {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+    }
+</style>

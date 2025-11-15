@@ -1,0 +1,148 @@
+<div class="container">
+  <h1>update()</h1>
+  <p class="signature">public function update(int $update_id, array $data, ?string $target_table = null): bool</p>
+  
+  <h2>Description</h2>
+  <div class="description">
+    <p>
+      This method updates a specific record identified by its ID with new data provided as an associative array. Optionally, you can specify the database table to update; if not provided, the table name will be inferred from the first segment of the URL.
+    </p>
+  </div>
+
+  <h2>Parameters</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+        <th>Required</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>update_id</td>
+        <td>int</td>
+        <td>The ID of the record to update.</td>
+        <td>N/A</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>data</td>
+        <td>array</td>
+        <td>An associative array containing column names as keys and their corresponding values.</td>
+        <td>N/A</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>target_table</td>
+        <td>string|null</td>
+        <td>(optional) The name of the database table to update. If not provided, the table name will be inferred from the first URL segment.</td>
+        <td>'First URL segment'</td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Return Value</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>bool</td>
+        <td>Returns true if the update was successful, false otherwise.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Throws</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Exception</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>RuntimeException</td>
+        <td>If the query execution fails.</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <h2>Example 1: Updating a User Record</h2>
+  <p>The code sample below assumes a current URL of the form: example.com/users/update/123.</p>
+  <div class="example">
+    <pre>// Data to update
+$data["name"] = "John Doe";
+$data["email"] = "john@example.com";
+
+// Update the user record with ID 123 using inferred table name
+$update_success = $this->model->update(123, $data);
+
+if ($update_success) {
+    echo "User record updated successfully!";
+} else {
+    echo "Failed to update user record.";
+}</pre>
+  </div>
+
+  <h2>Example 2: Updating a Customer Record with Explicit Table Name</h2>
+  <p>The code sample below assumes a current URL of the form: example.com/customers/update/456.</p>
+  <div class="example">
+    <pre>// Fetch record ID from URL
+$update_id = segment(3, 'int');
+
+// Data to update
+$data["name"] = "Alice Smith";
+$data["email"] = "alice@example.com";
+
+// Update the customer record in the 'customers' table
+$update_success = $this->model->update($update_id, $data, 'customers');
+
+if ($update_success) {
+    echo "Customer record updated successfully!";
+} else {
+    echo "Failed to update customer record.";
+}</pre>
+  </div>
+
+  <h2>Example 3: Updating a Record using Alternative Syntax</h2>
+  <p>The code example below uses alternative PHP syntax to initialize a data array.</p>
+  <div class="example">
+    <pre>// ID of the record to update
+$update_id = 123;
+
+// Data to update
+$data = [
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'email' => 'john.doe@example.com'
+];
+
+// Perform the update
+$update_success = $this->model->update($update_id, $data, 'members');
+
+if ($update_success) {
+    echo "Record updated successfully!";
+} else {
+    echo "Failed to update record.";
+}</pre>
+  </div>
+
+  <div class="alert alert-warning">
+    <div class="alert-heading"><i class="fa fa-exclamation-circle"></i> Warning!</div>
+    <div class="alert-body">
+      <p>
+        Exercise caution when using this method, especially in environments with complex data relationships or large datasets. Always ensure proper testing and consider potential data consistency issues.
+      </p>
+    </div>
+  </div>
+</div>

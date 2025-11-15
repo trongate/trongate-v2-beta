@@ -5,4 +5,11 @@ $admin_theme = [
 ];
 
 $themes['admin'] = $admin_theme;
+
+$bootstrappy_theme = [
+    "dir" => "bootstrappy/dark",
+    "template" => "bootstrappy.php",
+];
+
+$themes['bootstrappy'] = $bootstrappy_theme;
 define('THEMES', $themes);
