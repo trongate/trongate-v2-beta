@@ -4,6 +4,7 @@
   <h2>Description</h2>
   <div class="description">
     <p>Uploads a file using Trongate's inbuilt <code>File</code> class.</p>
+
     <p><strong>How It Works:</strong></p>
     <ul>
       <li>It instantiates a <code>File</code> object.</li>
@@ -56,8 +57,7 @@
   </table>
   <h2>Example Usage</h2>
 
-  <div class="example">
-    <pre>
+[code=php]
 // Example: Uploading a PDF file with custom configuration
 $config = [
     'destination' => 'documents/uploads/',
@@ -80,8 +80,7 @@ try {
     */
 } catch (Exception $e) {
     echo "Upload failed: " . $e->getMessage();
-}</pre>
-  </div>
+}[/code]
   <h2>Best Practices</h2>
   <div class="description">
     <ul>

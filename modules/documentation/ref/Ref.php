@@ -19,6 +19,8 @@ class Ref extends Trongate {
             $data['feature_ref_info'].= '<p>File path: '.$file_path.'</b>';
 	    }
 
+	    $data['feature_ref_info'] = $this->documentation->hide_code_blocks($data['feature_ref_info']);
+
         $this->view('feature_ref', $data);
 	}
 

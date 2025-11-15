@@ -1,7 +1,7 @@
 <?php
 class Documentation_model extends Model {
 
-	private $docs_db = 'live5';
+	private $docs_db = 'default';
 
 	public function get_books() {
 		$db = $this->docs_db;
