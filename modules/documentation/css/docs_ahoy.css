@@ -131,6 +131,11 @@ button, .button {
 	cursor: pointer;
 }
 
+.docs-books .card-body p {
+  font-size: .933em;
+  line-height: 1.33em;
+}
+
 .docs-page {
   display: grid;
   gap: 1em;

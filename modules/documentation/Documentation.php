@@ -2,21 +2,6 @@
 class Documentation extends Trongate {
 
     /**
-     * @var array The documentation collection.
-     * 
-     * Note: The documentation data is sourced from the JSON file located at:
-     *       APPPATH/modules/documentation/assets/docs_collections.json
-     */
-    public $docs_collections;
-
-    /**
-     * Constructor initializes the documentation collection.
-     */
-    public function __construct() {
-        $this->docs_collections = $this->_fetch_docs_collections();
-    }
-
-    /**
      * Displays the documentation home page.
      *
      * Prepares breadcrumb navigation, retrieves theme and book data,
@@ -55,12 +40,12 @@ class Documentation extends Trongate {
         $data['additional_includes_top'] = $additional_includes_top;
 
         if (segment(3) === '') {
-            $collections = $this->_fetch_docs_collections();
+            $this->module('documentation');
+            $collections = $this->documentation->model->get_books();
             $docs_strings = [];
             foreach($collections as $collection) {
-                $target_url = $collection->target_url;
-                $last_bit = get_last_part($target_url, '/');
-                $docs_strings[] = $last_bit;
+                // Extract docs_string from url_string in database
+                $docs_strings[] = $collection->url_string;
             }
             $data['docs_strings'] = $docs_strings;
         }
@@ -68,19 +53,6 @@ class Documentation extends Trongate {
         $data['view_module'] = 'documentation';
         $data['view_file'] = 'manage';
         $this->template('bootstrappy', $data);
-    }
-
-    /**
-     * Fetches the documentation collection from a JSON file.
-     *
-     * @return array The decoded JSON object cast to an associative array, containing the documentation collection.
-     */
-    public function _fetch_docs_collections(): array {
-        $filepath = APPPATH . 'modules/documentation/assets/docs_collections.json';
-        $docs_collections_json = file_get_contents($filepath);
-        $docs_collections = (array) json_decode($docs_collections_json);
-        unset($docs_collections[3]);
-        return $docs_collections;
     }
 
     public function _draw_search_btn() {

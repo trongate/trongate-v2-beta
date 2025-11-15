@@ -17,8 +17,13 @@ class Manage extends Trongate {
 
         // Having deleted documentation_chapters records for $doc_string, let's re-insert the chapter records.
         foreach ($docs_collections as $key => $docs_collection) {
-            $last_part = get_last_part($docs_collection->target_url, '/');
-            if ($last_part = $docs_string) {
+            // Convert url_string from database format to docs_string format
+            // e.g., "trongate-php-framework" becomes "php_framework"
+            $url_string = $docs_collection->url_string;
+            $url_string = str_replace('trongate-', '', $url_string); // Remove "trongate-" prefix
+            $url_string = str_replace('-', '_', $url_string); // Replace hyphens with underscores
+            
+            if ($url_string === $docs_string) {
                 $docs_chapters = $docs_collections[$key];
             }
         }
@@ -89,7 +94,7 @@ class Manage extends Trongate {
         $truncation_info = '';
 
         $this->module('documentation');
-        $docs_collections = $this->documentation->docs_collections;  
+        $docs_collections = $this->documentation->model->get_books();
 
         // Delete all of the chapters AND all of the pages
         $params['docs_string'] = $docs_string;

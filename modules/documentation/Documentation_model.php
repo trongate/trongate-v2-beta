@@ -4,9 +4,9 @@ class Documentation_model extends Model {
 	private $docs_db = 'default';
 
 	public function get_books() {
-		$db = $this->docs_db;
-		$books = $this->$db->get('priority', 'documentation_books');
-		return $books;
+	    $db = $this->docs_db;
+	    $books = $this->$db->get('priority', 'documentation_books');
+	    return $books;
 	}
 
 	public function get_chapters($book_url_string) {
