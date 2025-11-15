@@ -107,19 +107,7 @@ class Manage extends Trongate {
         $chapter_counter = 0;
         foreach($docs_chapters as $docs_chapter) {
             $chapter_counter++;
-// if ($chapter_counter === 16) {
-//     json($docs_chapter, true);
-// }
             $chapter_data = $this->build_chapter_data($docs_chapter, $docs_string, $chapter_counter);
-
-
-// if ($chapter_counter === 16) {
-//     var_dump($chapter_data); die();
-//     json($chapter_data, true);
-// echo count($chapter_data); die();
-// json($chapter_data[1], true);
-// }
-
 
             foreach($chapter_data as $key => $value) {
                 $value['book_id'] = $this->get_book_id($value['docs_string']);
@@ -134,89 +122,6 @@ class Manage extends Trongate {
 
         http_response_code(200);
         echo 'great success!';
-
-    }
-
-    public function submit_reindexXXXX() {
-
-        $docs_string = post('docsStr', true);
-        $chapter_number = (int) post('chapterNumber', true);
-        $truncation_info = '';
-
-        $this->module('documentation');
-        $docs_collections = $this->documentation->docs_collections;
-        $first_docs_string = get_last_part($docs_collections[0]->target_url, '/');
-
-        if (empty($docs_string)) {
-            $docs_string = $first_docs_string;
-            die();
-        }
-        
-        $chapter_number = max(1, $chapter_number);
-
-        if (($chapter_number === 1) && ($docs_string === $first_docs_string)) {
-
-            $truncation_info = '***   TRUNCTION *****';
-            $truncation_info.= ' since chapter_number is '.$chapter_number.' and docs_string is '.$docs_string.'   ';
-            $sql = 'TRUNCATE documentation_pages';
-            $this->db->query($sql);
-
-            $this->reindex_chapters($docs_collections);
-        }
-
-        $docs_contents = $this->documentation->_establish_docs_contents($docs_string);
-//json($docs_contents, true);        
-        if (!isset($docs_contents[$chapter_number - 1])) {
-            $this->send_json_response('0');
-        }
-        
-        $chapter_data = $this->build_chapter_data([
-            'docs_string' => $docs_string,
-            'chapter_number' => $chapter_number,
-            'docs_contents' => $docs_contents
-        ]);
-
-        $this->db->insert_batch('documentation_pages', $chapter_data);
-        
-        $num_chapters = count($docs_contents);
-
-        if ($chapter_number < $num_chapters) {
-            $this->send_json_response([
-                'chapter_number' => $chapter_number + 1,
-                'docs_string' => $docs_string,
-                'truncation_info' => $truncation_info
-            ]);
-        } else {
-
-                // Do we have another document collection ahead of this one?
-
-                $next_docs_string = '';
-                $found_collection = false;
-                foreach($docs_collections as $collection) {
-                    $collection_docs_string = get_last_part($collection->target_url, '/');
-
-                    if ($found_collection === true) {
-
-                        $next_docs_string = get_last_part($collection->target_url, '/');
-
-                        $this->send_json_response([
-                            'chapter_number' => 1,
-                            'docs_string' => $next_docs_string,
-                            'truncation_info' => $truncation_info
-                        ]);
-                    }
-
-                    if ($docs_string === $collection_docs_string) {
-                        $found_collection = true;
-                    }
-
-                }
-
-                if ($next_docs_string === '') {
-                    $this->send_json_response('0');
-                }
-
-        }
 
     }
 
@@ -283,71 +188,6 @@ class Manage extends Trongate {
                     $chapter_data[] = $row_data;
                 }
 
-        return $chapter_data;   
-    }
-
-    private function build_chapter_dataXXXX($args) {
-        $chapter_data = [];
-        $target_chapter_number = (int) $args['chapter_number'];
-
-        $chapter_counter = 0;
-        $page_counter = 0;
-        foreach($args['docs_contents'] as $chapter) {
-            $chapter_counter++;
-        
-                $pages = $chapter['pages'] ?? [];
-                settype($pages, 'array');
-
-                foreach($pages as $page) {
-                    $page_counter++;
-
-                    if ($chapter_counter === $target_chapter_number) {
-                        $page_filepath = $page['path'];
-                        $file_contents = file_get_contents($page_filepath);
-                        $file_contents = str_replace('—', ' - ', $file_contents);
-                        $file_contents = $this->clean_php_tags($file_contents);
-                        $file_contents = $this->documentation->make_video_containers($file_contents);
-
-                        $filename = get_last_part($page_filepath, '/');
-                        $first_four = substr($filename, 0, 4);
-
-                        if (ctype_digit($first_four)) {
-                            $filename = substr($filename, 4);
-                        }
-
-                        $filename = str_replace('.html', '', $filename);
-                        $filename_str = url_title(strtolower($filename));
-                        $page_url_string = str_replace('_', '-', $filename_str);
-
-                        // Get the headline
-                        $this->module('documentation-calculate_search_scores');
-                        $headline_content = $this->calculate_search_scores->_get_element_text_by_selector($file_contents, 'h1', true);
-
-                        $cleaned_page_content = $this->documentation->remove_unwanted_new_lines($file_contents);
-                        $cleaned_page_content = $this->documentation->hide_code_blocks($cleaned_page_content);
-
-                        // Remove PHP openings and closings
-                        $cleaned_page_content = $this->clean_php_tags($cleaned_page_content);
-                        $cleaned_page_content = strip_tags($cleaned_page_content);
-   
-                        $row_data = [
-                            'docs_string' => $args['docs_string'],
-                            'chapter_number' => $args['chapter_number'],
-                            'page_number' => $page_counter,
-                            'page_url_string' => $page_url_string,
-                            'headline' => $headline_content,
-                            'page_content' => $file_contents,
-                            'headline_sounds_like' => metaphone($headline_content),
-                            'page_content_sounds_like' => metaphone($cleaned_page_content)
-                        ];
-
-                        $chapter_data[] = $row_data;
-                    }
-
-                }
-
-        }
-  
         return $chapter_data;   
     }
 

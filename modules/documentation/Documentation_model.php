@@ -107,7 +107,7 @@ class Documentation_model extends Model {
      * @param string $comment The comment containing the [code]...[/code] tags to be processed.
      * @return string The processed comment with code blocks hidden inside <div> elements.
      */
-    private function hide_code_blocks(string $comment): string {
+    public function hide_code_blocks(string $comment): string {
         // First, validate and process only properly matched code blocks
         $pattern = '/\[code(?:=(\w+))?\]((?:(?!\[code).)*?)\[\/code\]/si';
         $processed_comment = preg_replace_callback($pattern, function ($matches) {
