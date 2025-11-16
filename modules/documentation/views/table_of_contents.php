@@ -1,6 +1,6 @@
     <h1 class="text-center">Table of Contents</h1>
     <?= Modules::run('documentation/_draw_search_btn') ?>
-    <div class="mt-1">
+    <div class="mt-1 container">
         <?php if (!empty($chapters)): ?>
             <?php foreach ($chapters as $chapter): ?>
                 <div class="card">
@@ -59,7 +59,8 @@
         align-items: center;
         padding: 0.75rem 0;
         border-bottom: 1px dotted #ccc;
-        font-size: 1.33em;
+        font-size: 1em;
+        line-height: 1em;
     }
     .toc-list-items li:last-child {
         border-bottom: none;

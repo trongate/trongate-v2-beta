@@ -96,11 +96,11 @@ img { max-width: 100%; height: auto; }
     background-color: #fff;
     width: 94%;
     margin: 0 auto;
-    max-width: 1200px;
+    max-width: 1320px;
     min-height: 100vh;
     padding: 1em 7em;
-	-webkit-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54); 
-	box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
+  	-webkit-box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54); 
+  	box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.54);
 }
 
 /* Breadcrumbs */
@@ -706,4 +706,4 @@ there.
 @media (min-width: 1000px) {}
 
 /* Larger than Desktop HD */
-@media (min-width: 1200px) {}
+@media (min-width: 1320px) {}

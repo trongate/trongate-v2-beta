@@ -6,13 +6,13 @@ body {
   font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #222;
   background: var(--background-gradient);
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .docs-container {
 	min-height: 100vh;
 	width: 94%;
-	max-width: 1200px;
+	max-width: 1320px;
 	margin: 0 auto;
 	background-color: #fefefe;
 	border-left: 1px #E1E1E1 solid;
@@ -289,7 +289,7 @@ pre code {
   width: 100%;
   margin: 0 auto 1em auto;
   overflow: auto; 
-  max-width: 760px;
+  max-width: 840px;
 }
 
 .code-block-header {
@@ -365,7 +365,7 @@ button.feature-ref-btn .fa {
 
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 1320px) {
   h1 {
   	font-size: 37px;
   }
