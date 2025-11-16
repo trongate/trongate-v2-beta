@@ -29,6 +29,10 @@ body {
 	overflow: hidden;
 }
 
+.container {
+	max-width: 1100px;
+}
+
 .feature-ref-top {
 	display: flex;
 	flex-direction: row;

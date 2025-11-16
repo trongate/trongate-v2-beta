@@ -287,7 +287,7 @@ function activateRefs() {
             // Remove parentheses from function name for URL
             const cleanFunctionName = functionName.replace('()', '');
             const targetUrl = `documentation-ref/display_info/${cleanFunctionName}`;
-            openIframeModal(targetUrl, 1000, 600);
+            openIframeModal(targetUrl, 1200, 600);
         });
         
         // Replace the span with the button

@@ -68,7 +68,7 @@
     }
     .toc-list-items a {
         text-decoration: none;
-        font-weight: 500;
+        font-weight: bold;
     }
     .toc-list-items a:hover {
         text-decoration: underline;

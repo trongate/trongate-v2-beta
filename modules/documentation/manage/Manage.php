@@ -91,6 +91,11 @@ class Manage extends Trongate {
         }
 
         $docs_string = post('docsStr', true);
+
+        if ($docs_string === 'trongate-php-framework') {
+            $docs_string = 'php_framework';
+        }
+
         $truncation_info = '';
 
         $this->module('documentation');
@@ -148,11 +153,10 @@ class Manage extends Trongate {
         settype($pages, 'array');
         $page_counter = 0;
                 foreach($pages as $page) {
-                    $page_counter++;
-
-     
+                    $page_counter++;     
                     $page_filepath = $page['path'];
                     $file_contents = file_get_contents($page_filepath);
+
                     $file_contents = str_replace('—', ' - ', $file_contents);
                     $file_contents = $this->clean_php_tags($file_contents);
                     $file_contents = $this->documentation->make_video_containers($file_contents);
