@@ -188,7 +188,7 @@ function revealCodeBlocks(targetEls = false, applyPrism = true) {
         } else if (displayLanguage.includes('j')) {
             displayLanguage = 'JavaScript';
         } else if (displayLanguage === 'text') {
-            displayLanguage = 'Plain Text';
+            displayLanguage = '';
         } else {
             displayLanguage = displayLanguage.toUpperCase();
         }
@@ -202,7 +202,7 @@ function revealCodeBlocks(targetEls = false, applyPrism = true) {
         trimElementInnerContent(innerCodeEl);
 
         const divLhs = document.createElement('div');
-        divLhs.innerText = displayLanguage + ':';
+        divLhs.innerText = displayLanguage;
         codeBlockHeader.appendChild(divLhs);
 
         const copyIconDiv = document.createElement('div');
