@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -47,25 +47,7 @@
     </tbody>
   </table>
   
-  <h2>Exceptions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Exception Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>RuntimeException</td>
-        <td>Thrown if the query execution fails or if the result cannot be fetched.</td>
-      </tr>
-    </tbody>
-  </table>
-  
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$num_users = $this->model->count('users');</pre>
-  </div>
+  [code=php]$num_users = $this->db->count('users');[/code]
   
 </div>

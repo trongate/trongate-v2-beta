@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -53,35 +53,13 @@
       </tr>
     </tbody>
   </table>
-  
-  <h2>Exceptions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Exception Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>RuntimeException</td>
-        <td>Thrown if the query execution fails.</td>
-      </tr>
-    </tbody>
-  </table>
 
   <h2>Example Usage #1</h2>
   <p>The code sample below demonstrates how to fetch a single record from the 'products' table with the ID '123'.</p>
-  <div class="example">
-    <pre>
-$product_obj = $this->model->get_where(123, 'products');</pre>
-  </div>
+[code=php]$product_obj = $this->db->get_where(123, 'products');[/code]
 
   <h2>Example Usage #2</h2>
   <p>In this alternative example, no table name has been passed into the method. This means that the table name will be assumed to be the value of the first URL segment.</p>
-  <div class="example">
-    <pre>
-$user_obj = $this->model->get_where(456);</pre>
-  </div>
+[code=php]$user_obj = $this->db->get_where(456);[/code]
 
 </div>

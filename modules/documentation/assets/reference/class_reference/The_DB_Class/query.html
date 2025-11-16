@@ -11,7 +11,7 @@
     </p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -80,11 +80,9 @@
   </div>
   <h2>Example Usage</h2>
   <p>Below is an example of executing a custom SQL query involving a table join to retrieve information about employees and their corresponding departments:</p>
-  <div class="example">
-    <pre>$sql = "SELECT e.name AS employee_name, e.position, d.name AS department_name
+[code=php]$sql = "SELECT e.name AS employee_name, e.position, d.name AS department_name
         FROM employees e
         JOIN departments d ON e.department_id = d.id";
         
-$rows = $this->model->query($sql, 'object');</pre>
-  </div>
+$rows = $this->db->query($sql, 'object');[/code]
 </div>

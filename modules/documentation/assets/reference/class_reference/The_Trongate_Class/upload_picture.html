@@ -102,7 +102,7 @@ function submit_product_picture($update_id) {
         
         // Update database with filename
         $data['picture'] = $file_info['file_name'];
-        $this->model->update($update_id, $data);
+        $this->db->update($update_id, $data);
         
         set_flashdata('Picture uploaded successfully');
         redirect($_SERVER['HTTP_REFERER']);
@@ -144,7 +144,7 @@ function submit_product_picture_with_thumbnail($update_id) {
         
         // Update database with filename
         $data['picture'] = $file_info['file_name'];
-        $this->model->update($update_id, $data);
+        $this->db->update($update_id, $data);
         
         set_flashdata('Picture and thumbnail uploaded successfully');
         redirect($_SERVER['HTTP_REFERER']);

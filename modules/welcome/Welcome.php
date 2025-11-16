@@ -1,6 +1,30 @@
 <?php
 class Welcome extends Trongate {
 
+    public function test() {
+        $rows = $this->db->get('id', 'users');
+        json($rows);
+    }
+
+/*
+CREATE TABLE users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email_address VARCHAR(255) NOT NULL
+);
+
+INSERT INTO users (first_name, last_name, email_address)
+VALUES ('Alice', 'Sutherland', 'alice.sutherland@example.com');
+
+INSERT INTO users (first_name, last_name, email_address)
+VALUES ('Brian', 'McDowell', 'brian.mcdowell@example.com');
+
+INSERT INTO users (first_name, last_name, email_address)
+VALUES ('Caroline', 'Walker', 'caroline.walker@example.com');
+
+*/
+
     public function demo() {
         $this->view('demo');
     }

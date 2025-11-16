@@ -8,7 +8,7 @@
     </p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -41,11 +41,9 @@
     </tbody>
   </table>
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>// Retrieve all table names from the database
-$tables = $this->model->get_all_tables();
+[code=php]// Retrieve all table names from the database
+$tables = $this->db->get_all_tables();
 
 // Display the table names
-json($tables);</pre>
-  </div>
+json($tables);[/code]
 </div>

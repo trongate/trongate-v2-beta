@@ -13,7 +13,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -79,13 +79,11 @@
   
   <h2>Example Usage</h2>
   <p>Below is an example of executing a SQL statement using the `exec()` method:</p>
-  <div class="example">
-    <pre>$sql = "CREATE TABLE example_table (
+[code]$sql = "CREATE TABLE example_table (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     
-$this->model->exec($sql);</pre>
-  </div>
+$this->db->exec($sql);[/code]
 </div>

@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -54,42 +54,21 @@
     </tbody>
   </table>
   
-  <h2>Exceptions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Exception Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>PDOException</td>
-        <td>Thrown if there is an error executing the SQL query.</td>
-      </tr>
-    </tbody>
-  </table>
-  
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$table_name = 'users'; // Example table name
+[code=php]$table_name = 'users'; // Example table name
 
 // Get detailed information about table structure
-$table_info = $this->model->describe_table($table_name);
+$table_info = $this->db->describe_table($table_name);
 
 // Display the information
-json($table_info);</pre>
-  </div>
+json($table_info);[/code]
   
   <h2>Alternative Example</h2>
-  <div class="example">
-    <pre>$table_name = 'users'; // Example table name
+[code=php]$table_name = 'users'; // Example table name
 
 // Get only column names
-$column_names = $this->model->describe_table($table_name, true);
+$column_names = $this->db->describe_table($table_name, true);
 
 // Display the column names
-json($column_names);
-</pre>
-  </div>
+json($column_names);[/code]
 </div>

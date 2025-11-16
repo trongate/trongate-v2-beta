@@ -1,5 +1,11 @@
-<h1>Introducing The DB Class</h1>
+<h1>The DB Class Reference</h1>
 <p>Trongate comes with a fully featured PHP class for assisting with database interaction. The class is named 'DB' and is stored in a file named <strong>DB.php</strong>, inside the <code>engine</code> directory.</p>
+
+<p>The DB class provides a comprehensive set of methods for working with MySQL and MariaDB databases. All methods can be invoked using <code>$this->db</code> from within your controllers.</p>
+
+<div class="alert alert-info">
+    <p>In Trongate v2, use <code>$this->db</code>. If you see <code>$this->model</code> in reference materials, that's v1 syntax.</p>
+</div>
 
 <p>The DB class contains the following methods:</p>
 
@@ -39,5 +45,3 @@
     <li><span class="feature-ref">query()</span></li>
     <li><span class="feature-ref" ref-path="class_reference/The_Model_Class">query_bind()</span></li>
 </ul>
-
-<p>The following pages will provide information on how to perform database operations using Trongate's Model class.</p>

@@ -10,7 +10,7 @@
   </div>
 
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -79,25 +79,22 @@
   
   <h2>Example 1: Updating a User Record</h2>
   <p>The code sample below assumes a current URL of the form: example.com/users/update/123.</p>
-  <div class="example">
-    <pre>// Data to update
+[code=php]// Data to update
 $data["name"] = "John Doe";
 $data["email"] = "john@example.com";
 
 // Update the user record with ID 123 using inferred table name
-$update_success = $this->model->update(123, $data);
+$update_success = $this->db->update(123, $data);
 
 if ($update_success) {
     echo "User record updated successfully!";
 } else {
     echo "Failed to update user record.";
-}</pre>
-  </div>
+}[/code]
 
   <h2>Example 2: Updating a Customer Record with Explicit Table Name</h2>
   <p>The code sample below assumes a current URL of the form: example.com/customers/update/456.</p>
-  <div class="example">
-    <pre>// Fetch record ID from URL
+[code=php]// Fetch record ID from URL
 $update_id = segment(3, 'int');
 
 // Data to update
@@ -105,19 +102,17 @@ $data["name"] = "Alice Smith";
 $data["email"] = "alice@example.com";
 
 // Update the customer record in the 'customers' table
-$update_success = $this->model->update($update_id, $data, 'customers');
+$update_success = $this->db->update($update_id, $data, 'customers');
 
 if ($update_success) {
     echo "Customer record updated successfully!";
 } else {
     echo "Failed to update customer record.";
-}</pre>
-  </div>
+}[/code]
 
   <h2>Example 3: Updating a Record using Alternative Syntax</h2>
   <p>The code example below uses alternative PHP syntax to initialize a data array.</p>
-  <div class="example">
-    <pre>// ID of the record to update
+[code=php]// ID of the record to update
 $update_id = 123;
 
 // Data to update
@@ -128,21 +123,17 @@ $data = [
 ];
 
 // Perform the update
-$update_success = $this->model->update($update_id, $data, 'members');
+$update_success = $this->db->update($update_id, $data, 'members');
 
 if ($update_success) {
     echo "Record updated successfully!";
 } else {
     echo "Failed to update record.";
-}</pre>
-  </div>
+}[/code]
 
   <div class="alert alert-warning">
-    <div class="alert-heading"><i class="fa fa-exclamation-circle"></i> Warning!</div>
-    <div class="alert-body">
-      <p>
-        Exercise caution when using this method, especially in environments with complex data relationships or large datasets. Always ensure proper testing and consider potential data consistency issues.
-      </p>
-    </div>
+        <p>
+          Exercise caution when using this method, especially in environments with complex data relationships or large datasets. Always ensure proper testing and consider potential data consistency issues.
+        </p>
   </div>
 </div>

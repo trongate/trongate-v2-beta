@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -68,35 +68,12 @@
     </tbody>
   </table>
   
-  <h2>Exceptions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Exception Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>InvalidArgumentException</td>
-        <td>Thrown if an invalid operator is provided.</td>
-      </tr>
-      <tr>
-        <td>RuntimeException</td>
-        <td>Thrown if the query execution fails.</td>
-      </tr>
-    </tbody>
-  </table>
-  
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$column = 'status';
+[code=php]$column = 'status';
 $value = 'active';
 $operator = '=';
 $target_tbl = 'users';
 
-$num_active_users = $this->model->count_where($column, $value, $operator, $target_tbl);
-</pre>
-  </div>
+$num_active_users = $this->db->count_where($column, $value, $operator, $target_tbl);[/code]
   
 </div>

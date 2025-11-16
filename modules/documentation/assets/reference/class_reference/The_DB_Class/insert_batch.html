@@ -8,7 +8,7 @@
     </p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -66,19 +66,14 @@
     </tbody>
   </table>
   <div class="alert alert-warning">
-    <div class="alert-heading"><i class="fa fa-exclamation-circle"></i> Warning!</div>
-    <div class="alert-body">
       <p>
         This method should only be used in controlled environments to prevent potential security vulnerabilities arising from direct user input.
-      </p>
-    </div>
+      </p>   
   </div>
 
   <h2>Example Usage</h2>
   <p>Below is an example of how to insert three records into an 'employees' table in a single batch:</p>
-  <div class="example">
-    <pre>
-$employee_records = [
+[code=php]$employee_records = [
     [
         'name' => 'John Doe',
         'position' => 'Software Engineer',
@@ -96,8 +91,7 @@ $employee_records = [
     ]
 ];
 
-$num_inserted = $this->model->insert_batch('employees', $employee_records);
+$num_inserted = $this->db->insert_batch('employees', $employee_records);
 echo "Successfully inserted $num_inserted records into the 'employees' table.";
-    </pre>
-  </div>
+[/code]
 </div>

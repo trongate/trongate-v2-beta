@@ -8,9 +8,13 @@
       This method resequences the IDs in a given table, assigning new sequential IDs starting from 1. It uses a temporary column to store the new IDs and avoid potential ID conflicts. If the table is empty, the method resets the auto-increment value to 1.
     </p>
   </div>
+
+<div class="alert alert-danger">
+This method should be used with caution and may produce undesired consequences. Resequencing IDs can lead to potential data inconsistencies and unexpected behaviors, especially in systems with complex relationships or when dealing with large datasets. It's recommended to thoroughly test this method in a controlled environment before applying it to a production system. Additionally, make sure to take proper backups of your data before executing this operation.  
+</div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -61,18 +65,6 @@
     </tbody>
   </table>
   
-  <h2>Note</h2>
-  <div class="alert alert-warning">
-    <div class="alert-heading"><i class="fa fa-exclamation-circle"></i> Warning!</div>
-    <div class="alert-body">
-      <p>
-        This method should be used with caution and may produce undesired consequences. Resequencing IDs can lead to potential data inconsistencies and unexpected behaviors, especially in systems with complex relationships or when dealing with large datasets. It's recommended to thoroughly test this method in a controlled environment before applying it to a production system. Additionally, make sure to take proper backups of your data before executing this operation.
-      </p>
-    </div>
-  </div>
-  
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$this->model->resequence_ids('tasks');</pre>
-  </div>
+[code=php]$this->db->resequence_ids('tasks');[/code]
 </div>

@@ -8,7 +8,7 @@
     </p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -66,27 +66,21 @@
   </table>
   <h2>Example #1</h2>
   <p>The following code sample demonstrates how to fetch an array of records from a 'members' table where the 'id' values match those within a specified array of integers. In this example, the table name is not explicitly passed as an argument, so the method will derive the table name from the first URL segment.</p>
-  <div class="example">
-    <pre><code>// Assuming the URL is: http://your-domain.com/members/{method_name}
+[code=php]// Assuming the URL is: http://your-domain.com/members/{method_name}
 $member_ids = [1, 2, 3, 4];
-$members = $this->model->get_where_in('id', $member_ids);
+$members = $this->db->get_where_in('id', $member_ids);
 foreach ($members as $member) {
     echo $member->username.'<br>';
-}
-</code></pre>
-  </div>
+}[/code]
   <h2>Example #2</h2>
   <p>This example demonstrates explicitly passing the table name and specifying the return type for the records. This approach provides more control over the query execution and result format.</p>
-  <div class="example">
-    <pre><code>$column = 'id';
+[code=php]$column = 'id';
 $values = [1, 2, 3, 4];
 $target_table = 'items';
 $return_type = 'object';
 
-$items = $this->model->get_where_in($column, $values, $target_table, $return_type);
+$items = $this->db->get_where_in($column, $values, $target_table, $return_type);
 foreach ($items as $item) {
     echo $item->title;
-}
-</code></pre>
-  </div>
+}[/code]
 </div>

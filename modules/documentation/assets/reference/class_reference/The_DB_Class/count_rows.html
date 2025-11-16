@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -61,28 +61,10 @@
     </tbody>
   </table>
   
-  <h2>Exceptions</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Exception Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>RuntimeException</td>
-        <td>Thrown if the query execution fails.</td>
-      </tr>
-    </tbody>
-  </table>
-  
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$column = 'status';
+[code=php]$column = 'status';
 $value = 'active';
 $target_table = 'users';
-$num_active_users = $this->model->count_rows($column, $value, $target_table);</pre>
-  </div>
+$num_active_users = $this->db->count_rows($column, $value, $target_table);[/code]
   
 </div>

@@ -10,7 +10,7 @@
   </div>
   
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -55,18 +55,16 @@
   </table>
   
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>$id = 123; // Example ID of the record to delete
+[code=php]$id = 123; // Example ID of the record to delete
 $target_tbl = 'products'; // Example target table
 
-$is_deleted = $this->model->delete($id, $target_tbl);
+$is_deleted = $this->db->delete($id, $target_tbl);
 
 if ($is_deleted) {
     echo "Record with ID {$id} was successfully deleted from the {$target_tbl} table.";
 } else {
     echo "Failed to delete record with ID {$id} from the {$target_tbl} table.";
 }
-</pre>
-  </div>
+[/code]
   
 </div>

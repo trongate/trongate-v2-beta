@@ -8,7 +8,7 @@
     </p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -45,12 +45,8 @@
   </table>
   <h2>Example Usage #1</h2>
   <p>In the example below, the table name ('products') is being passed into the method as an argument.</p>
-  <div class="example">
-    <pre>$max_id = $this->model->get_max('products');</pre>
-  </div>
+[code=php]$max_id = $this->db->get_max('products');[/code]
   <h2>Example Usage #2</h2>
   <p>In this alternative example, no table name has been passed into the method. This means that the table name will be assumed to be the value of the first URL segment.</p>
-  <div class="example">
-    <pre>$max_id = $this->model->get_max();</pre>
-  </div>
+[code=php]$max_id = $this->db->get_max();[/code]
 </div>

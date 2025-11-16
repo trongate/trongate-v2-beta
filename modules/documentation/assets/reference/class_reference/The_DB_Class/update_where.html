@@ -10,7 +10,7 @@
   </div>
 
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -70,8 +70,7 @@
 
   <h2>Example Usage #1</h2>
   <p>In this example, the table name is inferred from the first URL segment, and the update is performed based on the condition where the column 'status' equals 'active'.</p>
-  <div class="example">
-    <pre>// Fetch current timestamp
+[code=php]// Fetch current timestamp
 $current_time = date('Y-m-d H:i:s');
 
 // Data to update
@@ -79,19 +78,17 @@ $data["status"] = "inactive";
 $data["updated_at"] = $current_time;
 
 // Update rows where 'status' column equals 'active'
-$update_success = $this->model->update_where("status", "active", $data);
+$update_success = $this->db->update_where("status", "active", $data);
 
 if ($update_success) {
     echo "Rows updated successfully!";
 } else {
     echo "Failed to update rows.";
-}</pre>
-  </div>
+}[/code]
 
   <h2>Example Usage #2</h2>
   <p>In this alternative example, the table name 'products' has been passed into the method as an argument. The method attempts to execute SQL that modifies table records by setting the 'status' to 'out of stock' and updating the 'updated_at' timestamp. The update operation would <b>only</b> be applied to rows where the 'stock_quantity' equals 10.</p>
-  <div class="example">
-    <pre>// Fetch current timestamp
+[code=php]// Fetch current timestamp
 $current_time = date('Y-m-d H:i:s');
 
 // Data to update
@@ -99,21 +96,18 @@ $data["status"] = "out of stock";
 $data["updated_at"] = $current_time;
 
 // Update rows in the 'products' table where 'stock_quantity' equals 10
-$update_success = $this->model->update_where("stock_quantity", 10, $data, "products");
+$update_success = $this->db->update_where("stock_quantity", 10, $data, "products");
 
 if ($update_success) {
     echo "Rows updated successfully!";
 } else {
     echo "Failed to update rows.";
-}</pre>
-  </div>
+}[/code]
 
-  <div class="alert alert-warning">
-    <div class="alert-heading"><i class="fa fa-exclamation-circle"></i> Warning!</div>
-    <div class="alert-body">
+<div class="alert alert-warning">
       <p>
         Exercise caution when using this method, especially in environments with complex data relationships or large datasets. Always ensure proper testing and consider potential data consistency issues.
       </p>
-    </div>
-  </div>
+</div>
+
 </div>

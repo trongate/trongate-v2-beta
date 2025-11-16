@@ -1,0 +1,44 @@
+<h1>Regarding Table Names</h1>
+<p>When interacting with a MySQL or MariaDB database, you'll probably be using Trongate's <code>DB</code> class.  Most methods in Trongate's <code>DB</code> class include an optional <code>$target_table</code> parameter.</p>
+<p><b>When you <strong>don't</strong> pass a table name, as an argument, Trongate automatically uses the first URL segment to be the table name.</b></p>
+<p>For example, if your URL is <code>https://yoursite.com/products/display</code>, the table name defaults to <code>products</code>.</p>
+<div class="alert alert-success">
+    <p>To make your code more robust, it's a good practice to <i>always</i> pass the table name as an argument.</p>
+</div>
+<div class="alert alert-info">
+    <p>In Trongate v2, use <code>$this->db->get()</code>. If you see <code>$this->model->get()</code> in reference materials, that's v1 syntax.</p>
+</div>
+<hr>
+<h2>Example</h2>
+<p>Let's assume that your website <code>BASE_URL</code> is set to <code>https://example.com/</code>.</p>
+<p>Let's also assume that you have a module named <code>members</code>, and a database table that's also named 'members'.</p>
+<p>Finally, let's assume that you have a <code>manage()</code> method, on the <code>Members.php</code> controller file.  This method could be used to render a page for managing member records.  The <code>manage()</code> method could be invoked by going to:</p>
+[code]https://example.com/members/manage[/code]
+<p>In this scenario, we can use Trongate's <span class="feature-ref">get()</span> method to retrieve rows from the <b>members</b> database table.  The code might look like this:</p>
+[code=php]
+public function manage() {
+    // Fetch members records.
+    $rows = $this->db->get('id');
+    $data['members'] = $rows;
+    $data['view_file'] = 'manage_members';
+    $this->template('public');
+}
+[/code]
+<p>In the above code sample, the important line here is:</p>
+[code=php]$rows = $this->db->get('id');[/code]
+<p>This code executes the following SQL query:</p>
+[code]SELECT * FROM members ORDER BY id;[/code]
+<p>Even though, we only passed in one argument (the <code>$order_by</code> value), the table name of <b>members</b> is inferred from the first URL segment (the first URL segment, in this example, is 'members').</p>
+<h3>Explicit Table Name Declaration</h3>
+<p>The ability to be able to invoke SQL queries with such few characters is very much in alignment with Trongate's propensity for simplicity.  However, if there is ever a scenario where our URLs change (perhaps through some kind of <a href="documentation/trongate_php_framework/understanding-routing/custom-routing">custom routing</a> setup, our code would break!</p>
+<p>Therefore, to ensure that your code remains future proof, it's a good idea to pass in the <code>$target_tbl</code> argument when invoking methods from Trongate's <code>DB</code> class.</p>
+<p>For example:</p>
+[code=php]
+public function manage() {
+    // Fetch members records.
+    $rows = $this->db->get('id', 'members');
+    $data['members'] = $rows;
+    $data['view_file'] = 'manage_members';
+    $this->template('public');
+}
+[/code]
