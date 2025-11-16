@@ -12,6 +12,6 @@ $databases = [
         'port' => '3306',
         'user' => 'root',
         'password' => '',
-        'database' => 'trongate_live5'
+        'database' => 'trgongate_live5'
     ]
 ];
