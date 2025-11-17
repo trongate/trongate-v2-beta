@@ -2,8 +2,16 @@
 class Welcome extends Trongate {
 
     public function test() {
-        $rows = $this->db->get('id', 'users');
-        json($rows);
+        $rows = $this->db->get('chapter_number', 'documentation_chapters');
+        $counter = 0;
+        foreach($rows as $row) {
+            
+            if ($row->book_id === 1) {
+                $counter++;
+                echo $counter.': '.$row->chapter_title.',<br>';
+            }
+            
+        }
     }
 
 /*

@@ -14,7 +14,7 @@
     <p><strong>Note:</strong> Ensure the file exists and the path is valid before calling this method. If the file is restricted or inaccessible, or if the deletion fails, an exception will be thrown.</p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -57,8 +57,7 @@
     </tbody>
   </table>
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>
+[code=php]
 // Example 1: Deleting a single file
 try {
     $file = new File();
@@ -68,8 +67,8 @@ try {
     }
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage();
-}</pre>
-    <pre>
+}[/code]
+[code=php]
 // Example 2: Deleting multiple files in a loop
 $files_to_delete = [
     '/path/to/file1.txt',
@@ -85,18 +84,17 @@ foreach ($files_to_delete as $file_path) {
     } catch (Exception $e) {
         echo "Failed to delete $file_path: " . $e->getMessage() . "\n";
     }
-}</pre>
-    <pre>
+}[/code]
+[code=php]
 // Example 3: Handling restricted paths
 try {
     $file = new File();
     $file->delete('/path/to/restricted/file.txt');
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage(); // Output: "Access to this file is restricted: /path/to/restricted/file.txt"
-}</pre>
-  </div>
-  <h2>Best Practices</h2>
-  <div class="description">
+}[/code]
+
+<div class="alert alert-success">
     <ul>
       <li><strong>Validate Paths:</strong> Always ensure the file path is valid and does not conflict with restricted paths before calling this method.</li>
       <li><strong>Check File Existence:</strong> Verify the file exists before attempting to delete it, or handle the exception gracefully.</li>
@@ -104,5 +102,5 @@ try {
       <li><strong>Ensure Permissions:</strong> Make sure the script has sufficient permissions to delete the file.</li>
       <li><strong>Log Deletions:</strong> For auditing purposes, log successful and failed deletion attempts.</li>
     </ul>
-  </div>
+</div>
 </div>

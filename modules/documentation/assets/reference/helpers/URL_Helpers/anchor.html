@@ -52,8 +52,7 @@
     </tbody>
   </table>
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>
+[code=php]
 // Basic usage with just URL
 echo anchor('contact');
 // Output: &lt;a href="contact"&gt;contact&lt;/a&gt;
@@ -72,20 +71,20 @@ echo anchor('https://github.com/trongate', 'View Repo', ['target' => '_blank', '
 
 // Using HTML within text parameter (intentionally not escaped)
 echo anchor('contact', '&lt;i class="fa fa-envelope"&gt;&lt;/i&gt; Contact Us');
-// Output: &lt;a href="contact"&gt;&lt;i class="fa fa-envelope"&gt;&lt;/i&gt; Contact Us&lt;/a&gt;</pre>
-  </div>
+// Output: &lt;a href="contact"&gt;&lt;i class="fa fa-envelope"&gt;&lt;/i&gt; Contact Us&lt;/a&gt;[/code]
   <h2>Security Considerations</h2>
 
     <p><strong>Important:</strong> The <code>$text</code> parameter is not automatically escaped. If displaying user-generated content, use the <code>out()</code> function to prevent XSS attacks.</p>
     
     <p><strong>Unsafe Example (Vulnerable to XSS):</strong></p>
-    <pre>
+[code=php]
 echo anchor('profile', $user_name); 
-// Output (potentially unsafe): &lt;a href="profile"&gt;&lt;script&gt;alert('XSS')&lt;/script&gt;&lt;/a&gt;</pre>
+// Output (potentially unsafe): &lt;a href="profile"&gt;&lt;script&gt;alert('XSS')&lt;/script&gt;&lt;/a&gt;[/code]
     <p><strong>Safe Example (Escaped Output):</strong></p>
-    <pre>
+
+[code=php]
 echo anchor('profile', out($user_name)); 
-// Output: &lt;a href="profile"&gt;John Doe&lt;/a&gt;</pre>
+// Output: &lt;a href="profile"&gt;John Doe&lt;/a&gt;[/code]
     <p><strong>Note:</strong> The <code>$url</code> and <code>$attributes</code> parameters are automatically escaped for security.</p>
 
 </div>

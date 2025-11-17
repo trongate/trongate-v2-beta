@@ -273,87 +273,31 @@ function trimElementInnerContent(element) {
 
 function activateRefs() {
     const allRefs = document.querySelectorAll('.feature-ref');
+
     allRefs.forEach(thisRef => {
-        // Get the function name from the span
-        const functionName = thisRef.textContent;
-        
-        // Create the button element
+        const fullFunctionName = thisRef.textContent.trim();
+
+        // Remove parentheses for reference operations
+        const cleanedName = fullFunctionName.replace('()', '');
+
+        // Extract last segment using the same logic as PHP get_last_part()
+        const label = cleanedName.includes('-')
+            ? cleanedName.split('-').pop()
+            : cleanedName;
+
+        // Create the button
         const button = document.createElement('button');
         button.className = 'feature-ref-btn';
-        button.innerHTML = `${functionName} <i class="fa fa-info-circle"></i>`;
-        
-        // Add click event to open modal
+        button.innerHTML = `${label} <i class="fa fa-info-circle"></i>`;
+
+        // Add click handler
         button.addEventListener('click', () => {
-            // Remove parentheses from function name for URL
-            const cleanFunctionName = functionName.replace('()', '');
-            const targetUrl = `documentation-ref/display_info/${cleanFunctionName}`;
+            const targetUrl = `documentation-ref/display_info/${cleanedName}`;
             openIframeModal(targetUrl, 1200, 600);
         });
-        
-        // Replace the span with the button
+
+        // Replace span
         thisRef.replaceWith(button);
-    });
-}
-
-function activateRefsXXX() {
-    const allRefs = document.querySelectorAll('.feature-ref');
-
-    allRefs.forEach(thisRef => {
-
-        // <span class="feature-ref" style="display: none;">count_where()</span>
-        // <button class="feature-ref-btn">form_open() <i class="fa fa-info-circle"></i></button>
-
-        const btn = document.createElement('button');
-        
-        // Set all attributes for the 'good' button
-        btn.setAttribute('type', 'button');
-        btn.setAttribute('class', 'feature-ref-btn');
-        // btn.setAttribute('name', 'add_new_title_btn');
-        // btn.setAttribute('mx-get', 'documentation-ref/display_info');
-        // btn.setAttribute('mx-select', '#feature-ref-information .container');
-
-        const refName = thisRef.innerHTML;
-
-        while(thisRef.firstChild) {
-            thisRef.removeChild(thisRef.firstChild);
-        }
-
-        return;
-
-        thisRef.removeAttribute('class');
-
-        if (typeof refPath === 'undefined') {
-            var refPath = '';
-        }
-
-        const refPathAttr = getAttributeValue(thisRef, 'ref-path');
-        if (refPathAttr !== false) {
-            // class_reference/the-modules-class
-            refPath = refPathAttr;
-        }
-  
-        // Conditionally set mx-headers attribute only if refPath is valid
-        if (refPath && refPath.trim()) {
-            btn.setAttribute('mx-headers', `{"ref_path":"${refPath}","ref_name":"${refName}"}`);
-        } else {
-            btn.setAttribute('mx-headers', `{"ref_name":"${refName}"}`);
-        }
-
-        btn.setAttribute('mx-after-swap', 'improveTables');
-        btn.setAttribute('mx-build-modal', JSON.stringify({
-            id: "feature-ref-modal",
-            modalHeading: "Feature Reference",
-            width: "1000px",
-            marginTop: "3vh",
-            showCloseButton: "true"
-        }));
-        btn.setAttribute('mx-target', '#add-element-modal .modal-body');
-        
-        // Add button content
-        btn.innerHTML = refName + ' <i class="fa fa-info-circle"></i>';
-
-        // Append the button to the current reference
-        thisRef.appendChild(btn);
     });
 }
 

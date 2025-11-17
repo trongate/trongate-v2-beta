@@ -22,7 +22,7 @@ modules/
 
 <h2>How to Load One</h2>
 
-<p>From a controller:</p>
+<p>View files can be loaded from any controller by using Trongate's <span class="feature-ref">view()</span> method:</p>
 
 [code=php]
 $this->view('users_list', $data);
@@ -62,7 +62,7 @@ $html = $this->view('email_template', $data, true);
 </div>
 
 <div class="alert alert-success">
-<p>Use Trongate’s <code>out()</code> string helper to automatically escape user-generated content, protect your site from XSS and ensure proper encoding.</p>
+<p>Use Trongate’s <span class="feature-ref">out()</span> string helper to automatically escape user-generated content, protect your site from XSS and ensure proper encoding.</p>
 [code=php]
 &lt;?= out($name) ?&gt; &lt;!-- HTML --&gt;
 &lt;?= out($xml, 'UTF-8', 'xml') ?&gt; &lt;!-- XML --&gt;

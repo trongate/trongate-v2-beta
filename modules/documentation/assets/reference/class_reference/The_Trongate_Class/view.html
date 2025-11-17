@@ -6,7 +6,7 @@
     <p>Renders a view file with optional data. This method can either display the view on the browser or return the generated contents as a string.</p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -51,10 +51,19 @@
       </tr>
     </tbody>
   </table>
-  <h2>Example Usage</h2>
-  <div class="example">
-    <pre>
-$view_content = $this->view("my_view", ["name" => "John Doe"], true);
-echo $view_content; // Output: HTML content of the rendered view</pre>
-  </div>
+
+<h2>Example #1</h2>
+<p>The code sample below demonstrates normal view file rendering.  Here, user details are passed into a view file via a <code>$data</code> array.</p>
+[code=php]
+$data = [
+    'name' => 'John',
+    'age' => 21,
+    'city' => 'London'
+];
+$this->view('user_details', $data);
+[/code]
+
+<h2>Example #2</h2>
+<p>The code sample below shows how to read a view file into a variable without rendering it. The file's source code is stored as the string, <code>$view_content</code>.</p>
+[code=php]$view_content = $this->view("my_view", ["name" => "John Doe"], true);[/code]
 </div>
