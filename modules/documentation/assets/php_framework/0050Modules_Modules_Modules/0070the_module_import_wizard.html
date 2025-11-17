@@ -1,55 +1,28 @@
 <h1>The Module Import Wizard</h1>
-
 <p>Trongate's module import wizard lets you steal features like a pirate.</p>
-
 <ol>
   <li>Copy a module.</li>
   <li>Paste it into your app.</li>
   <li>Activate.</li>
   <li>Done.</li>
 </ol>
-
-<p>No Composer. No Packagist. No command line bullschitt. No GitHub dependency hell.</p>
-
+<p>No package managers. No dependency chains. No third-party gatekeepers.</p>
 <hr>
-
-<h2>The Problem It Solves</h2>
-
-<p>Other frameworks force you through third-party gatekeepers:</p>
-<ul>
-  <li>Packagist → anonymous strangers touching your code</li>
-  <li>Composer → command-line ceremony for a simple copy/paste job</li>
-  <li>GitHub → vendor lock-in disguised as "convenience"</li>
-</ul>
-
-<p><strong>Trongate says: <a href="https://www.youtube.com/watch?v=M1gLkL_3OQg" target="_blank">SHOVE IT!</a></strong></p>
-
-<hr>
-
 <h2>How It Works</h2>
-
 <p>Move features between apps like you're sharing photos:</p>
 <ol>
   <li>Grab module folder from App A</li>
   <li>Drop it into <code>modules/</code> in App B</li>
   <li>Visit <code>https://yoursite.com/module_name</code> — SQL runs automatically</li>
 </ol>
-
 <p>Got SQL tables? Drop <code>.sql</code> files in the module. The wizard handles them.</p>
-
 <hr>
-
 <h2>Video Demo</h2>
-
 <p>Watch it work:</p>
 [youtube]I8wM4AdA0k4[/youtube]
-
 <hr>
-
 <h2>Child Modules? Same Deal.</h2>
-
 <p>Child modules import just like regular modules:</p>
-
 [code]
 modules/
   shop/
@@ -58,38 +31,20 @@ modules/
       views/
       setup.sql ← SQL? Drop it here
 [/code]
-
 <p>Visit: <code>https://yoursite.com/shop-product_reviews</code></p>
 <p>The wizard detects child modules automatically.</p>
-
 <h2>Security First</h2>
-
 <div class="alert alert-danger">
   <p><strong>Never run the wizard on production.</strong></p>
   <p>Import on localhost. Test thoroughly. Then deploy.</p>
 </div>
-
 <hr>
-
-<h2>Why This Matters</h2>
-
-<p>Trongate is the <strong>only</strong> PHP framework that lets you:</p>
-<ul>
-  <li><strong>Single point of accountability:</strong> You control every line of code.</li>
-  <li>Share features without third-party platforms.</li>
-  <li>Copy/paste entire modules like normal files.</li>
-</ul>
-
-<hr>
-
 <h2>Tips</h2>
-
 <ul>
   <li><strong>Module dependencies?</strong> Document them in a <code>README.md</code> inside the module</li>
   <li><strong>Config changes needed?</strong> Add instructions in <code>INSTALL.txt</code></li>
   <li><strong>Assets?</strong> They're already in the module. Just works.</li>
 </ul>
-
 <div class="alert alert-info">
-  <p>The wizard runs once per module. After setup, it disables itself automatically.</p>
+  <p>The wizard runs once per module. After setup, it disables itself automatically.
 </div>

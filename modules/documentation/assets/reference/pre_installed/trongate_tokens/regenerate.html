@@ -43,7 +43,7 @@
   </table>
 <h2>Example Usage</h2>
 <p>The JavaScript code sample below illustrates extending a user's login session by regenerating their token using an HTTP GET request. This approach involves appending the existing token to the target URL string. While exposing tokens in URLs is generally considered poor practice due to security concerns, in this specific scenario, any validated tokens passed via the URL are immediately invalidated and removed from the database, rendering them useless.</p>
-<div class="example">
+<div>
   <pre>&lt;script&gt;
 const baseUrl = '&lt;?= BASE_URL ?&gt;';
 let token = 'user-token';

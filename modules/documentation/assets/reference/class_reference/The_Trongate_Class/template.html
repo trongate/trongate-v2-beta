@@ -6,7 +6,7 @@
     <p>Renders a specific template view by calling a corresponding method in the Templates controller class.</p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -46,11 +46,14 @@
     </tbody>
   </table>
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>
-$template_name = "my_template";
-$data = ['variable1' => 'value1', 'variable2' => 'value2'];
-template($template_name, $data);</pre>
-  </div>
-  </div>
+<p>The code below demonstrates how to render a template named 'admin'.  In this example, as assortment of user data is being passed into the template, including some user details and a corresponding view file name.</p>
+[code=php]
+$data = [
+    'first_name' => 'John',
+    'age' => 21,
+    'city' => 'London',
+    'view_file' => 'user_profile'
+];
+
+$this->template('admin', $data);[/code]
 </div>

@@ -72,7 +72,7 @@
   <p>The code below demonstrates how to remove a portion of text enclosed within HTML bold tags (&lt;b&gt; and &lt;/b&gt;). In this example, the goal is to remove the substring <b>&lt;b&gt;Macbeth&lt;/b&gt;</b> from the <code>$haystack</code> variable.</p>
 <p>Note that <b>&lt;b&gt;Macbeth&lt;/b&gt;</b> appears more than once in the <code>$haystack</code> variable. However, only the first instance of a matching substring is being removed.</p> 
 
-  <div class="example">
+  <div>
     <pre>$start = '&lt;b&gt;';
 $end = '&lt;/b&gt;';
 $haystack = 'When &lt;b&gt;Macbeth&lt;/b&gt; speaks, all listen. &lt;b&gt;Macbeth&lt;/b&gt; is a forbidden word.';
@@ -84,7 +84,7 @@ echo remove_substr_between($start, $end, $haystack);
 <p>In this example, <i>all</i> occurrences of substrings that match the defined conditions are removed by passing a value of <b>true</b> as the optional fourth argument.</p>
 
 
-  <div class="example">
+  <div>
     <pre>$start = '&lt;b&gt;';
 $end = '&lt;/b&gt;';
 $haystack = 'When &lt;b&gt;Macbeth&lt;/b&gt; speaks, all listen. &lt;b&gt;Macbeth&lt;/b&gt; is a forbidden word.';

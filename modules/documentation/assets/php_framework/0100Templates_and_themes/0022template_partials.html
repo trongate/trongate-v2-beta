@@ -1,0 +1,84 @@
+<h1>Template Partials</h1>
+
+<p>Partials are reusable chunks of template code: headers, footers, navbars, sidebars, whatever.</p>
+
+<p>Trongate supports them. You can use them. They work exactly like you'd expect.</p>
+
+<h2>Example: Template Without Partials</h2>
+
+<p>Here's a basic template with footer markup directly inside:</p>
+
+[code=html]
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
+    &lt;title&gt;&lt;?= $page_title ?? 'My Site' ?&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;?= Template::display($data) ?&gt;
+    
+    &lt;footer&gt;
+        &lt;p&gt;&amp;copy; &lt;?= date('Y') ?&gt; &lt;?= OUR_NAME ?&gt;&lt;/p&gt;
+        &lt;p&gt;Contact: info@example.com&lt;/p&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+[/code]
+
+<h2>Example: Template With Partials</h2>
+
+<p>Same template, but the footer is loaded from a partial:</p>
+
+[code=html]
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
+    &lt;title&gt;&lt;?= $page_title ?? 'My Site' ?&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;?= Template::display($data) ?&gt;
+    
+    &lt;?= Template::partial('partials/footer', $data) ?&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+[/code]
+
+<p>The footer partial (<code>templates/views/partials/footer.php</code>):</p>
+
+[code=html]
+&lt;footer&gt;
+    &lt;p&gt;&amp;copy; &lt;?= date('Y') ?&gt; &lt;?= OUR_NAME ?&gt;&lt;/p&gt;
+    &lt;p&gt;Contact: info@example.com&lt;/p&gt;
+&lt;/footer&gt;
+[/code]
+
+<p>Same result, reusable markup.</p>
+
+<h2>How Partials Work</h2>
+
+<p>Partials live in <code>templates/views/</code> (or subfolders).</p>
+
+<p>Load one from your template file with <code>Template::partial()</code>:</p>
+
+[code=php]
+&lt;?= Template::partial('footer') ?&gt;
+[/code]
+
+<p class="mt-3"><b>NOTE:</b> The <code class="feature-ref">partial()</code> method has the ability to pass an array of <code>$data</code> to a partial.  For example:</p>
+
+[code=php]
+&lt;?= Template::partial('footer', $data) ?&gt;
+[/code]
+
+<p>The <code>$data</code> array gets automatically extracted, making variables available directly in the partial.</p>
+
+<div class="alert alert-info">
+  <p>Partials are a common pattern in other frameworks, which is why Trongate supports them. However, the preferred Trongate approach for reusable UI is to load entire modules directly from your templates or views.</p>
+  <p>See: <a href="documentation/trongate_php_framework/basic-concepts/loading-modules">Loading modules from templates/views</a></p>
+</div>

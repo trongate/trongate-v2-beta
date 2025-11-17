@@ -1,36 +1,26 @@
 <h1>Using Debug Mode</h1>
-
-<p>Trongate’s DB class ships with a built-in <strong>Debug Mode</strong>. Flip one switch → raw SQL spills onto the page. No log files. No var_dump hell. Just <b>Native PHP</b> truth.</p>
-
+<p>Trongate's DB class ships with a built-in <strong>Debug Mode</strong>.</p> 
+<p>Flip one switch → raw SQL spills onto the page. No log files. No <code>var_dump()</code> misery. Just <b>Native PHP</b> truth.</p>
 <h2>Enable It. Own It.</h2>
-
 <ol>
     <li>Open <code>engine/DB.php</code>.</li>
     <li>Find <code>private $debug = false;</code>.</li>
     <li>Make it <code>true</code>.</li>
 </ol>
-
 [code=php]
 private $debug = true;
 [/code]
-
-<p>That’s it. Now watch those queries sing!</p>
-
-<h2>What You’ll See</h2>
-
+<p>That's it. Now watch those queries sing!</p>
+<h2>What You'll See</h2>
 <p>Hit any DB method. A yellow <code>.tg-rprt</code> box appears <strong>before</strong> your output, shouting the exact SQL <em>before</em> PDO binding.</p>
-
 <div class="text-center">
     <figure>
         <img src="https://trongate.io/docs/images/debug_mode.webp" alt="Debug mode in action – raw SQL on screen" style="max-width: 600px;">
-        <figcaption>SQL preview. No guesswork. No bullshit.</figcaption>
+        <figcaption>SQL preview. No guesswork. No mystery.</figcaption>
     </figure>
 </div>
-
 <h2>Real Example</h2>
-
 <p>Table: <code>users</code></p>
-
 [code=sql]
 CREATE TABLE users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -39,18 +29,14 @@ CREATE TABLE users (
     email_address VARCHAR(255) NOT NULL
 );
 [/code]
-
 <p>Controller: <code>modules/welcome/Welcome.php</code></p>
-
 [code=php]
 public function test() {
     $rows = $this->db->get('id', 'users');
     json($rows);
 }
 [/code]
-
 <p>Visit: <code>https://example.com/welcome/test</code></p>
-
 <h3>Debug OFF →</h3>
 [code]
 [
@@ -59,9 +45,7 @@ public function test() {
     { "id": 3, "first_name": "Caroline", ... }
 ]
 [/code]
-
 <h3>Debug ON →</h3>
-
 <div class="tg-rprt" style="color:#383623;background:#efe79e;font-family:monospace;padding:1em;border:1px solid #383623;margin:1em 0;">
     <b>QUERY TO BE EXECUTED:</b><br><br>
     -> SELECT * FROM users ORDER BY id<br>
@@ -70,22 +54,17 @@ public function test() {
         <b>PLEASE NOTE:</b> The query shown above is how the query would look <i>before</i> binding. PDO currently has no means of displaying previous query executed.
     </div>
 </div>
-
 <p>…followed by the same JSON. Because <span class="feature-ref">json()</span> is your friend.</p>
-
 <div class="alert alert-info">
     <p><strong>Pro move:</strong> Use <code>json($data, true)</code> in APIs to dump + die. Debug Mode still shows the SQL first.</p>
 </div>
-
 <h2>Why It Rules</h2>
-
 <ul>
     <li>See <strong>every query</strong> before it runs.</li>
-    <li>No log parsing. No Xdebug. No tears.</li>
-    <li>Works with <span class="feature-ref">get()</span>, <span class="feature-ref">get_where()</span>, <span class="feature-ref">query()</span> — all of them.</li>
+    <li>No log parsing. No external debuggers. No complexity.</li>
+    <li>Works with <span class="feature-ref">get()</span>, <span class="feature-ref">get_where()</span>, <span class="feature-ref">query()</span> — <a href="documentation/trongate_php_framework/database-operations/the-db-class-reference">all of them</a>.</li>
     <li>Turn it off in prod. One line. Done.</li>
 </ul>
-
 <div class="alert alert-warning">
     <p><strong>Never</strong> leave <code>$debug = true</code> in production.<br>
     Unless you want your users reading your schema for fun.</p>

@@ -6,7 +6,7 @@
     <p>Loads a template file with optional data for use within the template.</p>
   </div>
   <h2>Parameters</h2>
-  <table>
+  <table class="params-table">
     <thead>
       <tr>
         <th>Parameter</th>
@@ -46,8 +46,18 @@
     </tbody>
   </table>
   <h2>Example Usage</h2>
-  <div class="example">
-    <pre>
-load("template_file.php", ['variable' => 'value']);</pre>
-  </div>
-</div>
+[code=php]&lt;?php
+class Templates extends Trongate {
+
+    /**
+     * Loads the 'admin' template with provided data.
+     *
+     * @param array $data  Data to be passed into the template.
+     * @return void
+     */
+    public function admin(array $data): void {
+        load('admin', $data);
+    }
+
+}
+[/code]

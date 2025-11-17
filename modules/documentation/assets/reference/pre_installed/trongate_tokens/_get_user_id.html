@@ -45,14 +45,14 @@
   </table>
   <h2>Example Usage #1</h2>
   <p>In the code sample below, a token is passed into the <b>_get_user_id()</b> method in an attempt to return a Trongate user ID.</p>
-  <div class="example">
+  <div>
     <pre>$token = 'agFauQmexzstRnBmKv5BNDgewsWgD32j';
 $this->module('trongate_tokens');
 $trongate_user_id = $this->trongate_tokens->_get_user_id($token);</pre>
   </div>
   <h2>Example Usage #2</h2>
   <p>In this alternative example, no token has been passed into the <b>_get_user_id()</b> method. This means that the method will attempt to retrieve a token from the session, cookie, or page header values. If a valid token is found in any of those locations, the method will then attempt to fetch and return an associated Trongate user ID.</p>
-  <div class="example">
+  <div>
     <pre>$this->module('trongate_tokens');
 $trongate_user_id = $this->trongate_tokens->_get_user_id();</pre>
   </div>

@@ -10,7 +10,7 @@
     </div>
 
     <h2>Parameters</h2>
-    <table>
+    <table class="params-table">
         <thead>
             <tr>
                 <th>Parameter</th>
@@ -93,36 +93,36 @@
     <h2>Common Use Cases</h2>
 
     <h3>1. Header with Dynamic Title</h3>
-    <div class="example">
+    <div>
         <p><strong>Template usage:</strong></p>
-        <pre>&lt;!DOCTYPE html&gt;
+[code=php]&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
 &lt;head&gt;
     &lt;?= Template::partial('partials/head', [
         'page_title' => $page_title,
         'meta_description' => $meta_description
     ]) ?&gt;
-&lt;/head&gt;</pre>
+&lt;/head&gt;[/code]
 
         <p><strong>Partial content (partials/head.php):</strong></p>
-        <pre>&lt;meta charset="UTF-8"&gt;
+[code=html]&lt;meta charset="UTF-8"&gt;
 &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
 &lt;title&gt;&lt;?= $page_title ?? 'Default Title' ?&gt;&lt;/title&gt;
 &lt;meta name="description" content="&lt;?= $meta_description ?? '' ?&gt;"&gt;
-&lt;link rel="stylesheet" href="&lt;?= BASE_URL ?&gt;css/styles.css"&gt;</pre>
+&lt;link rel="stylesheet" href="&lt;?= BASE_URL ?&gt;css/styles.css"&gt;[/code]
     </div>
 
     <h3>2. Navigation with User State</h3>
-    <div class="example">
+    <div>
         <p><strong>Template usage:</strong></p>
-        <pre>&lt;?= Template::partial('partials/navigation', [
+[code=php]&lt;?= Template::partial('partials/navigation', [
     'user_id' => $user_id,
     'is_admin' => $is_admin,
     'active_page' => 'dashboard'
-]) ?&gt;</pre>
+]) ?&gt;[/code]
 
         <p><strong>Partial content (partials/navigation.php):</strong></p>
-        <pre>&lt;nav class="navbar"&gt;
+[code=html]&lt;nav class="navbar"&gt;
     &lt;div class="container"&gt;
         &lt;a class="navbar-brand" href="&lt;?= BASE_URL ?&gt;"&gt;Site Name&lt;/a&gt;
         &lt;ul class="nav-links"&gt;
@@ -137,22 +137,22 @@
             &lt;?php endif; ?&gt;
         &lt;/ul&gt;
     &lt;/div&gt;
-&lt;/nav&gt;</pre>
+&lt;/nav&gt;[/code]
     </div>
 
     <h3>3. Reusable Form Components</h3>
-    <div class="example">
+    <div>
         <p><strong>Template usage:</strong></p>
-        <pre>&lt;?= Template::partial('partials/forms/text_input', [
+[code=php]&lt;?= Template::partial('partials/forms/text_input', [
     'label' => 'Email Address',
     'name' => 'email',
     'value' => $email ?? '',
     'required' => true,
     'error' => $errors['email'] ?? null
-]) ?&gt;</pre>
+]) ?&gt;[/code]
 
         <p><strong>Partial content (partials/forms/text_input.php):</strong></p>
-        <pre>&lt;div class="form-group &lt;?= isset($error) ? 'has-error' : '' ?&gt;"&gt;
+[code=html]&lt;div class="form-group &lt;?= isset($error) ? 'has-error' : '' ?&gt;"&gt;
     &lt;label for="&lt;?= $name ?&gt;"&gt;
         &lt;?= $label ?&gt;
         &lt;?php if ($required ?? false): ?&gt;
@@ -167,7 +167,7 @@
     &lt;?php if (isset($error)): ?&gt;
         &lt;div class="error-message"&gt;&lt;?= $error ?&gt;&lt;/div&gt;
     &lt;?php endif; ?&gt;
-&lt;/div&gt;</pre>
+&lt;/div&gt;[/code]
     </div>
 
     <h2>Dependencies</h2>
@@ -194,13 +194,12 @@
     <p>If the specified partial file does not exist, the script will terminate with an error message showing the attempted file path. This behavior is handled by the attempt_include() method.</p>
 
     <div class="alert alert-warning">
-        <h3>Important Notes</h3>
         <ul>
-            <li>Partial files must be located within the templates/views directory</li>
-            <li>All variables in the $data array become available as individual variables in the partial</li>
-            <li>File paths are case-sensitive on Unix-based systems</li>
-            <li>The .php extension is automatically added to the file name</li>
-            <li>For module-specific partials, use Template::display() instead</li>
+            <li>Partial files must be located within the templates/views directory.</li>
+            <li>All variables in the $data array become available as individual variables in the partial.</li>
+            <li>File paths are case-sensitive on Unix-based systems.</li>
+            <li>The .php extension is automatically added to the file name.</li>
+            <li>For module-specific partials, use Template::display() instead.</li>
         </ul>
     </div>
 </div>
