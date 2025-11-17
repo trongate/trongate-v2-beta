@@ -19,8 +19,12 @@
 public function manage() {
     // Fetch members records.
     $rows = $this->db->get('id');
-    $data['members'] = $rows;
-    $data['view_file'] = 'manage_members';
+
+    $data = [
+        'members' => $rows,
+        'view_file' => 'manage_members'
+    ];
+    
     $this->template('public');
 }
 [/code]
@@ -37,8 +41,12 @@ public function manage() {
 public function manage() {
     // Fetch members records.
     $rows = $this->db->get('id', 'members');
-    $data['members'] = $rows;
-    $data['view_file'] = 'manage_members';
+
+    $data = [
+        'members' => $rows,
+        'view_file' => 'manage_members'
+    ];
+
     $this->template('public');
 }
 [/code]

@@ -19,12 +19,14 @@
 
 <p>And the corresponding controller code:</p>
 
-[code=php]
+[code=php]&lt;?php
 class Products extends Trongate {
   
-  function details() {
-    $data['view_module'] = 'inventory';
-    $data['view_file'] = 'product_details';
+  public function details() {
+    $data = [
+        'view_module' => 'inventory',
+        'view_file' => 'product_details'
+    ];
     $this-&gt;template('default', $data);
   }
 
@@ -42,10 +44,10 @@ class Products extends Trongate {
 
 <p>If <code>view_module</code> is not specified in the <code>$data</code> array, the template will use the first URL segment to determine where to look for the view file. For example:</p>
 
-[code=php]
+[code=php]&lt;?php
 class Products extends Trongate {
   
-  function details() {
+  public function details() {
     $data['view_file'] = 'product_details';
     $this-&gt;template('default', $data);
   }
@@ -70,11 +72,15 @@ class Products extends Trongate {
 [code=php]
 class Welcome extends Trongate {
 
-  function hello() {
-    $data['first_name'] = 'John';
-    $data['view_file'] = 'hello_view';
-    $this-&gt;template('default', $data);
-  }
+    function hello() {
+
+        $data = [
+            'first_name' => 'John',
+            'view_file' => 'hello_view'
+        ];
+
+        $this-&gt;template('default', $data);
+    }
 
 }
 [/code]
