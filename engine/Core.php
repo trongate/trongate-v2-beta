@@ -98,12 +98,6 @@ class Core {
             return $child_path;
         }
 
-        // Try custom 404 intercept
-        $intercept_path = $this->try_404_intercept();
-        if ($intercept_path !== null) {
-            return $intercept_path;
-        }
-
         // All options exhausted
         $this->draw_error_page();
     }
@@ -132,26 +126,23 @@ class Core {
     }
 
     /**
-     * Attempt to use custom 404 intercept.
+     * Draw an error page for 404 Not Found errors.
+     * Loads the error handler defined in ERROR_404 config.
      *
-     * @return string|null The controller path if found, null otherwise
+     * @return void
      */
-    private function try_404_intercept(): ?string {
-        if (defined('INTERCEPT_404')) {
-            $intercept_bits = explode('/', INTERCEPT_404);
-            $this->current_module = $intercept_bits[0];
-            // Derive controller name from module name
-            $this->current_controller = ucfirst($intercept_bits[0]);
-            $this->current_method = $intercept_bits[1];
-            
-            $controller_path = '../modules/' . $this->current_module . '/' . $this->current_controller . '.php';
-            
-            if (file_exists($controller_path)) {
-                return $controller_path;
-            }
-        }
-
-        return null;
+    private function draw_error_page(): void {
+        http_response_code(404);
+        
+        $handler_parts = explode('/', ERROR_404);
+        list($module, $method) = $handler_parts;
+        
+        $controller_path = '../modules/' . $module . '/' . ucfirst($module) . '.php';
+        
+        require_once $controller_path;
+        $controller = new $module();
+        $controller->$method();
+        die();
     }
 
     /**

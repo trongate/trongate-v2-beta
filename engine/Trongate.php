@@ -53,7 +53,7 @@ class Trongate {
             'model' => new Model($this->module_name),
             'validation' => new Validation(),
             'file' => new File(),
-            'image' => new Image()
+            'image' => new Image(),
             default => null
         };
 

@@ -1,17 +1,31 @@
 <?php
 class Welcome extends Trongate {
 
-    public function ahoy() {
-        $this->view('ahoy');
+    public function hello() {
+        // Load an 'admin' template from the new 'Templates' module
+        $data['view_file'] = 'hello'; // The view file at 'modules/welcome/views/hello.php'
+        $this->templates->admin($data); // Loading the 'admin' template from Templates.php
+    }
+
+    /**
+     * Renders the (default) homepage for public access.
+     *
+     * @return void
+     */
+    public function index(): void {
+        $this->view('stealth_homepage');
+    }
+
+    public function public() {
+        $data['name'] = 'David';
+        $data['view_file'] = 'welcome_public';
+        $this->templates->public($data);
     }
 
     public function icons() {
-
         $icon_dir = APPPATH . '/public/trongate-icons';
         $data['icons'] = glob($icon_dir . '/*.svg');
         $this->view('icons', $data);
-
-
     }
 
     public function test() {
@@ -48,15 +62,6 @@ VALUES ('Caroline', 'Walker', 'caroline.walker@example.com');
 
     public function demo() {
         $this->view('demo');
-    }
-
-    /**
-     * Renders the (default) homepage for public access.
-     *
-     * @return void
-     */
-    public function index(): void {
-        $this->view('stealth_homepage');
     }
 
     public function render_latest_version() {
