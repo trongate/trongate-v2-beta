@@ -1,3 +1,33 @@
+Figure out what to do with 404 errors.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 * Large Header working with nav.
 
 * Open slide nav working.

@@ -6,7 +6,7 @@
  * This class provides a comprehensive suite of methods designed for efficient and secure file management.
  * It supports functionalities like uploading, deleting, reading, writing files, and managing directories.
  * Access restrictions are in place to prevent reading and manipulation of critical directories such as 
- * 'config', 'engine', and 'templates', as well as any files directly under the root application level (e.g., '.htaccess').
+ * 'config' and 'engine', as well as any files directly under the root application level (e.g., '.htaccess').
  *
  * Users of this class are advised to be aware of the security implications associated with file handling in a web environment,
  * particularly to ensure that operations do not inadvertently expose sensitive application areas.
@@ -492,7 +492,7 @@ class File {
      * @return bool Returns true if the path is valid, false otherwise.
      */
     private function is_path_valid(string $path): bool {
-        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine', APPPATH . 'templates'];
+        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine'];
         
         // If the path exists, validate it directly
         if (file_exists($path)) {
