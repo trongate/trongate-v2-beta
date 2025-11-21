@@ -2,174 +2,111 @@
 
 <p>You've seen how themes load. Now make one. It's stupidly simple.</p>
 
-<h2>Basic Theme (No Shared Assets)</h2>
+<h2 class="mt-1">Step 1 – Choose a Theme Name</h2>
 
-<p>Let's start with the simplest possible theme structure.</p>
+<p>First, decide on a name for your theme. For this example, we'll assume a theme name of, "<b>modern</b>".</p>
 
-<h3>Step 1 – Make the Folder</h3>
+<p>Your theme name must be a <b>valid directory name</b>. This means:</p>
 
-<p>Create a folder inside <code>public/themes/</code>:</p>
+<ul>
+    <li>No spaces (use underscores instead: <code>new_age</code> not <code>new age</code>)</li>
+    <li>No special characters (stick to letters, numbers, and underscores)</li>
+    <li>Use lowercase for consistency</li>
+</ul>
+
+<p><strong>Good theme names:</strong> <code>modern</code>, <code>admin_dark</code>, <code>new_age</code>, <code>retro_80s</code></p>
+
+<p><strong>Bad theme names:</strong> <code>My Theme</code>, <code>super-cool!</code>, <code>theme#1</code></p>
+
+<h2 class="mt-3">Step 2 – Create the Theme Folder</h2>
+
+<p>Create your theme folder inside <code>public/themes/</code> using your theme name:</p>
 
 [code]
 public/themes/
-    acme_dashboard/
-        dark/
-        light/
+    modern/
+        css/
+        js/
 [/code]
 
-<h3>Step 2 – Add Your Template File</h3>
+<div class="alert alert-info">
+    <p>For this example, we're assuming that you have a CSS file and a JavaScript file prepared for your theme, hence the sub directories "css" and "js". In a real world example, you can have any filetype of your choosing added to your theme directory. This includes things like images, fonts and so on.</p>
+    <p>We won't bother giving you sample code for those files. The purpose of this page is merely to show you how themes get structured. It's for you to come with your own design ideas.</p>
+</div>
 
-<p>Create the template file inside the <code>dark/</code> folder:</p>
+<h2 class="mt-3">Step 3 – Create the Template File</h2>
 
-<p><code>public/themes/acme_dashboard/dark/acme.php</code></p>
+<p>Create <code>public/themes/modern/modern.php</code>:</p>
 
 [code=html]
 &lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
 &lt;head&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
     &lt;meta charset="UTF-8"&gt;
     &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
-    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;css/style.css"&gt;
+    
+    &lt;link rel="stylesheet" href="css/trongate.css"&gt;
+    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;css/modern.css"&gt;
+    
     &lt;?= $additional_includes_top ?? '' ?&gt;
-    &lt;title&gt;&lt;?= $page_title ?? 'Acme Dashboard' ?&gt;&lt;/title&gt;
+    &lt;title&gt;&lt;?= $page_title ?? 'Modern Theme' ?&gt;&lt;/title&gt;
 &lt;/head&gt;
 &lt;body&gt;
-    &lt;?= Template::display($data) ?&gt;
+    &lt;div class="header"&gt;
+        &lt;h1&gt;My App&lt;/h1&gt;
+    &lt;/div&gt;
     
-    &lt;script src="&lt;?= THEME_DIR ?&gt;js/app.js"&gt;&lt;/script&gt;
+    &lt;div class="container"&gt;
+        &lt;?= Template::display($data) ?&gt;
+    &lt;/div&gt;
+    
     &lt;?= $additional_includes_btm ?? '' ?&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 [/code]
 
-<p>All assets live inside <code>dark/</code>. <code>THEME_DIR</code> points directly to them.</p>
-
-<h3>Step 3 – Register It</h3>
+<h2 class="mt-3">Step 4 – Register the Theme</h2>
 
 <p>Open <code>config/themes.php</code> and add:</p>
 
 [code=php]
 &lt;?php
 $themes = [
-    'acme_dark' =&gt; [
-        'dir'      =&gt; 'acme_dashboard/dark',
-        'template' =&gt; 'acme.php',
-    ],
-    'acme_light' =&gt; [
-        'dir'      =&gt; 'acme_dashboard/light',
-        'template' =&gt; 'acme.php',
+    'modern' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern.php',
     ],
 ];
 define('THEMES', $themes);
 [/code]
 
-<h3>Step 4 – Handle It in Templates.php</h3>
+<p>The theme key (<code>'modern'</code>) must match your theme directory name.</p>
 
-<p>Add a method in <code>templates/controllers/Templates.php</code>:</p>
+<h2 class="mt-3">Step 5 – Create the Template Method</h2>
+
+<p>Add a method in <code>templates/controllers/Templates.php</code> and give the method the <b>same name as your theme</b>.</p> 
+<p>For example:</p>
 
 [code=php]
-public function acme_dark(array $data): void {
+public function modern(array $data): void {
     $data['additional_includes_top'] = $this-&gt;build_additional_includes($data['additional_includes_top'] ?? []);
     $data['additional_includes_btm'] = $this-&gt;build_additional_includes($data['additional_includes_btm'] ?? []);
-    load('acme_dark', $data);
+    load('modern', $data);
 }
 [/code]
 
-<p>Repeat for <code>acme_light()</code> if needed.</p>
+<p>The method name must match your theme key from <code>config/themes.php</code>.</p>
 
-<h3>Step 5 – Use It</h3>
+<h2 class="mt-3">Step 6 – Use Your Theme</h2>
 
-[code=php]
-$this-&gt;template('acme_dark', $data);
-[/code]
-
-<p>Done. Refresh. New theme.</p>
-
-<h2>Advanced: Using Shared Assets</h2>
-
-<p>What if multiple color variations share fonts, icons, or base styles? Answer: <b>Use a <code>shared/</code> folder</b>.</p>
-
-<h3>Updated Structure</h3>
-
-[code]
-public/themes/
-    acme_dashboard/
-        shared/
-            css/
-                fonts.css
-                reset.css
-            js/
-                utils.js
-        dark/
-            css/
-                style.css     ← dark-specific styles only
-            acme.php
-        light/
-            css/
-                style.css     ← light-specific styles only
-            acme.php
-[/code]
-
-<h3>Set Up Shared Path in Templates.php</h3>
-
-<p>Establish the <code>$shared_dir</code> variable in your template method:</p>
+<p>In any controller, load your theme using Trongate's <span class="feature-ref">template()</span> method:</p>
 
 [code=php]
-public function acme_dark(array $data): void {
-    // Shared assets live one level up from the current theme variation
-    $data['shared_dir'] = dirname(rtrim(THEME_DIR, '/')) . '/shared/';
-    
-    $data['additional_includes_top'] = $this-&gt;build_additional_includes($data['additional_includes_top'] ?? []);
-    $data['additional_includes_btm'] = $this-&gt;build_additional_includes($data['additional_includes_btm'] ?? []);
-    load('acme_dark', $data);
+public function index(): void {
+    $data['view_file'] = 'welcome';
+    $this-&gt;template('modern', $data);
 }
 [/code]
 
-<p>Now <code>$shared_dir</code> is available in your template.</p>
-
-<h3>Use It in Your Template</h3>
-
-<p><code>public/themes/acme_dashboard/dark/acme.php</code></p>
-
-[code=html]
-&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-    &lt;meta charset="UTF-8"&gt;
-    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
-    
-    &lt;!-- Shared assets --&gt;
-    &lt;link rel="stylesheet" href="&lt;?= $shared_dir ?&gt;css/fonts.css"&gt;
-    &lt;link rel="stylesheet" href="&lt;?= $shared_dir ?&gt;css/reset.css"&gt;
-    
-    &lt;!-- Variation-specific assets --&gt;
-    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;css/style.css"&gt;
-    
-    &lt;?= $additional_includes_top ?? '' ?&gt;
-    &lt;title&gt;&lt;?= $page_title ?? 'Acme Dashboard' ?&gt;&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;?= Template::display($data) ?&gt;
-    
-    &lt;script src="&lt;?= $shared_dir ?&gt;js/utils.js"&gt;&lt;/script&gt;
-    &lt;script src="&lt;?= THEME_DIR ?&gt;js/app.js"&gt;&lt;/script&gt;
-    &lt;?= $additional_includes_btm ?? '' ?&gt;
-&lt;/body&gt;
-&lt;/html&gt;
-[/code]
-
-<p>Shared assets load once. Variation-specific styles override as needed. Clean and DRY.</p>
-
-<div class="alert alert-success">
-    <ul>
-        <li>Start simple—use a basic structure until you actually need shared assets.</li>
-        <li>Put fonts, icon sets, and CSS resets in <code>shared/</code>.</li>
-        <li>Only override what changes between variations.</li>
-        <li>Want a single-variation theme? Skip sub-folders: <code>'dir' =&gt; 'my_theme'</code>.</li>
-        <li>Share themes between projects? Just copy the folder and register it.</li>
-    </ul>
-</div>
-
-<p class="text-center mt-5"><strong>Go build something beautiful.</strong></p>
+<p class="mt-3">Done. Your theme is live!</p>

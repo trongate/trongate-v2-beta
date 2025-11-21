@@ -1,0 +1,234 @@
+<h1>Theme Variations</h1>
+
+<p>Theme variations let you offer multiple color schemes (dark, light, blue, red, etc.) without violating the <a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself" target="_blank">DRY principle</a>.</p>
+
+<p>Below is a continuation of the example that's discussed in the <a href="documentation/trongate_php_framework/templates-and-themes/building-your-own-theme">previous page</a>. Here, we'll assume that you would like to create a new <b>dark</b> variation of your theme.</p>
+
+<h2 class="mt-2">Step 1 – Choose a Variation Name</h2>
+
+<p>First, decide on a name for your variation. For this example, we'll use "<b>dark</b>".</p>
+
+<p>Your variation name must follow the same rules as theme names:</p>
+
+<ul>
+    <li>No spaces (use underscores instead: <code>ocean_blue</code> not <code>ocean blue</code>)</li>
+    <li>No special characters (stick to letters, numbers, and underscores)</li>
+    <li>Use lowercase for consistency</li>
+</ul>
+
+<p><strong>Good variation names:</strong> <code>dark</code>, <code>light</code>, <code>ocean_blue</code>, <code>high_contrast</code></p>
+
+<h2>Step 2 – Create the Variation Folder</h2>
+
+<p>Create a subdirectory inside your theme folder using your variation name:</p>
+
+[code]
+public/themes/
+    modern/
+        dark/
+            css/
+            images/
+[/code]
+
+<p>All assets specific to your dark variation (stylesheets, icons, images, etc.) should live inside this <code>dark/</code> folder.</p>
+
+<h2>Step 3 – Create the Variation Stylesheet</h2>
+
+<p>Create <code>public/themes/modern/dark/css/modern_dark.css</code>:</p>
+
+[code=css]
+/* Dark color scheme */
+body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.header {
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #404040;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+}
+
+.btn {
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+.btn:hover {
+    background-color: #2563eb;
+}
+[/code]
+
+<p>This stylesheet contains <strong>only colors</strong>. The structure and layout come from your base <code>modern.css</code> file.</p>
+
+<h2>Step 4 – Create the Variation Template File</h2>
+
+<p>Create <code>public/themes/modern/modern_dark.php</code>:</p>
+
+[code=html]
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    
+    &lt;link rel="stylesheet" href="css/trongate.css"&gt;
+    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;css/modern.css"&gt;
+    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;dark/css/modern_dark.css"&gt;
+    
+    &lt;?= $additional_includes_top ?? '' ?&gt;
+    &lt;title&gt;&lt;?= $page_title ?? 'Modern Theme' ?&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="header"&gt;
+        &lt;h1&gt;My App&lt;/h1&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="container"&gt;
+        &lt;?= Template::display($data) ?&gt;
+    &lt;/div&gt;
+    
+    &lt;?= $additional_includes_btm ?? '' ?&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+[/code]
+
+<p>Notice we load <strong>two</strong> stylesheets: <code>modern.css</code> (the base structure) and <code>modern_dark.css</code> (the dark colors). This means the dark variation doesn't duplicate any layout code—it only adds colors.</p>
+
+<h2>Step 5 – Register the Variation</h2>
+
+<p>Update <code>config/themes.php</code> to include your new variation:</p>
+
+[code=php]
+&lt;?php
+$themes = [
+    'modern' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern.php',
+    ],
+    'modern_dark' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern_dark.php',
+    ],
+];
+define('THEMES', $themes);
+[/code]
+
+<p>Both variations use the same <code>dir</code> (they live in the same folder) but different <code>template</code> files.</p>
+
+<h2>Step 6 – Add the Template Method</h2>
+
+<p>Add another method in <code>templates/controllers/Templates.php</code>:</p>
+
+[code=php]
+public function modern_dark(array $data): void {
+    $data['additional_includes_top'] = $this-&gt;build_additional_includes($data['additional_includes_top'] ?? []);
+    $data['additional_includes_btm'] = $this-&gt;build_additional_includes($data['additional_includes_btm'] ?? []);
+    load('modern_dark', $data);
+}
+[/code]
+
+<h2>Step 7 – Use Either Variation</h2>
+
+<p>Switch between variations in your controller:</p>
+
+[code=php]
+// Use default theme
+$this->template('modern', $data);
+
+// Use dark theme
+$this->template('modern_dark', $data);
+[/code]
+
+<p>Done. You now have two color schemes for the same theme.</p>
+
+<div class="alert alert-success">
+<p>Alternatively, to permanently switch your theme variation, simply update <code>config/themes.php</code> to change which template the <code>'modern'</code> key points to:</p>
+
+[code=php]
+&lt;?php
+$themes = [
+    'modern' => [
+        'dir'      => 'modern',
+        'template' => 'modern_dark.php',  // Changed from modern.php
+    ],
+    'modern_dark' => [
+        'dir'      => 'modern',
+        'template' => 'modern_dark.php',
+    ],
+];
+define('THEMES', $themes);
+[/code]
+
+<p>Now all calls to <code>$this->template('modern', $data)</code> will use the dark variation. No controller code changes needed.</p>  
+</div>
+
+<h2>Adding More Variations</h2>
+
+<p>You can create as many color variations as you want. Follow the same pattern for red, blue, green, purple, or any other color scheme:</p>
+
+<ul>
+    <li>Create <code>red/css/modern_red.css</code> and <code>modern_red.php</code></li>
+    <li>Create <code>blue/css/modern_blue.css</code> and <code>modern_blue.php</code></li>
+    <li>Create <code>green/css/modern_green.css</code> and <code>modern_green.php</code></li>
+    <li>Register each one in <code>config/themes.php</code></li>
+    <li>Add corresponding methods in <code>Templates.php</code></li>
+</ul>
+
+<p>There's no limit. Create as many variations as you need.</p>
+
+<h2>Example: Multiple Variations</h2>
+
+<p>Here's what your theme structure might look like with multiple color schemes:</p>
+
+[code]
+public/themes/
+    modern/
+        css/
+            modern.css          ← base structure (shared)
+        js/
+            app.js
+        dark/
+            css/
+                modern_dark.css ← dark colors only
+            images/             ← dark-specific images
+        red/
+            css/
+                modern_red.css  ← red colors only
+        blue/
+            css/
+                modern_blue.css ← blue colors only
+        modern.php              ← default template
+        modern_dark.php         ← dark template
+        modern_red.php          ← red template
+        modern_blue.php         ← blue template
+[/code]
+
+<p>And your <code>config/themes.php</code>:</p>
+
+[code=php]
+&lt;?php
+$themes = [
+    'modern' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern.php',
+    ],
+    'modern_dark' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern_dark.php',
+    ],
+    'modern_red' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern_red.php',
+    ],
+    'modern_blue' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern_blue.php',
+    ],
+];
+define('THEMES', $themes);
+[/code]

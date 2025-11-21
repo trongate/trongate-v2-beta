@@ -1,6 +1,19 @@
 <?php
 class Welcome extends Trongate {
 
+    public function ahoy() {
+        $this->view('ahoy');
+    }
+
+    public function icons() {
+
+        $icon_dir = APPPATH . '/public/trongate-icons';
+        $data['icons'] = glob($icon_dir . '/*.svg');
+        $this->view('icons', $data);
+
+
+    }
+
     public function test() {
         $rows = $this->db->get('chapter_number', 'documentation_chapters');
         $counter = 0;
