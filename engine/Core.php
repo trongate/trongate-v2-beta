@@ -126,19 +126,20 @@ class Core {
     }
 
     /**
-     * Draw an error page for 404 Not Found errors.
+     * Draw an error page for a given HTTP response code.
      * Loads the error handler defined in ERROR_404 config.
      *
+     * @param int $http_response_code
      * @return void
      */
-    private function draw_error_page(): void {
-        http_response_code(404);
-        
+    private function draw_error_page(int $http_response_code = 404): void {
+        http_response_code($http_response_code);
+
         $handler_parts = explode('/', ERROR_404);
         list($module, $method) = $handler_parts;
-        
+
         $controller_path = '../modules/' . $module . '/' . ucfirst($module) . '.php';
-        
+
         require_once $controller_path;
         $controller = new $module();
         $controller->$method();

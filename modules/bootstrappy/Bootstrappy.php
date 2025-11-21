@@ -1,12 +1,5 @@
 <?php
-class Templates extends Trongate {
-
-    public function __construct() {
-        if (segment(1) === 'templates') {
-            http_response_code(403);
-            die();
-        }
-    }
+class Bootstrappy extends Trongate {
 
     /**
      * Display documentation theme template with provided data.
@@ -16,44 +9,12 @@ class Templates extends Trongate {
      * @param array $data The data to pass to the template view
      * @return void
      */
-    public function docs_ahoy(array $data): void {
+    public function _default(array $data): void {
         $data['theme'] = (isset($data['theme'])) ? $data['theme'] : 'blue';
         $data['additional_includes_top'] = $this->build_additional_includes($data['additional_includes_top'] ?? []);
         $data['additional_includes_btm'] = $this->build_additional_includes($data['additional_includes_btm'] ?? []);
         // Display the admin template
-        $this->display('docs_ahoy', $data);
-    }
-
-    /**
-     * Display an admin template with provided data.
-     * This method is prefixed with underscore to prevent direct URL access.
-     *
-     * @param array $data The data to pass to the template view
-     * @return void
-     */
-    public function _admin(array $data): void {        
-        // Display the admin template
-        $this->display('admin', $data);
-    }
-
-    /**
-     * Display a public template with provided data.
-     * This method is prefixed with underscore to prevent direct URL access.
-     *
-     * @param array $data The data to pass to the template view
-     * @return void
-     */
-    public function _public(array $data): void {
-        $this->display('public', $data);
-    }
-
-    /**
-     * Display 404 error page.
-     *
-     * @return void
-     */
-    public function error_404(): void {
-        $this->display('error_404');
+        $this->display('bootstrappy', $data);
     }
     
     /**

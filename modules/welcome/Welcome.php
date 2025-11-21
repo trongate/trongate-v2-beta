@@ -4,7 +4,7 @@ class Welcome extends Trongate {
     public function hello() {
         // Load an 'admin' template from the new 'Templates' module
         $data['view_file'] = 'hello'; // The view file at 'modules/welcome/views/hello.php'
-        $this->templates->admin($data); // Loading the 'admin' template from Templates.php
+        $this->modern->red($data); // Loading the 'admin' template from Templates.php
     }
 
     /**

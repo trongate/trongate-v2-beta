@@ -19,7 +19,7 @@ class Documentation extends Trongate {
         $data['books'] = $this->model->get_books();
         $data['view_module'] = 'documentation';
         $data['view_file'] = 'documentation_home';
-        $this->template('docs_ahoy', $data);
+        $this->templates->docs_ahoy($data);
     }
 
     /**
@@ -52,7 +52,7 @@ class Documentation extends Trongate {
 
         $data['view_module'] = 'documentation';
         $data['view_file'] = 'manage';
-        $this->template('bootstrappy', $data);
+        $this->bootstrappy->_default($data);
     }
 
     public function _draw_search_btn() {
@@ -141,8 +141,8 @@ class Documentation extends Trongate {
             ['title' => $data['book_title'], 'url' => BASE_URL . 'documentation/'.segment(2)]
         ];
 
-        $data['view_file'] = 'table_of_contents';
-        $this->template('docs_ahoy', $data);        
+        $data['view_file'] = 'table_of_contents'; 
+        $this->templates->docs_ahoy($data); 
     }
 
     /**
@@ -188,7 +188,7 @@ class Documentation extends Trongate {
         $data['prev_url'] = $next_prev_array['prev_url'];
         $data['next_url'] = $next_prev_array['next_url'];
 
-        $this->template('docs_ahoy', $data);        
+        $this->templates->docs_ahoy($data);     
     }
 
     /**
@@ -244,7 +244,7 @@ class Documentation extends Trongate {
         $next_prev_array = $this->model->build_prev_next_array($current_chapter_obj, $chapters, $data);
         $data['prev_url'] = $next_prev_array['prev_url'];
         $data['next_url'] = $next_prev_array['next_url'];
-        $this->template('docs_ahoy', $data);
+        $this->templates->docs_ahoy($data);
     }
 
     /**
