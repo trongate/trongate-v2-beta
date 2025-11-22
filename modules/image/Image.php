@@ -8,7 +8,7 @@
  *
  * Requires GD extension to be enabled in the PHP configuration.
  */
-class Image {
+class Image extends Trongate {
 
     /**
      * Holds the GD image resource instance.

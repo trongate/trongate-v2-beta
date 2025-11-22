@@ -1,701 +1,822 @@
 <?php
 
 /**
- * File management class for handling file operations within the application.
+ * Image manipulation class to handle loading, resizing, and saving images.
+ * Supports JPEG, GIF, PNG, and WEBP image formats using PHP's GD library.
+ * Provides functionalities for loading images, retrieving image metadata,
+ * and performing operations such as resizing and cropping.
  *
- * This class provides a comprehensive suite of methods designed for efficient and secure file management.
- * It supports functionalities like uploading, deleting, reading, writing files, and managing directories.
- * Access restrictions are in place to prevent reading and manipulation of critical directories such as 
- * 'config' and 'engine', as well as any files directly under the root application level (e.g., '.htaccess').
- *
- * Users of this class are advised to be aware of the security implications associated with file handling in a web environment,
- * particularly to ensure that operations do not inadvertently expose sensitive application areas.
+ * Requires GD extension to be enabled in the PHP configuration.
  */
-class File {
+class Image {
 
     /**
-     * Handles the file upload process with specified configuration.
-     *
-     * This method validates the upload configuration, processes the uploaded file,
-     * performs security checks, generates a secure filename, and moves the file to the
-     * target destination. It returns an array containing details about the uploaded file.
-     *
-     * @param array $config An associative array containing upload configuration options:
-     *                      - 'destination': (string) The target directory for the uploaded file.
-     *                      - 'target_module': (string) The target module name (defaults to the current segment).
-     *                      - 'upload_to_module': (bool) Whether to upload to the module directory (default: false).
-     *                      - 'make_rand_name': (bool) Whether to generate a random filename (default: false).
-     * @return array An associative array containing details about the uploaded file:
-     *               - 'file_name': (string) The name of the uploaded file.
-     *               - 'file_path': (string) The full path to the uploaded file.
-     *               - 'file_type': (string) The MIME type of the uploaded file.
-     *               - 'file_size': (int) The size of the uploaded file in bytes.
-     * @throws Exception If the upload fails due to invalid configuration, file upload errors,
-     *                   security validation failures, or file movement issues.
+     * Holds the GD image resource instance.
+     * @var resource|GdImage|null
      */
-    public function upload(array $config): array {
-        try {
-            // Validate basic config
-            $destination = $config['destination'] ?? null;
-            $target_module = $config['target_module'] ?? segment(1);
-            $upload_to_module = $config['upload_to_module'] ?? false;
-            $make_rand_name = $config['make_rand_name'] ?? false;
+    private $image;
 
-            // Validate upload path
-            $this->validate_upload_path($destination, $upload_to_module, $target_module);
+    /**
+     * Stores the type of the image as one of the PHP IMAGETYPE_XXX constants.
+     * This type determines which MIME type to use when serving the image via HTTP.
+     * @var int|null
+     */
+    private $image_type;
 
-            // Get uploaded file
-            if (empty($_FILES)) {
-                throw new Exception('No file was uploaded');
+    /**
+     * The file path of the loaded image, used primarily for reference and during saving operations.
+     * @var string|null
+     */
+    private $file_name;
+
+    /**
+     * Associative array mapping image types to their respective MIME types.
+     * This mapping supports content negotiation when images are served via HTTP.
+     * @var array
+     */
+    private $content_type = [
+        IMAGETYPE_JPEG => 'image/jpeg',
+        IMAGETYPE_GIF => 'image/gif',
+        IMAGETYPE_PNG => 'image/png',
+        IMAGETYPE_WEBP => 'image/webp',
+    ];
+
+    /**
+     * Constructor attempts to load an image if a filename is provided.
+     * Throws an error and halts execution if the GD library is not available.
+     *
+     * @param string|null $filename Path to the image file to load. If null, no image is loaded.
+     */
+    public function __construct($filename = null) {
+        if (!extension_loaded('gd')) {
+            echo "<h1 style='color: red;'>*** Warning ***</h1>";
+            echo "<h2>Trongate requires the GD extension for PHP to be loaded for image uploaders to work</h2>";
+            echo "<p>This is not a problem with Trongate but a setup issue with your PHP instance.</p>";
+            die("<p>Please open your <i>'php.ini'</i> file and search for <b>'extension=gd'</b> then remove the leading semicolon or add this line, save and restart your web server to enable this change.</p>");
+        }
+
+        if ($filename) {
+            $this->file_name = $filename;
+            $this->load($filename);
+        }
+    }
+
+    /**
+     * Handles the upload and processing of an image file.
+     *
+     * This method manages the entire process of uploading an image file, including:
+     * - Validating and moving the uploaded file.
+     * - Loading the uploaded image for further processing.
+     * - Resizing the image if its dimensions exceed the specified maximum width or height.
+     * - Generating a thumbnail if requested.
+     *
+     * @param array $data Configuration data for handling the upload and processing of the image. Expected keys include:
+     *                    - 'destination' (string): The directory where the file will be uploaded.
+     *                    - 'max_width' (int, optional): The maximum allowed width for the image (default: 450).
+     *                    - 'max_height' (int, optional): The maximum allowed height for the image (default: 450).
+     *                    - 'thumbnail_dir' (string, optional): The directory where the thumbnail will be saved (default: '').
+     *                    - 'thumbnail_max_width' (int, optional): The maximum width for the thumbnail (default: 0).
+     *                    - 'thumbnail_max_height' (int, optional): The maximum height for the thumbnail (default: 0).
+     *                    - 'upload_to_module' (bool, optional): Whether to upload the file to a module-specific directory (default: false).
+     *                    - 'make_rand_name' (bool, optional): Whether to generate a random name for the uploaded file (default: false).
+     *                    - 'targetModule' (string, optional): The target module for module-specific uploads (default: segment(1)).
+     *                    - 'file_input_name' (string, optional): The name of the file input field (default: 'file').
+     *
+     * @return array An associative array containing details about the uploaded file, including:
+     *               - 'file_name' (string): The name of the uploaded file.
+     *               - 'file_path' (string): The full path to the uploaded file.
+     *               - 'file_type' (string): The MIME type of the uploaded file.
+     *               - 'file_size' (int): The size of the uploaded file in bytes.
+     *               - 'thumbnail_path' (string, optional): The full path to the generated thumbnail, if applicable.
+     *
+     * @throws Exception If the file upload fails or if there are issues during image processing.
+     */
+    public function upload(array $data): array {
+        // Extract configuration data
+        $destination = $data['destination'] ?? '';
+        $max_width = $data['max_width'] ?? 450;
+        $max_height = $data['max_height'] ?? 450;
+        $thumbnail_dir = $data['thumbnail_dir'] ?? '';
+        $thumbnail_max_width = $data['thumbnail_max_width'] ?? 0;
+        $thumbnail_max_height = $data['thumbnail_max_height'] ?? 0;
+        $upload_to_module = $data['upload_to_module'] ?? false;
+        $make_rand_name = $data['make_rand_name'] ?? false;
+        $target_module = $data['targetModule'] ?? segment(1);
+        $file_input_name = $data['file_input_name'] ?? 'file';
+
+        // Validate file upload
+        if (!isset($_FILES[$file_input_name]) || $_FILES[$file_input_name]['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("File upload failed or no file was uploaded.");
+        }
+
+        $uploaded_file = $_FILES[$file_input_name];
+        
+        // Validate it's an image
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $uploaded_file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mime_type, $allowed_types)) {
+            throw new Exception("Invalid file type. Only image files are allowed.");
+        }
+
+        // Determine destination directory
+        if ($upload_to_module === true) {
+            $destination = APPPATH . 'modules/' . $target_module . '/' . ltrim($destination, '/');
+        }
+
+        // Create destination directory if it doesn't exist
+        if (!is_dir($destination)) {
+            if (!mkdir($destination, 0755, true)) {
+                throw new Exception("Failed to create destination directory: {$destination}");
             }
-
-            $userfile = array_keys($_FILES)[0];
-            $upload = $_FILES[$userfile];
-
-            if ($upload['error'] !== UPLOAD_ERR_OK) {
-                throw new Exception($this->get_upload_error_message($upload['error']));
-            }
-
-            // Add new security validation
-            $this->validate_file($upload['tmp_name']);
-
-            // Generate filename
-            $file_info = $this->generate_secure_filename($upload['name'], $make_rand_name);
-
-            // Set target path
-            $target_path = $upload_to_module ?
-                '../modules/' . $target_module . '/' . $destination :
-                $destination;
-
-            // Ensure unique filename
-            $final_path = $this->ensure_unique_path($target_path, $file_info['name'], $file_info['extension']);
-
-            // Move file
-            if (!move_uploaded_file($upload['tmp_name'], $final_path)) {
-                throw new Exception('Failed to move uploaded file');
-            }
-
-            return [
-                'file_name' => basename($final_path),
-                'file_path' => $final_path,
-                'file_type' => $upload['type'],
-                'file_size' => $upload['size']
-            ];
-
-        } catch (Exception $e) {
-            // Log error here if needed
-            throw new Exception('Upload failed: ' . $e->getMessage());
-        }
-    }
-
-    /**
-    * Generate a unique file path by appending incremental numbers if the file already exists.
-    *
-    * @param string $directory The target directory path
-    * @param string $base_name The base filename without extension
-    * @param string $extension The file extension including the dot (e.g. '.jpg')
-    *
-    * @return string The unique file path that does not exist in the directory
-    */
-    private function ensure_unique_path(string $directory, string $base_name, string $extension): string {
-        $counter = 1;
-        $final_path = $directory . '/' . $base_name . $extension;
-
-        while (file_exists($final_path)) {
-            $final_path = $directory . '/' . $base_name . '_' . $counter . $extension;
-            $counter++;
         }
 
-        return $final_path;
-    }
-
-    /**
-     * Retrieves metadata about a file.
-     *
-     * This method provides information about a file including its size,
-     * last modification time, and permissions. Additionally, it now returns the file name
-     * and MIME type.
-     *
-     * @param string $file_path The path to the file.
-     * @return array Returns an array with file metadata.
-     * @throws Exception if the file does not exist.
-     */
-    public function info(string $file_path): array {
-        if (!file_exists($file_path)) {
-            throw new Exception("The file does not exist: $file_path");
+        // Generate file name
+        if ($make_rand_name === true) {
+            $extension = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid('img_', true) . '.' . $extension;
+        } else {
+            $file_name = basename($uploaded_file['name']);
         }
 
-        $info = [];
-        $info['file_name'] = basename($file_path);  // Get the file name from the path
-        $info['size'] = filesize($file_path); // Size in bytes
-        $info['modified_time'] = filemtime($file_path); // Last modified time as Unix timestamp
-        $info['permissions'] = fileperms($file_path); // File permissions
-        $info['mime_type'] = mime_content_type($file_path); // MIME type
+        // Full file path
+        $file_path = rtrim($destination, '/') . '/' . $file_name;
 
-        // Format permissions for readability
-        $info['readable_permissions'] = substr(sprintf('%o', $info['permissions']), -4);
-
-        // Adding human-readable sizes
-        $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $factor = floor((strlen($info['size']) - 1) / 3);
-        $info['human_readable_size'] = sprintf("%.2f", $info['size'] / pow(1024, $factor)) . @$sizes[$factor];
-
-        return $info;
-    }
-
-    /**
-     * Creates a new directory at the specified path.
-     *
-     * This method allows for the creation of nested directories if they do not exist.
-     *
-     * @param string $directory_path The path where the directory should be created.
-     * @param int $permissions The permissions to set for the directory, in octal notation (e.g., 0755).
-     * @param bool $recursive Whether to create nested directories if necessary.
-     * @return bool Returns true if the directory was created successfully, or if it already exists.
-     * @throws Exception if the directory cannot be created.
-     */
-    public function create_directory(string $directory_path, int $permissions = 0755, bool $recursive = true): bool {
-        if (file_exists($directory_path)) {
-            return true;
+        // Move uploaded file
+        if (!move_uploaded_file($uploaded_file['tmp_name'], $file_path)) {
+            throw new Exception("Failed to move uploaded file to destination.");
         }
 
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($directory_path)) {
-            throw new Exception("Access to this path is restricted: $directory_path");
-        }
+        // Build file info array
+        $file_info = [
+            'file_name' => $file_name,
+            'file_path' => $file_path,
+            'file_type' => $mime_type,
+            'file_size' => $uploaded_file['size']
+        ];
 
-        if (!mkdir($directory_path, $permissions, $recursive)) {
-            throw new Exception("Failed to create directory: $directory_path");
-        }
+        // Load the uploaded image for further processing
+        $this->load($file_path);
 
-        return true;
-    }
+        // Resize the image if necessary
+        if (($max_width > 0 && $this->get_width() > $max_width) || ($max_height > 0 && $this->get_height() > $max_height)) {
+            $resize_factor_w = $this->get_width() / $max_width;
+            $resize_factor_h = $this->get_height() / $max_height;
 
-    /**
-     * Checks whether a file or directory exists at the specified path.
-     *
-     * @param string $path The path to the file or directory.
-     * @return bool Returns true if the file or directory exists, otherwise false.
-     */
-    public function exists(string $path): bool {
-        return file_exists($path);
-    }
-
-    /**
-     * Reads the contents of a file.
-     *
-     * @param string $file_path The path to the file to be read.
-     * @return string Returns the contents of the file.
-     * @throws Exception If the file does not exist or cannot be read.
-     */
-    public function read(string $file_path): string {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($file_path)) {
-            throw new Exception("Access to this file is restricted: $file_path");
-        }
-
-        if (!file_exists($file_path)) {
-            throw new Exception("The file does not exist: $file_path");
-        }
-
-        $content = file_get_contents($file_path);
-        if ($content === false) {
-            throw new Exception("Failed to read the file: $file_path");
-        }
-
-        return $content;
-    }
-
-    /**
-     * Writes or appends data to a file.
-     *
-     * @param string $file_path The path to the file where data should be written.
-     * @param mixed $data The data to write to the file.
-     * @param bool $append Whether to append data to the file instead of overwriting it.
-     * @return bool Returns true on successful write, false on failure.
-     * @throws Exception If there is an error writing to the file.
-     */
-    public function write(string $file_path, $data, bool $append = false): bool {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($file_path)) {
-            throw new Exception("Access to this file is restricted: $file_path");
-        }
-
-        $flags = $append ? FILE_APPEND : 0;
-        $result = file_put_contents($file_path, $data, $flags);
-        if ($result === false) {
-            throw new Exception("Failed to write to the file: $file_path");
-        }
-
-        return true;
-    }
-
-    /**
-     * Deletes a file from the filesystem.
-     *
-     * This method checks if the file exists and attempts to delete it. If the file does not exist or cannot be deleted,
-     * an exception is thrown.
-     *
-     * @param string $file_path The path to the file that needs to be deleted.
-     * @return bool Returns true if the file is successfully deleted.
-     * @throws Exception If the file does not exist or the deletion fails.
-     */
-    public function delete(string $file_path): bool {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($file_path)) {
-            throw new Exception("Access to this file is restricted: $file_path");
-        }
-
-        if (!file_exists($file_path)) {
-            throw new Exception("The file does not exist: $file_path");
-        }
-
-        if (!unlink($file_path)) {
-            throw new Exception("Failed to delete the file: $file_path");
-        }
-
-        return true;
-    }
-
-    /**
-     * Initiates a file download or displays inline from the server or an external URL.
-     *
-     * This method prepares and sends headers based on the parameters to either initiate a file download
-     * from the server's local storage or display it inline. It checks if the file exists and is readable before proceeding.
-     *
-     * @param string $file_path The path or URL of the file.
-     * @param bool $as_attachment Determines whether to force the file download (true) or display inline (false).
-     * @throws Exception If the file does not exist or cannot be read.
-     * @return void
-     */
-    public function download(string $file_path, bool $as_attachment = true): void {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($file_path)) {
-            throw new Exception("Access to this file is restricted: $file_path");
-        }
-
-        // Check if the file exists in the given path
-        if (!file_exists($file_path)) {
-            throw new Exception("The file does not exist: $file_path");
-        }
-
-        // Ensure the file is readable
-        if (!is_readable($file_path)) {
-            throw new Exception("The file is not accessible: $file_path");
-        }
-
-        // Clean all buffering to avoid interference with the file
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // Determine content disposition based on $as_attachment flag
-        $content_disposition = $as_attachment ? 'attachment' : 'inline';
-
-        // Set headers for file download or display
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: ' . $content_disposition . '; filename="' . basename($file_path) . '"');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        header('Content-Length: ' . filesize($file_path));
-
-        // Flush system output buffer
-        flush();
-
-        // Read the file and send it to the output buffer
-        readfile($file_path);
-
-        // Terminate the script to prevent additional output
-        exit;
-    }
-
-    /**
-     * Lists files and directories within a specified directory.
-     *
-     * This method returns an array containing the names of files and directories
-     * within the specified directory. It has an option to perform a recursive listing,
-     * which includes all subdirectories and their contents.
-     *
-     * @param string $directory_path The path to the directory whose contents are to be listed.
-     * @param bool $recursive Determines whether the listing should be recursive.
-     * @throws Exception If the specified directory does not exist or is not a directory.
-     * @return array An array of file and directory names from the specified directory.
-     */
-    public function list_directory(string $directory_path, bool $recursive = false): array {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($directory_path)) {
-            throw new Exception("Access to this path is restricted: $directory_path");
-        }
-
-        // Check if the directory exists
-        if (!is_dir($directory_path)) {
-            throw new Exception("The specified path is not a directory: $directory_path");
-        }
-
-        $result = [];
-        $items = new DirectoryIterator($directory_path);
-
-        foreach ($items as $item) {
-            if ($item->isDot()) {
-                continue; // Skip current and parent directory references
-            }
-
-            // If the item is a directory and recursive is true, recurse into it
-            if ($item->isDir() && $recursive) {
-                $subdirectory_items = $this->list_directory($item->getPathname(), true);
-                $result[$item->getFilename()] = $subdirectory_items; // Store with directory as key
+            if ($resize_factor_w > $resize_factor_h) {
+                $this->resize_to_width($max_width);
             } else {
-                // Otherwise, add the filename to the result
-                $result[] = $item->getFilename();
+                $this->resize_to_height($max_height);
             }
+
+            // Save the resized image
+            $this->save($file_path);
         }
 
-        return $result;
+        // Generate a thumbnail if requested
+        if ($thumbnail_max_width > 0 && $thumbnail_max_height > 0 && $thumbnail_dir !== '') {
+            $thumbnail_path = str_replace($destination, $thumbnail_dir, $file_path);
+            
+            // Create thumbnail directory if it doesn't exist
+            $thumbnail_directory = dirname($thumbnail_path);
+            if (!is_dir($thumbnail_directory)) {
+                if (!mkdir($thumbnail_directory, 0755, true)) {
+                    throw new Exception("Failed to create thumbnail directory: {$thumbnail_directory}");
+                }
+            }
+            
+            $thumbnail_data = [
+                'new_file_path' => $thumbnail_path,
+                'max_width' => $thumbnail_max_width,
+                'max_height' => $thumbnail_max_height,
+                'tmp_file_width' => $this->get_width(),
+                'tmp_file_height' => $this->get_height(),
+                'image' => $this,
+            ];
+            $this->save_image($thumbnail_data);
+            $file_info['thumbnail_path'] = $thumbnail_path;
+        }
+
+        return $file_info;
     }
 
     /**
-     * Copies a file from one location to another.
-     *
-     * @param string $source_path The path to the source file.
-     * @param string $destination_path The path to the destination where the file will be copied.
-     * @return bool Returns true on success, or false on failure.
-     * @throws Exception if the source file does not exist or the copy fails.
-     */
-    public function copy(string $source_path, string $destination_path): bool {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($source_path)) {
-            throw new Exception("Access to this path is restricted: $source_path");
-        }
-
-        if (!file_exists($source_path)) {
-            throw new Exception("The source file does not exist: $source_path");
-        }
-
-        if (!copy($source_path, $destination_path)) {
-            throw new Exception("Failed to copy the file from $source_path to $destination_path");
-        }
-
-        return true;
-    }
-
-    /**
-     * Moves a file from one location to another.
-     *
-     * @param string $source_path The path to the source file.
-     * @param string $destination_path The path to the destination where the file will be moved.
-     * @return bool Returns true on success, or false on failure.
-     * @throws Exception if the source file does not exist or the move fails.
-     */
-    public function move(string $source_path, string $destination_path): bool {
-
-        // Validate the path to ensure it's allowed based on predefined security rules
-        if (!$this->is_path_valid($source_path)) {
-            throw new Exception("Access to this path is restricted: $source_path");
-        }
-
-        if (!file_exists($source_path)) {
-            throw new Exception("The source file does not exist: $source_path");
-        }
-
-        if (!rename($source_path, $destination_path)) {
-            throw new Exception("Failed to move the file from $source_path to $destination_path");
-        }
-
-        return true;
-    }
-
-    /**
-    * Validates the upload destination path and ensures it exists and is accessible.
+    * Loads and validates an image file into memory.
     *
-    * @param string $destination The target upload directory path
-    * @param bool $upload_to_module Whether to upload to a module directory (default: false)
-    * @param string $target_module The target module name if uploading to module (default: '')
-    *
-    * @throws Exception If:
-    *                   - Destination is empty
-    *                   - Target path is not a directory
-    *                   - Path validation fails for non-module uploads
-    *
+    * This method performs several steps:
+    * 1. Validates the image file for type, size and memory requirements
+    * 2. Determines the image type (JPEG, GIF, PNG, WEBP)
+    * 3. Creates an appropriate GD image resource based on the type
+    * 
+    * @param string $filename Path to the image file to be loaded
+    * @throws InvalidArgumentException If the image type is unsupported
+    * @throws RuntimeException If WebP support is unavailable or if image resource creation fails
     * @return void
     */
-    private function validate_upload_path(string $destination, bool $upload_to_module = false, string $target_module = ''): void {
-        if (empty($destination)) {
-            throw new Exception('Upload destination not specified');
+    protected function load(string $filename): void {
+
+        // Validate file before any operations
+        $this->validate_image($filename);
+
+        $image_info = getimagesize($filename);
+        $this->image_type = $image_info[2];
+
+        switch ($this->image_type) {
+            case IMAGETYPE_JPEG:
+                $this->image = imagecreatefromjpeg($filename);
+                break;
+            case IMAGETYPE_GIF:
+                $this->image = imagecreatefromgif($filename);
+                break;
+            case IMAGETYPE_PNG:
+                $this->image = imagecreatefrompng($filename);
+                break;
+            case IMAGETYPE_WEBP:
+                if (!function_exists('imagecreatefromwebp')) {
+                    throw new RuntimeException('WebP support not available in this PHP installation');
+                }
+                $this->image = imagecreatefromwebp($filename);
+                break;
+            default:
+                throw new InvalidArgumentException("Unsupported image type");
         }
 
-        if ($upload_to_module === true) {
-            $target_path = '../modules/' . $target_module . '/' . $destination;
-        } else {
-            $target_path = $destination;
+        if ($this->image === false) {
+            throw new RuntimeException("Failed to create image resource");
         }
 
-        if (!is_dir($target_path)) {
-            throw new Exception('Invalid upload destination');
-        }
-
-        // Use existing is_path_valid() as final check if not uploading to module
-        if ($upload_to_module === false && !$this->is_path_valid($target_path)) {
-            throw new Exception('Unauthorized upload location');
-        }
     }
 
     /**
-    * Generates a secure filename for an uploaded file, either randomized or based on original name.
-    *
-    * @param string $original_name The original filename from the upload
-    * @param bool $make_rand_name Whether to generate a random filename (default: false)
+    * Performs comprehensive validation of an image file.
     * 
-    * @return array{
-    *    name: string,           The base filename without extension
-    *    extension: string,      The lowercase file extension
-    *    full_name: string      The complete filename with extension
-    * }
+    * This method executes multiple validation checks on an image file including:
+    * - File existence verification
+    * - MIME type validation using finfo and getimagesize
+    * - File signature/magic number verification
+    * - Memory requirement calculations
+    *
+    * @param string $filename The path to the image file to validate
+    * @throws InvalidArgumentException If the file doesn't exist, has invalid MIME type, or invalid signature
+    * @throws RuntimeException If image info can't be read or memory requirements exceed limits
+    * @return void
     */
-    private function generate_secure_filename(string $original_name, bool $make_rand_name): array {
-        $file_info = return_file_info($original_name);
-        
-        if ($make_rand_name === true) {
-            $file_name = strtolower(make_rand_str(10));
-        } else {
-            $file_name = url_title($file_info['file_name']); 
-        }
-        
-        // Whitelist of allowed extensions could be added here
-        $extension = strtolower($file_info['file_extension']);
-        
-        return [
-            'name' => $file_name,
-            'extension' => $extension,
-            'full_name' => $file_name . $extension
-        ];
-    }
+    private function validate_image(string $filename): void {
 
-    /**
-     * Checks if a given path is valid based on predefined security rules.
-     *
-     * This method validates a file path to ensure it does not reside in restricted directories,
-     * is not directly under the application root, and is within the application's directory scope.
-     * The function prevents directory traversal attacks and unauthorized file access by validating
-     * against a list of restricted paths and checking the path's relative position to the application's root.
-     *
-     * If the path doesn't exist yet, it validates the parent directory instead.
-     *
-     * @param string $path The file or directory path to validate.
-     * @return bool Returns true if the path is valid, false otherwise.
-     */
-    private function is_path_valid(string $path): bool {
-        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine'];
-        
-        // If the path exists, validate it directly
-        if (file_exists($path)) {
-            $normalized_path = realpath($path);
-            
-            // Check if the path is in a restricted directory
-            foreach ($restricted_dirs as $dir) {
-                $restricted_real_path = realpath($dir);
-                if ($restricted_real_path && strpos($normalized_path, $restricted_real_path) === 0) {
-                    return false; // Path is inside a restricted directory
-                }
-            }
-            
-            // Prevent manipulation of any files or directories directly under APPPATH
-            $relative_path = str_replace(realpath(APPPATH), '', $normalized_path);
-            if (strpos($relative_path, DIRECTORY_SEPARATOR) === false) {
-                return false; // Path is directly under the root directory
-            }
-            
-            // Ensure the path is within the application directory to avoid external access
-            if (strpos($normalized_path, realpath(APPPATH)) !== 0) {
-                return false;
-            }
-            
-            return true;
-        } 
-        
-        // If the path doesn't exist, validate its parent directory
-        else {
-            // Get the parent directory path
-            $parent_path = dirname($path);
-            
-            // If parent path doesn't exist either, return false
-            if (!file_exists($parent_path)) {
-                // We could recursively check parent paths here, but that might introduce
-                // security issues. Better to ensure parent directories exist first.
-                return false;
-            }
-            
-            // Validate the parent directory
-            $parent_normalized_path = realpath($parent_path);
-            
-            // Check if the parent path is in a restricted directory
-            foreach ($restricted_dirs as $dir) {
-                $restricted_real_path = realpath($dir);
-                if ($restricted_real_path && strpos($parent_normalized_path, $restricted_real_path) === 0) {
-                    return false; // Parent path is inside a restricted directory
-                }
-            }
-            
-            // Prevent manipulation of any files or directories directly under APPPATH
-            $parent_relative_path = str_replace(realpath(APPPATH), '', $parent_normalized_path);
-            if (strpos($parent_relative_path, DIRECTORY_SEPARATOR) === false) {
-                return false; // Parent path is directly under the root directory
-            }
-            
-            // Ensure the parent path is within the application directory to avoid external access
-            if (strpos($parent_normalized_path, realpath(APPPATH)) !== 0) {
-                return false;
-            }
-            
-            // The target path inherits validity from its parent
-            return true;
-        }
-    }
-
-    /**
-     * Validates an uploaded file by checking its existence, memory requirements, and MIME type.
-     *
-     * This method ensures that the file exists, has sufficient memory for processing, and has a valid MIME type.
-     * If any validation fails, an exception is thrown.
-     *
-     * @param string $filename The path to the file to be validated.
-     * @return void
-     * @throws InvalidArgumentException If the file does not exist.
-     * @throws RuntimeException If the file exceeds memory requirements or fails MIME type validation.
-     */
-    private function validate_file(string $filename): void {
         if (!file_exists($filename)) {
             throw new InvalidArgumentException("File not found: $filename");
         }
 
-        // Memory validation for all files
-        $memory_validation = $this->validate_memory_requirements($filename);
-        if (!$memory_validation['status']) {
-            throw new RuntimeException($memory_validation['message']);
-        }
-
-        // Validate MIME type
-        $this->validate_mime_type($filename);
-    }
-
-    /**
-     * Validates the MIME type of a file by comparing the results from `finfo` and the `file` command.
-     *
-     * This method ensures that the MIME type detected by PHP's `finfo` matches the MIME type
-     * reported by the system's `file` command. If a mismatch is detected, an exception is thrown.
-     *
-     * @param string $filename The path to the file to be validated.
-     * @return void
-     * @throws InvalidArgumentException If a MIME type mismatch is detected.
-     */
-    private function validate_mime_type(string $filename): void {
+        // Enhanced MIME validation with double-checking
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime_type = finfo_file($finfo, $filename);
         finfo_close($finfo);
 
-        // Additional MIME validation for Unix systems
-        if (DIRECTORY_SEPARATOR !== '\\') {
-            $cmd = 'file --brief --mime ' . escapeshellarg($filename) . ' 2>&1';
-            if (function_exists('exec')) {
-                $native_mime = trim(exec($cmd));
+        $allowed_types = array_values($this->content_type);
+        if (!in_array($mime_type, $allowed_types)) {
+            throw new InvalidArgumentException('Invalid image type');
+        }
 
-                // Normalize the MIME type by stripping additional metadata
-                $native_mime_base = strtok($native_mime, ';'); // Extract the base MIME type
-                $mime_type_base = strtok($mime_type, ';'); // Extract the base MIME type
+        // Additional image validation
+        $image_info = @getimagesize($filename);
+        if ($image_info === false) {
+            throw new RuntimeException('Failed to get image information');
+        }
 
-                if ($native_mime_base !== false && $native_mime_base !== $mime_type_base) {
-                    throw new InvalidArgumentException('MIME type mismatch detected');
-                }
+        $detected_mime = $image_info['mime'];
+
+        // Verify MIME type matches getimagesize result
+        $detected_mime_base = strtolower(substr($detected_mime, 0, strpos($detected_mime, '/')));
+        $mime_type_base = strtolower(substr($mime_type, 0, strpos($mime_type, '/')));
+        if ($detected_mime_base !== 'image' || $mime_type_base !== 'image') {
+            throw new InvalidArgumentException('MIME type mismatch detected');
+        }
+
+        // Validate file signatures
+        $file_content = file_get_contents($filename, false, null, 0, 8);
+        $signatures = [
+            IMAGETYPE_JPEG => ["\xFF\xD8\xFF"],
+            IMAGETYPE_PNG => ["\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"],
+            IMAGETYPE_GIF => ["GIF87a", "GIF89a"],
+            IMAGETYPE_WEBP => ["RIFF", "WEBP"]
+        ];
+
+        $valid_signature = false;
+        foreach ($signatures[$image_info[2]] ?? [] as $sig) {
+            if (strpos($file_content, $sig) === 0) {
+                $valid_signature = true;
+                break;
+            }
+        }
+        if (!$valid_signature) {
+            throw new InvalidArgumentException('Invalid file signature');
+        }
+
+        if (($file = @fopen($filename, 'rb')) === FALSE) {
+            throw new RuntimeException('Unable to analyze image file');
+        }
+        $opening_bytes = fread($file, 256);
+        fclose($file);
+
+        // Enhanced pattern including PHP tags
+        if (preg_match('/<(script|iframe|object|embed|applet)[\s>]|<\?php|<\?/i', $opening_bytes)) {
+            throw new InvalidArgumentException('Potential security threat detected in image');
+        }
+
+        $required_memory = $image_info[0] * $image_info[1] * 4 * 1.5;
+        if (memory_get_usage() + $required_memory > $this->get_memory_limit()) {
+            throw new RuntimeException('Image too large to process');
+        }
+
+    }
+
+    /**
+     * Saves the currently loaded image to a file, with optional compression and file permissions settings.
+     *
+     * This method saves an image resource held in this class to a specified file. It handles different
+     * image types and applies the specified compression level for formats that support it (JPEG, WEBP).
+     * File permissions can also be set if provided. If no filename is specified, the method uses an
+     * internal default filename, which must be set prior to calling this method.
+     *
+     * @param string|null $filename Optional. The path where the image file will be saved. Defaults to the class's internal filename if null.
+     * @param int $compression Optional. Compression level for JPEG and WEBP images, from 0 (worst quality, smallest file) to 100 (best quality, largest file). Defaults to 100.
+     * @param int|null $permissions Optional. File permissions to set on the saved file. Uses format (e.g., 0644). If not specified, the system's default permissions are used.
+     * @return void
+     * @throws InvalidArgumentException If an unsupported image type is encountered or required properties are not set.
+     * @throws RuntimeException If writing the file fails.
+     */
+    public function save(?string $filename = null, int $compression = 100, ?int $permissions = null): void {
+        $filename = $filename ?: $this->file_name;
+
+        switch ($this->get_image_type()) {
+            case IMAGETYPE_JPEG:
+                imagejpeg($this->image, $filename, $compression);
+                break;
+            case IMAGETYPE_GIF:
+                imagegif($this->image, $filename);
+                break;
+            case IMAGETYPE_WEBP:
+                imagewebp($this->image, $filename, $compression);
+                break;
+            case IMAGETYPE_PNG:
+                imagesavealpha($this->image, true);
+                imagepng($this->image, $filename);
+                break;
+            default:
+                throw new InvalidArgumentException("Unsupported image type or required properties not set.");
+        }
+
+        if ($permissions !== null) {
+            if (!chmod($filename, $permissions)) {
+                throw new RuntimeException("Failed to set file permissions.");
             }
         }
     }
 
     /**
-     * Validates whether there is sufficient memory available to process a file.
+     * Outputs or returns the image content directly depending on the given parameter.
      *
-     * This method checks if the system has enough memory to handle the file by comparing
-     * the file size (with a processing buffer) to the available memory. It returns an array
-     * indicating the validation status and an optional error message.
+     * This method handles the output of the image directly to the browser or captures the image data as a string.
+     * The operation depends on the `$return` parameter. It utilizes output buffering to capture the output when `$return` is true.
+     * Supports various image formats based on the internal image type set within the class.
      *
-     * @param string $filename The path to the file to be validated.
-     * @return array An associative array containing:
-     *               - 'status': (bool) Whether there is sufficient memory (true) or not (false).
-     *               - 'message': (string) An error message if memory is insufficient (empty string otherwise).
+     * @param bool $return Determines whether to return the image content as a string (true) or to output it directly to the browser (false).
+     * @return string|null Returns the image data as a string if `$return` is true; otherwise, outputs directly and returns null.
      */
-    private function validate_memory_requirements(string $filename): array {
-        $result = ['status' => true, 'message' => ''];
-        
-        if (!function_exists('memory_get_usage')) {
-            return $result;
+    public function output(bool $return = false): ?string {
+        $contents = null;
+        if ($return) {
+            ob_start();
+        }
+        switch ($this->get_image_type()) {
+            case IMAGETYPE_JPEG:
+                imagejpeg($this->image);
+                break;
+            case IMAGETYPE_GIF:
+                imagegif($this->image);
+                break;
+            case IMAGETYPE_WEBP:
+                imagewebp($this->image);
+                break;
+            case IMAGETYPE_PNG:
+                imagealphablending($this->image, true);
+                imagesavealpha($this->image, true);
+                imagepng($this->image);
+                break;
+        }
+        if ($return) {
+            $contents = ob_get_clean();
+        }
+        return $contents;
+    }
+
+    /**
+     * Retrieves the width of the currently loaded image.
+     *
+     * This method returns the width of the image resource that is currently loaded within the instance.
+     * It relies on the PHP GD library's imagesx() function to obtain the width of the image resource.
+     *
+     * @return int The width of the image in pixels, if an image is loaded.
+     * @throws Exception If no image is loaded.
+     */
+    public function get_width(): int {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded.");
+        }
+        return imagesx($this->image);
+    }
+
+    /**
+     * Retrieves the height of the currently loaded image.
+     *
+     * This method returns the height of the image resource that is currently loaded within the instance.
+     * It relies on the PHP GD library's imagesy() function to obtain the height of the image resource.
+     *
+     * @return int The height of the image in pixels, if an image is loaded.
+     * @throws Exception If no image is loaded, ensuring that the method does not fail silently.
+     */
+    public function get_height(): int {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded.");
+        }
+        return imagesy($this->image);
+    }
+
+    /**
+     * Resizes the image to a specified height while maintaining the aspect ratio.
+     *
+     * This method calculates the proportional width necessary to maintain the aspect ratio based on a new height,
+     * then resizes the image to these new dimensions using the `resize` method.
+     *
+     * @param int $height The target height to which the image should be resized.
+     * @throws Exception If no image is loaded or if the provided height is non-positive.
+     * @return void
+     */
+    public function resize_to_height(int $height): void {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded to resize.");
+        }
+        if ($height <= 0) {
+            throw new Exception("Height must be greater than zero.");
         }
 
+        $currentHeight = $this->get_height();
+        if ($currentHeight === 0) {  // To prevent division by zero
+            throw new Exception("Loaded image has zero height, cannot resize.");
+        }
+
+        $ratio = $height / $currentHeight;
+        $width = $this->get_width() * $ratio;
+        $this->resize($width, $height);
+    }
+
+    /**
+     * Resizes the image to a specified width while maintaining the aspect ratio.
+     *
+     * This method calculates the proportional height necessary to maintain the aspect ratio based on a new width,
+     * then resizes the image to these new dimensions using the `resize` method.
+     *
+     * @param int $width The target width to which the image should be resized.
+     * @throws Exception If no image is loaded or if the provided width is non-positive.
+     * @return void
+     */
+    public function resize_to_width(int $width): void {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded to resize.");
+        }
+        if ($width <= 0) {
+            throw new Exception("Width must be greater than zero.");
+        }
+
+        $currentWidth = $this->get_width();
+        if ($currentWidth === 0) {  // To prevent division by zero
+            throw new Exception("Loaded image has zero width, cannot resize.");
+        }
+
+        $ratio = $width / $currentWidth;
+        $height = $this->get_height() * $ratio;
+        $this->resize($width, $height);
+    }
+
+    /**
+     * Scales the image by a given percentage, adjusting both width and height while maintaining the aspect ratio.
+     *
+     * This method calculates the new dimensions of the image based on the percentage scale provided.
+     * It scales the width and height by the given percentage, then resizes the image to these new dimensions using the `resize` method.
+     *
+     * @param float $scale The percentage by which to scale the image. A value of 100 maintains the original size,
+     *                     values less than 100 reduce the size, and values greater than 100 increase the size.
+     * @throws Exception If no image is loaded or if the scale value is not valid.
+     * @return void
+     */
+    public function scale(float $scale): void {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded to scale.");
+        }
+        if ($scale <= 0) {
+            throw new Exception("Scale must be a positive number.");
+        }
+
+        $width = $this->get_width() * $scale / 100;
+        $height = $this->get_height() * $scale / 100;
+        $this->resize($width, $height);
+    }
+
+    /**
+     * Resizes and crops the image to specified dimensions.
+     *
+     * This method adjusts the image to the specified width and height, maintaining the aspect ratio and
+     * cropping the excess if necessary. It ensures that the final image matches the target dimensions
+     * exactly, even if that involves cropping parts of the image. It handles different aspect ratios by first
+     * resizing to the dimension that requires less adjustment before cropping to achieve the desired dimensions.
+     *
+     * @param int $width The target width for the image.
+     * @param int $height The target height for the image.
+     * @throws Exception If no image is loaded or if width or height are non-positive values.
+     * @return void
+     */
+    public function resize_and_crop(int $width, int $height): void {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded to resize and crop.");
+        }
+        if ($width <= 0 || $height <= 0) {
+            throw new Exception("Width and height must be positive integers.");
+        }
+
+        $target_ratio = $width / $height;
+        $actual_ratio = $this->get_width() / $this->get_height();
+
+        if ($target_ratio === $actual_ratio) {
+            $this->resize($width, $height);
+        } elseif ($target_ratio > $actual_ratio) {
+            $this->resize_to_width($width);
+            $this->crop($width, $height);
+        } else {
+            $this->resize_to_height($height);
+            $this->crop($width, $height);
+        }
+    }
+
+    /**
+     * Resizes the image to the specified dimensions.
+     *
+     * Creates a new image resource with the specified width and height, then resamples
+     * the current image onto this new canvas. This method maintains image quality and applies
+     * appropriate transparency settings based on the image type. As a protected method, it's intended
+     * for internal class operations and use by extending classes, supporting common image manipulations
+     * such as scaling and cropping that require direct resizing.
+     *
+     * @param float $width The target width for the resized image, must be a positive integer.
+     * @param float $height The target height for the resized image, must be a positive integer.
+     * @throws Exception Throws an exception if the dimensions provided are invalid or if no image is loaded.
+     * @return void
+     */
+    protected function resize(float $width, float $height): void {
+        if ($this->image === null) {
+            throw new Exception("No image is loaded to resize.");
+        }
+        if ($width <= 0 || $height <= 0) {
+            throw new Exception("Width and height must be positive integers.");
+        }
+
+        $new_image = imagecreatetruecolor($width, $height);
+        if (!$new_image) {
+            throw new Exception("Failed to create a new image resource.");
+        }
+
+        $image_type = $this->get_image_type();
+        if ($image_type === IMAGETYPE_GIF || $image_type === IMAGETYPE_PNG) {
+            $this->prepare_transparency($new_image);
+        }
+
+        imagecopyresampled($new_image, $this->image, 0, 0, 0, 0, $width, $height, $this->get_width(), $this->get_height());
+        $this->image = $new_image;
+    }
+
+    /**
+     * Prepares the transparency settings for a given image resource based on its type.
+     *
+     * Configures transparency handling for GIF and PNG images. For GIF images with a specific transparent color,
+     * allocates this color in the new image resource and sets it as transparent. For PNG images, ensures that
+     * alpha blending is disabled and alpha saving is enabled to maintain transparency in the resultant image.
+     * This method is critical for preserving the visual integrity of images that require transparency.
+     *
+     * @param resource|GdImage $resource The image resource to which transparency settings should be applied.
+     * @throws Exception Throws an exception if transparency preparation fails.
+     * @return void
+     */
+    private function prepare_transparency($resource): void {
+        $image_type = $this->get_image_type();
+        if ($image_type === IMAGETYPE_GIF || $image_type === IMAGETYPE_PNG) {
+            if ($image_type === IMAGETYPE_GIF) {
+                $transparency = imagecolortransparent($this->image);
+                if ($transparency >= 0) {
+                    $transparent_color = imagecolorsforindex($this->image, $transparency);
+                    $transparency = imagecolorallocate($resource, $transparent_color['red'], $transparent_color['green'], $transparent_color['blue']);
+                    if (!$transparency) {
+                        throw new Exception("Failed to allocate transparency color for GIF image.");
+                    }
+                    imagefill($resource, 0, 0, $transparency);
+                    imagecolortransparent($resource, $transparency);
+                }
+            } elseif ($image_type === IMAGETYPE_PNG) {
+                imagealphablending($resource, false);
+                imagesavealpha($resource, true);
+                $color = imagecolorallocatealpha($resource, 0, 0, 0, 127);
+                if (!$color) {
+                    throw new Exception("Failed to allocate alpha transparency for PNG image.");
+                }
+                imagefill($resource, 0, 0, $color);
+            }
+        } else {
+            throw new Exception("Unsupported image type for transparency preparation.");
+        }
+    }
+
+    /**
+     * Crops the image to specified dimensions from a selected position.
+     *
+     * This method adjusts the image to the specified width and height, focusing the crop based on the `trim` parameter.
+     * It will crop the image focusing on the center or the right side, depending on `trim`. If the current image dimensions
+     * are less than the desired dimensions, no cropping occurs. The resulting image retains the specified dimensions from
+     * the selected part of the original image.
+     *
+     * @param int $width The desired width of the cropped image.
+     * @param int $height The desired height of the cropped image.
+     * @param string $trim Optional. Determines the part of the image to focus on during cropping.
+     *                     Can be 'center' or 'right'. Default is 'center'. If 'left' is provided, it defaults to no offset.
+     * @return void
+     * @throws InvalidArgumentException If the given dimensions are invalid or exceed the original dimensions.
+     */
+    public function crop(int $width, int $height, string $trim = 'center'): void {
+        $offset_x = 0;
+        $offset_y = 0;
+        $current_width = $this->get_width();
+        $current_height = $this->get_height();
+
+        if ($trim != 'left') {
+            if ($current_width > $width) {
+                $diff = $current_width - $width;
+                $offset_x = ($trim === 'center') ? $diff / 2 : $diff; // full diff for trim right
+            }
+            if ($current_height > $height) {
+                $diff = $current_height - $height;
+                $offset_y = ($trim === 'center') ? $diff / 2 : $diff;
+            }
+        }
+
+        $new_image = imagecreatetruecolor($width, $height);
+        imagecopyresampled($new_image, $this->image, 0, 0, $offset_x, $offset_y, $width, $height, $width, $height);
+        $this->image = $new_image;
+    }
+
+    /**
+     * Retrieves the type of the currently loaded image.
+     *
+     * This method returns the image type identified by one of the IMAGETYPE_XXX constants,
+     * corresponding to the format of the image currently held by the class instance.
+     * The image type is useful for determining how to process or handle the image data.
+     * If no image has been loaded or if the type cannot be determined (e.g., the image data is invalid),
+     * null is returned. This method is protected to limit its accessibility to within the class itself
+     * and its subclasses, supporting encapsulation of the image handling logic.
+     *
+     * @return int|null Returns the image type as one of the predefined IMAGETYPE_XXX constants.
+     *                  Returns null if the image type is not determined or no image is loaded.
+     */
+    protected function get_image_type(): ?int {
+        return $this->image_type;
+    }
+
+    /**
+    * Gets the PHP memory limit in bytes.
+    * 
+    * Retrieves and converts the PHP memory_limit configuration value to bytes.
+    * Handles limit values specified with K (Kilobytes), M (Megabytes), or G (Gigabytes) suffixes.
+    * Returns PHP_INT_MAX if memory_limit is set to -1 (unlimited).
+    *
+    * Example values handled:
+    * - "128M" -> 134217728 (bytes)
+    * - "1G" -> 1073741824 (bytes)
+    * - "-1" -> PHP_INT_MAX
+    *
+    * @return int Memory limit in bytes
+    */
+    private function get_memory_limit(): int {
         $memory_limit = ini_get('memory_limit');
         if ($memory_limit === '-1') {
-            return $result;
+            return PHP_INT_MAX;
         }
-
-        // Convert memory limit to bytes
-        $memory_limit = $this->convert_to_bytes($memory_limit);
-        $file_size = filesize($filename);
-        $needed_memory = $file_size * 2.1; // Buffer for processing
-
-        $memory_available = $memory_limit - memory_get_usage();
         
-        if ($needed_memory > $memory_available) {
-            return [
-                'status' => false,
-                'message' => 'Insufficient memory to process file'
-            ];
+        $unit = strtolower(substr($memory_limit, -1));
+        $value = (int)substr($memory_limit, 0, -1);
+        
+        switch ($unit) {
+            case 'g':
+                $value *= 1024;
+            case 'm':
+                $value *= 1024;
+            case 'k':
+                $value *= 1024;
         }
-
-        return $result;
+        
+        return $value;
     }
 
     /**
-     * Returns a user-friendly error message based on the provided file upload error code.
+     * Frees up memory allocated to the image resource.
      *
-     * This method maps PHP's file upload error codes to descriptive error messages.
-     * It is used to provide meaningful feedback when a file upload fails.
+     * This method releases the memory associated with the image resource
+     * stored in this class's instance. It should be invoked when the image is no longer needed,
+     * especially in scripts that process multiple or large images, to prevent memory leaks and manage
+     * system resources more efficiently. Failure to call this method in such scenarios can lead to 
+     * increased memory usage and possible performance degradation.
      *
-     * @param int $error_code The file upload error code (e.g., UPLOAD_ERR_INI_SIZE).
-     * @return string A user-friendly error message corresponding to the error code.
+     * @return void
      */
-    private function get_upload_error_message(int $error_code): string {
-        return match($error_code) {
-            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive',
-            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive',
-            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
-            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
-            default => 'Unknown upload error'
-        };
+    public function destroy(): void {
+        if ($this->image !== null) {
+            imagedestroy($this->image);
+            $this->image = null; // Explicitly unset the image to ensure it's no longer usable.
+        }
     }
 
     /**
-     * Converts memory value strings (like '128M', '1G') to bytes
-     * 
-     * @param string $memory_value The memory value with unit suffix
-     * @return int The value in bytes
+     * Saves the processed image to a specified path with configured settings.
+     *
+     * This method manages the saving of an image after potentially resizing it to meet specified
+     * maximum width and height constraints. If the actual dimensions of the image exceed these maximums,
+     * the image is resized to fit within the bounds while preserving the aspect ratio. The image is then
+     * saved to the filesystem with the specified compression level and file permissions set.
+     *
+     * @param array $data Configuration array containing all necessary parameters for image processing, including:
+     *                    - 'new_file_path': The path where the image will be saved.
+     *                    - 'compression': The compression level for JPEG/WEBP images, from 0 (worst quality, smallest file)
+     *                      to 100 (best quality, largest file).
+     *                    - 'permissions': The file permissions to set on the new image file, e.g., 0644.
+     *                    - 'max_width': The maximum allowed width for the image.
+     *                    - 'max_height': The maximum allowed height for the image.
+     *                    - 'tmp_file_width': The current width of the temporary file.
+     *                    - 'tmp_file_height': The current height of the temporary file.
+     *                    - 'image': The Image object that is being manipulated and saved.
+     * @return void
+     * @throws Exception If saving the image fails due to filesystem errors or invalid parameters.
      */
-    private function convert_to_bytes(string $memory_value): int {
-        $unit = strtolower(substr($memory_value, -1));
-        $value = (int) substr($memory_value, 0, -1);
-        
-        return match($unit) {
-            'g' => $value * 1024 * 1024 * 1024,
-            'm' => $value * 1024 * 1024,
-            'k' => $value * 1024,
-            default => (int) $memory_value,
-        };
+    private function save_image(array $data): void {
+        $new_file_path = $data['new_file_path'] ?? '';
+        $compression = $data['compression'] ?? 100;
+        $permissions = $data['permissions'] ?? 0755; // Default changed to a more common permission setting for images
+        $max_width = $data['max_width'] ?? 0;
+        $max_height = $data['max_height'] ?? 0;
+        $tmp_file_width = $data['tmp_file_width'] ?? 0;
+        $tmp_file_height = $data['tmp_file_height'] ?? 0;
+        $image = $data['image'];
+
+        if (($max_width > 0 && ($tmp_file_width > $max_width)) || ($max_height > 0 && ($tmp_file_height > $max_height))) {
+            $resize_factor_w = $tmp_file_width / $max_width;
+            $resize_factor_h = $tmp_file_height / $max_height;
+
+            if ($resize_factor_w > $resize_factor_h) {
+                $image->resize_to_width($max_width);
+            } else {
+                $image->resize_to_height($max_height);
+            }
+        }
+
+        $image->save($new_file_path, $compression, $permissions);
+    }
+
+    /**
+    * Gets the MIME type header for the currently loaded image.
+    * 
+    * Returns the appropriate MIME type (e.g., 'image/jpeg', 'image/png') for the loaded image.
+    * This MIME type can be used in HTTP Content-Type headers when serving the image.
+    *
+    * @throws InvalidArgumentException If no image has been loaded or image type is not set
+    * @return string The MIME type of the current image (e.g., 'image/jpeg', 'image/png', 'image/gif', 'image/webp')
+    */
+    public function get_header(): string {
+        if (!$this->image_type) {
+            throw new InvalidArgumentException("No image has been loaded, or image type is unset.");
+        }
+        return $this->content_type[$this->image_type];
+    }
+
+    /**
+    * Validates that a file exists at the specified path.
+    * 
+    * A utility method that checks if a file exists at the given path.
+    * Used for basic file existence validation before attempting file operations.
+    *
+    * @param string $path The filesystem path to check
+    * @throws InvalidArgumentException If no file exists at the specified path
+    * @return void
+    */
+    private function check_file_exists(string $path): void {
+        if (!file_exists($path)) {
+            throw new InvalidArgumentException("File not found: $path");
+        }
     }
 
 }

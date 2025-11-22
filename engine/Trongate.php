@@ -50,7 +50,6 @@ class Trongate {
         // Handle core framework classes with lazy loading
         $core_instance = match($key) {
             'model' => new Model($this->module_name),
-            'image' => new Image(),
             default => null
         };
 
@@ -141,19 +140,6 @@ class Trongate {
         }
 
         throw new Exception("Module controller not found: {$target_module}");
-    }
-
-    /**
-     * Upload a picture file using the upload method from the Image class.
-     *
-     * This method serves as an alternative way of invoking the upload method from the Image class.
-     * It simply uses the lazy-loaded Image instance and calls its upload method with the provided configuration data.
-     *
-     * @param array $config The configuration data for handling the upload.
-     * @return array|null The information of the uploaded file.
-     */
-    protected function upload_picture(array $config): ?array {
-        return $this->image->upload($config);
     }
 
     /**
