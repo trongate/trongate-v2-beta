@@ -10,7 +10,9 @@
 <body>
 	<div class="container">
 		<h1 class="text-center">Headline</h1>
-		<?= Pagination::display($pagination_data) ?>
+		
+
+		<?= Modules::run('pagination/display', $pagination_data) ?>
 	</div>
 </body>
 </html>
