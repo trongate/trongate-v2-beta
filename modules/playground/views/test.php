@@ -9,9 +9,19 @@
 </head>
 <body>
 	<div class="container">
-		<h1 class="text-center">Headline</h1>
-		<?= Modules::run('pagination/display', $pagination_data) ?>
-		<?= json($rows[0]) ?>
+		<h1 class="text-center">Test Form</h1>
+		<?php
+		echo form_open('playground/submit', array('class' => 'highlight-errors'));
+		echo form_label('First Name');
+		echo validation_errors('first_name');
+		echo form_input('first_name', $first_name, array('autocomplete' => 'off', 'placeholder' => 'Enter first name...'));
+
+		echo form_label('Last Name');
+		echo validation_errors('last_name');
+		echo form_input('last_name', $last_name, array('autocomplete' => 'off', 'placeholder' => 'Enter last name...'));
+		echo form_submit('submit', 'Submit');
+		echo form_close();
+		?>
 	</div>
 </body>
 </html>
