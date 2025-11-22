@@ -11,7 +11,11 @@
 	<div class="container">
 		<h1 class="text-center">Test Form</h1>
 		<?php
-		echo form_open('playground/submit', array('class' => 'highlight-errors'));
+		$form_attr = [
+			'class' => 'highlight-errors',
+			'data-error-display' => 'validation_msgs/english'
+		];
+		echo form_open('playground/submit', $form_attr);
 		echo form_label('First Name');
 		echo validation_errors('first_name');
 		echo form_input('first_name', $first_name, array('autocomplete' => 'off', 'placeholder' => 'Enter first name...'));

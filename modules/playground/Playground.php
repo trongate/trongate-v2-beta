@@ -7,6 +7,7 @@ class Playground extends Trongate {
     }
 
     public function submit() {
+
         $this->validation->set_rules('first_name', 'first name', 'required|min_length[5]|callback_firstname_check');
         $this->validation->set_rules('last_name', 'first name', 'required');
 

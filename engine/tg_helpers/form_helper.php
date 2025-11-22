@@ -191,47 +191,27 @@ function form_close(): string {
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
-
+    
     // Generate the hidden CSRF token input
     $html = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') . '">';
     $html .= '</form>';
-
+    
     // Check if form submission errors exist
     if (isset($_SESSION['form_submission_errors'])) {
-        // Pass the error array directly to highlight_validation_errors
-        $html .= highlight_validation_errors($_SESSION['form_submission_errors']);
+        // Inject the errors as JSON
+        $errors_json = json_encode($_SESSION['form_submission_errors'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        $html .= '<script>window.trongateValidationErrors = ' . $errors_json . ';</script>';
         
-        // Clear the session errors after processing
+        // Inject the validation JavaScript
+        $js_code = file_get_contents(APPPATH . 'engine/tg_helpers/injectables/js/highlight_validation_errors.js');
+        $js_code = str_replace('{{BASE_URL}}', BASE_URL, $js_code);
+        $html .= '<script>' . $js_code . '</script>';
+        
+        // Clear the session errors
         unset($_SESSION['form_submission_errors']);
     }
-
+    
     return $html;
-}
-
-/**
- * Highlight validation errors using provided JSON data.
- *
- * @param array $errors_data Array containing validation errors.
- * @return string HTML code for highlighting validation errors.
- */
-function highlight_validation_errors(array $errors_data): string {
-    // Safely encode the errors data into JSON
-    $errors_json = json_encode($errors_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-
-    if ($errors_json === false) {
-        error_log('JSON encoding failed for validation errors.');
-        return '';
-    }
-
-    // Read the JavaScript template
-    $output_str = file_get_contents(APPPATH . 'engine/views/highlight_errors.txt');
-    if ($output_str === false) {
-        error_log('Failed to read highlight_errors.txt file');
-        return '';
-    }
-
-    // Inject JSON data safely into the JavaScript context
-    return '<div class="inline-validation-builder"><script>let validationErrorsJson = ' . $errors_json . ';</script><script>' . $output_str . '</script></div>';
 }
 
 /**
