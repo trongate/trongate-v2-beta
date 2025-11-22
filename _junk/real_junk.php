@@ -1,973 +1,701 @@
 <?php
+
 /**
- * Trongate Validation Class
+ * File management class for handling file operations within the application.
  *
- * Provides server-side form and file validation with built-in CSRF protection.
- * To bypass CSRF for API endpoints:
- *     define('API_SKIP_CSRF', true);
+ * This class provides a comprehensive suite of methods designed for efficient and secure file management.
+ * It supports functionalities like uploading, deleting, reading, writing files, and managing directories.
+ * Access restrictions are in place to prevent reading and manipulation of critical directories such as 
+ * 'config' and 'engine', as well as any files directly under the root application level (e.g., '.htaccess').
  *
- * All input is retrieved via the global post() helper so JSON,
- * multipart/form-data, x-www-form-urlencoded and dot/bracket notation all work
- * identically.
+ * Users of this class are advised to be aware of the security implications associated with file handling in a web environment,
+ * particularly to ensure that operations do not inadvertently expose sensitive application areas.
  */
-class Validation {
-
-    /** @var array Holds the form submission errors. */
-    public array $form_submission_errors = [];
-
-    /** @var array Holds the posted fields. */
-    public array $posted_fields = [];
+class File {
 
     /**
-     * Set rules for form field validation.
+     * Handles the file upload process with specified configuration.
      *
-     * @param string $key The form field name.
-     * @param string $label The form field label.
-     * @param string|array $rules The validation rules for the field.
+     * This method validates the upload configuration, processes the uploaded file,
+     * performs security checks, generates a secure filename, and moves the file to the
+     * target destination. It returns an array containing details about the uploaded file.
+     *
+     * @param array $config An associative array containing upload configuration options:
+     *                      - 'destination': (string) The target directory for the uploaded file.
+     *                      - 'target_module': (string) The target module name (defaults to the current segment).
+     *                      - 'upload_to_module': (bool) Whether to upload to the module directory (default: false).
+     *                      - 'make_rand_name': (bool) Whether to generate a random filename (default: false).
+     * @return array An associative array containing details about the uploaded file:
+     *               - 'file_name': (string) The name of the uploaded file.
+     *               - 'file_path': (string) The full path to the uploaded file.
+     *               - 'file_type': (string) The MIME type of the uploaded file.
+     *               - 'file_size': (int) The size of the uploaded file in bytes.
+     * @throws Exception If the upload fails due to invalid configuration, file upload errors,
+     *                   security validation failures, or file movement issues.
+     */
+    public function upload(array $config): array {
+        try {
+            // Validate basic config
+            $destination = $config['destination'] ?? null;
+            $target_module = $config['target_module'] ?? segment(1);
+            $upload_to_module = $config['upload_to_module'] ?? false;
+            $make_rand_name = $config['make_rand_name'] ?? false;
+
+            // Validate upload path
+            $this->validate_upload_path($destination, $upload_to_module, $target_module);
+
+            // Get uploaded file
+            if (empty($_FILES)) {
+                throw new Exception('No file was uploaded');
+            }
+
+            $userfile = array_keys($_FILES)[0];
+            $upload = $_FILES[$userfile];
+
+            if ($upload['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception($this->get_upload_error_message($upload['error']));
+            }
+
+            // Add new security validation
+            $this->validate_file($upload['tmp_name']);
+
+            // Generate filename
+            $file_info = $this->generate_secure_filename($upload['name'], $make_rand_name);
+
+            // Set target path
+            $target_path = $upload_to_module ?
+                '../modules/' . $target_module . '/' . $destination :
+                $destination;
+
+            // Ensure unique filename
+            $final_path = $this->ensure_unique_path($target_path, $file_info['name'], $file_info['extension']);
+
+            // Move file
+            if (!move_uploaded_file($upload['tmp_name'], $final_path)) {
+                throw new Exception('Failed to move uploaded file');
+            }
+
+            return [
+                'file_name' => basename($final_path),
+                'file_path' => $final_path,
+                'file_type' => $upload['type'],
+                'file_size' => $upload['size']
+            ];
+
+        } catch (Exception $e) {
+            // Log error here if needed
+            throw new Exception('Upload failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+    * Generate a unique file path by appending incremental numbers if the file already exists.
+    *
+    * @param string $directory The target directory path
+    * @param string $base_name The base filename without extension
+    * @param string $extension The file extension including the dot (e.g. '.jpg')
+    *
+    * @return string The unique file path that does not exist in the directory
+    */
+    private function ensure_unique_path(string $directory, string $base_name, string $extension): string {
+        $counter = 1;
+        $final_path = $directory . '/' . $base_name . $extension;
+
+        while (file_exists($final_path)) {
+            $final_path = $directory . '/' . $base_name . '_' . $counter . $extension;
+            $counter++;
+        }
+
+        return $final_path;
+    }
+
+    /**
+     * Retrieves metadata about a file.
+     *
+     * This method provides information about a file including its size,
+     * last modification time, and permissions. Additionally, it now returns the file name
+     * and MIME type.
+     *
+     * @param string $file_path The path to the file.
+     * @return array Returns an array with file metadata.
+     * @throws Exception if the file does not exist.
+     */
+    public function info(string $file_path): array {
+        if (!file_exists($file_path)) {
+            throw new Exception("The file does not exist: $file_path");
+        }
+
+        $info = [];
+        $info['file_name'] = basename($file_path);  // Get the file name from the path
+        $info['size'] = filesize($file_path); // Size in bytes
+        $info['modified_time'] = filemtime($file_path); // Last modified time as Unix timestamp
+        $info['permissions'] = fileperms($file_path); // File permissions
+        $info['mime_type'] = mime_content_type($file_path); // MIME type
+
+        // Format permissions for readability
+        $info['readable_permissions'] = substr(sprintf('%o', $info['permissions']), -4);
+
+        // Adding human-readable sizes
+        $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $factor = floor((strlen($info['size']) - 1) / 3);
+        $info['human_readable_size'] = sprintf("%.2f", $info['size'] / pow(1024, $factor)) . @$sizes[$factor];
+
+        return $info;
+    }
+
+    /**
+     * Creates a new directory at the specified path.
+     *
+     * This method allows for the creation of nested directories if they do not exist.
+     *
+     * @param string $directory_path The path where the directory should be created.
+     * @param int $permissions The permissions to set for the directory, in octal notation (e.g., 0755).
+     * @param bool $recursive Whether to create nested directories if necessary.
+     * @return bool Returns true if the directory was created successfully, or if it already exists.
+     * @throws Exception if the directory cannot be created.
+     */
+    public function create_directory(string $directory_path, int $permissions = 0755, bool $recursive = true): bool {
+        if (file_exists($directory_path)) {
+            return true;
+        }
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($directory_path)) {
+            throw new Exception("Access to this path is restricted: $directory_path");
+        }
+
+        if (!mkdir($directory_path, $permissions, $recursive)) {
+            throw new Exception("Failed to create directory: $directory_path");
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether a file or directory exists at the specified path.
+     *
+     * @param string $path The path to the file or directory.
+     * @return bool Returns true if the file or directory exists, otherwise false.
+     */
+    public function exists(string $path): bool {
+        return file_exists($path);
+    }
+
+    /**
+     * Reads the contents of a file.
+     *
+     * @param string $file_path The path to the file to be read.
+     * @return string Returns the contents of the file.
+     * @throws Exception If the file does not exist or cannot be read.
+     */
+    public function read(string $file_path): string {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($file_path)) {
+            throw new Exception("Access to this file is restricted: $file_path");
+        }
+
+        if (!file_exists($file_path)) {
+            throw new Exception("The file does not exist: $file_path");
+        }
+
+        $content = file_get_contents($file_path);
+        if ($content === false) {
+            throw new Exception("Failed to read the file: $file_path");
+        }
+
+        return $content;
+    }
+
+    /**
+     * Writes or appends data to a file.
+     *
+     * @param string $file_path The path to the file where data should be written.
+     * @param mixed $data The data to write to the file.
+     * @param bool $append Whether to append data to the file instead of overwriting it.
+     * @return bool Returns true on successful write, false on failure.
+     * @throws Exception If there is an error writing to the file.
+     */
+    public function write(string $file_path, $data, bool $append = false): bool {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($file_path)) {
+            throw new Exception("Access to this file is restricted: $file_path");
+        }
+
+        $flags = $append ? FILE_APPEND : 0;
+        $result = file_put_contents($file_path, $data, $flags);
+        if ($result === false) {
+            throw new Exception("Failed to write to the file: $file_path");
+        }
+
+        return true;
+    }
+
+    /**
+     * Deletes a file from the filesystem.
+     *
+     * This method checks if the file exists and attempts to delete it. If the file does not exist or cannot be deleted,
+     * an exception is thrown.
+     *
+     * @param string $file_path The path to the file that needs to be deleted.
+     * @return bool Returns true if the file is successfully deleted.
+     * @throws Exception If the file does not exist or the deletion fails.
+     */
+    public function delete(string $file_path): bool {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($file_path)) {
+            throw new Exception("Access to this file is restricted: $file_path");
+        }
+
+        if (!file_exists($file_path)) {
+            throw new Exception("The file does not exist: $file_path");
+        }
+
+        if (!unlink($file_path)) {
+            throw new Exception("Failed to delete the file: $file_path");
+        }
+
+        return true;
+    }
+
+    /**
+     * Initiates a file download or displays inline from the server or an external URL.
+     *
+     * This method prepares and sends headers based on the parameters to either initiate a file download
+     * from the server's local storage or display it inline. It checks if the file exists and is readable before proceeding.
+     *
+     * @param string $file_path The path or URL of the file.
+     * @param bool $as_attachment Determines whether to force the file download (true) or display inline (false).
+     * @throws Exception If the file does not exist or cannot be read.
      * @return void
      */
-    public function set_rules(string $key, string $label, string $rules): void {
-        $validation_data['key'] = $key;
-        $validation_data['label'] = $label;
+    public function download(string $file_path, bool $as_attachment = true): void {
 
-        if (isset($_FILES[$key])) {
-            // File handling
-            $file = $_FILES[$key];
-            $file['field_name'] = $key;
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($file_path)) {
+            throw new Exception("Access to this file is restricted: $file_path");
+        }
 
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                $this->handle_upload_error($key, $label, $file['error']);
-                return;
+        // Check if the file exists in the given path
+        if (!file_exists($file_path)) {
+            throw new Exception("The file does not exist: $file_path");
+        }
+
+        // Ensure the file is readable
+        if (!is_readable($file_path)) {
+            throw new Exception("The file is not accessible: $file_path");
+        }
+
+        // Clean all buffering to avoid interference with the file
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Determine content disposition based on $as_attachment flag
+        $content_disposition = $as_attachment ? 'attachment' : 'inline';
+
+        // Set headers for file download or display
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: ' . $content_disposition . '; filename="' . basename($file_path) . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file_path));
+
+        // Flush system output buffer
+        flush();
+
+        // Read the file and send it to the output buffer
+        readfile($file_path);
+
+        // Terminate the script to prevent additional output
+        exit;
+    }
+
+    /**
+     * Lists files and directories within a specified directory.
+     *
+     * This method returns an array containing the names of files and directories
+     * within the specified directory. It has an option to perform a recursive listing,
+     * which includes all subdirectories and their contents.
+     *
+     * @param string $directory_path The path to the directory whose contents are to be listed.
+     * @param bool $recursive Determines whether the listing should be recursive.
+     * @throws Exception If the specified directory does not exist or is not a directory.
+     * @return array An array of file and directory names from the specified directory.
+     */
+    public function list_directory(string $directory_path, bool $recursive = false): array {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($directory_path)) {
+            throw new Exception("Access to this path is restricted: $directory_path");
+        }
+
+        // Check if the directory exists
+        if (!is_dir($directory_path)) {
+            throw new Exception("The specified path is not a directory: $directory_path");
+        }
+
+        $result = [];
+        $items = new DirectoryIterator($directory_path);
+
+        foreach ($items as $item) {
+            if ($item->isDot()) {
+                continue; // Skip current and parent directory references
             }
 
-            // Run security validation
-            try {
-                $this->validate_file_content($file);
-            } catch (Exception $e) {
-                $this->form_submission_errors[$key][] = $e->getMessage();
-                return;
+            // If the item is a directory and recursive is true, recurse into it
+            if ($item->isDir() && $recursive) {
+                $subdirectory_items = $this->list_directory($item->getPathname(), true);
+                $result[$item->getFilename()] = $subdirectory_items; // Store with directory as key
+            } else {
+                // Otherwise, add the filename to the result
+                $result[] = $item->getFilename();
             }
+        }
 
-            $validation_data['posted_value'] = $file;
-            $tests_to_run = $this->get_tests_to_run($rules);
+        return $result;
+    }
+
+    /**
+     * Copies a file from one location to another.
+     *
+     * @param string $source_path The path to the source file.
+     * @param string $destination_path The path to the destination where the file will be copied.
+     * @return bool Returns true on success, or false on failure.
+     * @throws Exception if the source file does not exist or the copy fails.
+     */
+    public function copy(string $source_path, string $destination_path): bool {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($source_path)) {
+            throw new Exception("Access to this path is restricted: $source_path");
+        }
+
+        if (!file_exists($source_path)) {
+            throw new Exception("The source file does not exist: $source_path");
+        }
+
+        if (!copy($source_path, $destination_path)) {
+            throw new Exception("Failed to copy the file from $source_path to $destination_path");
+        }
+
+        return true;
+    }
+
+    /**
+     * Moves a file from one location to another.
+     *
+     * @param string $source_path The path to the source file.
+     * @param string $destination_path The path to the destination where the file will be moved.
+     * @return bool Returns true on success, or false on failure.
+     * @throws Exception if the source file does not exist or the move fails.
+     */
+    public function move(string $source_path, string $destination_path): bool {
+
+        // Validate the path to ensure it's allowed based on predefined security rules
+        if (!$this->is_path_valid($source_path)) {
+            throw new Exception("Access to this path is restricted: $source_path");
+        }
+
+        if (!file_exists($source_path)) {
+            throw new Exception("The source file does not exist: $source_path");
+        }
+
+        if (!rename($source_path, $destination_path)) {
+            throw new Exception("Failed to move the file from $source_path to $destination_path");
+        }
+
+        return true;
+    }
+
+    /**
+    * Validates the upload destination path and ensures it exists and is accessible.
+    *
+    * @param string $destination The target upload directory path
+    * @param bool $upload_to_module Whether to upload to a module directory (default: false)
+    * @param string $target_module The target module name if uploading to module (default: '')
+    *
+    * @throws Exception If:
+    *                   - Destination is empty
+    *                   - Target path is not a directory
+    *                   - Path validation fails for non-module uploads
+    *
+    * @return void
+    */
+    private function validate_upload_path(string $destination, bool $upload_to_module = false, string $target_module = ''): void {
+        if (empty($destination)) {
+            throw new Exception('Upload destination not specified');
+        }
+
+        if ($upload_to_module === true) {
+            $target_path = '../modules/' . $target_module . '/' . $destination;
+        } else {
+            $target_path = $destination;
+        }
+
+        if (!is_dir($target_path)) {
+            throw new Exception('Invalid upload destination');
+        }
+
+        // Use existing is_path_valid() as final check if not uploading to module
+        if ($upload_to_module === false && !$this->is_path_valid($target_path)) {
+            throw new Exception('Unauthorized upload location');
+        }
+    }
+
+    /**
+    * Generates a secure filename for an uploaded file, either randomized or based on original name.
+    *
+    * @param string $original_name The original filename from the upload
+    * @param bool $make_rand_name Whether to generate a random filename (default: false)
+    * 
+    * @return array{
+    *    name: string,           The base filename without extension
+    *    extension: string,      The lowercase file extension
+    *    full_name: string      The complete filename with extension
+    * }
+    */
+    private function generate_secure_filename(string $original_name, bool $make_rand_name): array {
+        $file_info = return_file_info($original_name);
+        
+        if ($make_rand_name === true) {
+            $file_name = strtolower(make_rand_str(10));
+        } else {
+            $file_name = url_title($file_info['file_name']); 
+        }
+        
+        // Whitelist of allowed extensions could be added here
+        $extension = strtolower($file_info['file_extension']);
+        
+        return [
+            'name' => $file_name,
+            'extension' => $extension,
+            'full_name' => $file_name . $extension
+        ];
+    }
+
+    /**
+     * Checks if a given path is valid based on predefined security rules.
+     *
+     * This method validates a file path to ensure it does not reside in restricted directories,
+     * is not directly under the application root, and is within the application's directory scope.
+     * The function prevents directory traversal attacks and unauthorized file access by validating
+     * against a list of restricted paths and checking the path's relative position to the application's root.
+     *
+     * If the path doesn't exist yet, it validates the parent directory instead.
+     *
+     * @param string $path The file or directory path to validate.
+     * @return bool Returns true if the path is valid, false otherwise.
+     */
+    private function is_path_valid(string $path): bool {
+        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine'];
+        
+        // If the path exists, validate it directly
+        if (file_exists($path)) {
+            $normalized_path = realpath($path);
             
-            // Extract and process file-specific rules
-            foreach ($tests_to_run as $test_to_run) {
-                $this->posted_fields[$key] = $label;
-                $validation_data['test_to_run'] = $test_to_run;
-                $this->run_validation_test($validation_data, $rules);
+            // Check if the path is in a restricted directory
+            foreach ($restricted_dirs as $dir) {
+                $restricted_real_path = realpath($dir);
+                if ($restricted_real_path && strpos($normalized_path, $restricted_real_path) === 0) {
+                    return false; // Path is inside a restricted directory
+                }
             }
-
-        } else {
-            // Normal form field handling
-            $validation_data['posted_value'] = post($key, true);
-            $tests_to_run = $this->get_tests_to_run($rules);
-
-            foreach ($tests_to_run as $test_to_run) {
-                $this->posted_fields[$key] = $label;
-                $validation_data['test_to_run'] = $test_to_run;
-                $this->run_validation_test($validation_data, $rules);
+            
+            // Prevent manipulation of any files or directories directly under APPPATH
+            $relative_path = str_replace(realpath(APPPATH), '', $normalized_path);
+            if (strpos($relative_path, DIRECTORY_SEPARATOR) === false) {
+                return false; // Path is directly under the root directory
             }
-        }
-
-        $_SESSION['form_submission_errors'] = $this->form_submission_errors;
-    }
-
-    /**
-     * Handles file upload errors by mapping the error code to a user-friendly message
-     * and storing the error in the form submission errors array.
-     *
-     * @param string $key The key associated with the file upload field.
-     * @param string $label The label/name of the file upload field.
-     * @param int $error_code The error code returned by the file upload process.
-     * @return void
-     */
-    private function handle_upload_error(string $key, string $label, int $error_code): void {
-        $error_message = match($error_code) {
-            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form',
-            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
-            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
-            default => 'An unknown error occurred during file upload'
-        };
-        $this->form_submission_errors[$key][] = $error_message;
-        $_SESSION['form_submission_errors'] = $this->form_submission_errors;
-    }
-
-    /**
-     * Run a validation test based on the provided validation data and rules.
-     *
-     * @param array $validation_data An array containing validation data.
-     * @param mixed|null $rules The rules for validation (default: null).
-     * @return void
-     */
-    private function run_validation_test(array $validation_data, $rules = null): void {
-
-        switch ($validation_data['test_to_run']) {
-            case 'required':
-                $this->check_for_required($validation_data);
-                break;
-            case 'numeric':
-                $this->check_for_numeric($validation_data);
-                break;
-            case 'integer':
-                $this->check_for_integer($validation_data);
-                break;
-            case 'decimal':
-                $this->check_for_decimal($validation_data);
-                break;
-            case 'valid_email':
-                $this->valid_email($validation_data);
-                break;
-            case 'valid_datepicker':
-                $this->valid_datepicker($validation_data);
-                break;
-            case 'valid_datepicker_us':
-                $this->valid_datepicker_us($validation_data);
-                break;
-            case 'valid_datepicker_eu':
-                $this->valid_datepicker_eu($validation_data);
-                break;
-            case 'valid_datepicker_uk':
-                $this->valid_datepicker_eu($validation_data);
-                break;
-            case 'valid_datetimepicker':
-                $this->valid_datetimepicker($validation_data);
-                break;
-            case 'valid_datetimepicker_us':
-                $this->valid_datetimepicker_us($validation_data);
-                break;
-            case 'valid_datetimepicker_eu':
-                $this->valid_datetimepicker_eu($validation_data);
-                break;
-            case 'valid_time':
-                $this->valid_time($validation_data);
-                break;
-            case 'allowed_types':
-                $this->check_allowed_file_types($validation_data, $rules);
-                break;
-            case 'max_size':
-                $this->check_file_size($validation_data, $rules);
-                break;
-            case 'max_width':
-            case 'max_height':
-            case 'min_width':
-            case 'min_height':
-            case 'square':
-                $this->check_image_dimensions($validation_data, $rules);
-                break;
-            default:
-                $this->run_special_test($validation_data);
-                break;
-        }
-    }
-
-    /**
-     * Run form validation checks.
-     *
-     * @param array|null $validation_array An array containing validation rules (default: null).
-     * @return bool|null Returns a boolean value if validation completes, null if the script execution is potentially terminated.
-     */
-    public function run(?array $validation_array = null): ?bool {
-
-        $this->csrf_protect();
-
-        if (isset($_SESSION['form_submission_errors'])) {
-            unset($_SESSION['form_submission_errors']);
-        }
-
-        if (isset($validation_array)) {
-            $this->process_validation_array($validation_array);
-        }
-
-        if (count($this->form_submission_errors) > 0) {
-            $_SESSION['form_submission_errors'] = $this->form_submission_errors;
-            return false;
-        } else {
+            
+            // Ensure the path is within the application directory to avoid external access
+            if (strpos($normalized_path, realpath(APPPATH)) !== 0) {
+                return false;
+            }
+            
+            return true;
+        } 
+        
+        // If the path doesn't exist, validate its parent directory
+        else {
+            // Get the parent directory path
+            $parent_path = dirname($path);
+            
+            // If parent path doesn't exist either, return false
+            if (!file_exists($parent_path)) {
+                // We could recursively check parent paths here, but that might introduce
+                // security issues. Better to ensure parent directories exist first.
+                return false;
+            }
+            
+            // Validate the parent directory
+            $parent_normalized_path = realpath($parent_path);
+            
+            // Check if the parent path is in a restricted directory
+            foreach ($restricted_dirs as $dir) {
+                $restricted_real_path = realpath($dir);
+                if ($restricted_real_path && strpos($parent_normalized_path, $restricted_real_path) === 0) {
+                    return false; // Parent path is inside a restricted directory
+                }
+            }
+            
+            // Prevent manipulation of any files or directories directly under APPPATH
+            $parent_relative_path = str_replace(realpath(APPPATH), '', $parent_normalized_path);
+            if (strpos($parent_relative_path, DIRECTORY_SEPARATOR) === false) {
+                return false; // Parent path is directly under the root directory
+            }
+            
+            // Ensure the parent path is within the application directory to avoid external access
+            if (strpos($parent_normalized_path, realpath(APPPATH)) !== 0) {
+                return false;
+            }
+            
+            // The target path inherits validity from its parent
             return true;
         }
     }
 
     /**
-     * Invoke the required form validation tests.
+     * Validates an uploaded file by checking its existence, memory requirements, and MIME type.
      *
-     * @param array $validation_array The array containing validation rules and data.
+     * This method ensures that the file exists, has sufficient memory for processing, and has a valid MIME type.
+     * If any validation fails, an exception is thrown.
+     *
+     * @param string $filename The path to the file to be validated.
      * @return void
+     * @throws InvalidArgumentException If the file does not exist.
+     * @throws RuntimeException If the file exceeds memory requirements or fails MIME type validation.
      */
-    private function process_validation_array(array $validation_array): void {
-
-        foreach ($validation_array as $key => $value) {
-            if (isset($value['label'])) {
-                $label = $value['label'];
-            } else {
-                $label = str_replace('_', ' ', $key);
-            }
-
-            $posted_value = post($key, true);
-            $rules = $this->build_rules_str($value);
-            $tests_to_run = $this->get_tests_to_run($rules);
-
-            $validation_data['key'] = $key;
-            $validation_data['label'] = $label;
-            $validation_data['posted_value'] = $posted_value;
-
-            foreach ($tests_to_run as $test_to_run) {
-                $this->posted_fields[$key] = $label;
-                $validation_data['test_to_run'] = $test_to_run;
-                $this->run_validation_test($validation_data);
-            }
-        }
-    }
-
-    /**
-     * Build rules string based on the provided validation rules.
-     *
-     * @param array $value An array representing validation rules.
-     * @return string Returns a string containing rules generated from the validation rules.
-     */
-    private function build_rules_str(array $value): string {
-        $rules_str = '';
-
-        foreach ($value as $k => $v) {
-            if ($k !== 'label') {
-                $rules_str .= $k . (is_bool($v) ? '|' : '[' . $v . ']|');
-            }
+    private function validate_file(string $filename): void {
+        if (!file_exists($filename)) {
+            throw new InvalidArgumentException("File not found: $filename");
         }
 
-        return rtrim($rules_str, '|'); // Remove trailing '|' if present
+        // Memory validation for all files
+        $memory_validation = $this->validate_memory_requirements($filename);
+        if (!$memory_validation['status']) {
+            throw new RuntimeException($memory_validation['message']);
+        }
+
+        // Validate MIME type
+        $this->validate_mime_type($filename);
     }
 
     /**
-     * Get tests to run based on provided rules.
+     * Validates the MIME type of a file by comparing the results from `finfo` and the `file` command.
      *
-     * @param string $rules A string containing validation rules separated by '|'.
-     * @return array An array containing individual tests to run based on rules.
-     */
-    private function get_tests_to_run(string $rules): array {
-        $tests_to_run = explode('|', $rules);
-        return $tests_to_run;
-    }
-
-    /**
-     * Check for required fields in the validation data.
+     * This method ensures that the MIME type detected by PHP's `finfo` matches the MIME type
+     * reported by the system's `file` command. If a mismatch is detected, an exception is thrown.
      *
-     * @param array $validation_data An array containing validation data.
-     *                              Required keys: 'key', 'label', 'posted_value'
+     * @param string $filename The path to the file to be validated.
      * @return void
+     * @throws InvalidArgumentException If a MIME type mismatch is detected.
      */
-    private function check_for_required(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = trim($validation_data['posted_value']);
+    private function validate_mime_type(string $filename): void {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $filename);
+        finfo_close($finfo);
 
-        if ($posted_value === '') {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field is required.';
-        }
-    }
+        // Additional MIME validation for Unix systems
+        if (DIRECTORY_SEPARATOR !== '\\') {
+            $cmd = 'file --brief --mime ' . escapeshellarg($filename) . ' 2>&1';
+            if (function_exists('exec')) {
+                $native_mime = trim(exec($cmd));
 
-    /**
-     * Check if the value in validation data is numeric.
-     *
-     * @param array $validation_data An array containing validation data.
-     *                              Required keys: 'key', 'label', 'posted_value'
-     * @return void
-     */
-    private function check_for_numeric(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
+                // Normalize the MIME type by stripping additional metadata
+                $native_mime_base = strtok($native_mime, ';'); // Extract the base MIME type
+                $mime_type_base = strtok($mime_type, ';'); // Extract the base MIME type
 
-        if ((!is_numeric($posted_value)) && ($posted_value !== '')) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be numeric.';
-        }
-    }
-
-    /**
-     * Check if the value in validation data is an integer.
-     *
-     * @param array $validation_data An array containing validation data.
-     *                              Required keys: 'key', 'label', 'posted_value'
-     * @return void
-     */
-    private function check_for_integer(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            $result = ctype_digit(strval($posted_value));
-
-            if ($result === false) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be an integer.';
-            }
-        }
-    }
-
-    /**
-     * Check if the value in validation data is a decimal number.
-     *
-     * @param array $validation_data An array containing validation data.
-     *                              Required keys: 'key', 'label', 'posted_value'
-     * @return void
-     */
-    private function check_for_decimal(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            if ((float) $posted_value == floor($posted_value)) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field must contain a number with a decimal.';
-            }
-        }
-    }
-
-    /**
-     * Validates a datepicker value.
-     *
-     * @param array $validation_data An array containing validation data.
-     *                              Required keys: 'posted_value', 'key', 'label'
-     * @return bool Returns true if the datepicker value is valid, false otherwise.
-     * @throws Exception If the posted value is not a valid date in the expected format.
-     */
-    private function valid_datepicker(array $validation_data): bool {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            try {
-                $parsed_date = parse_date($posted_value);
-
-                if ($parsed_date instanceof DateTime) {
-                    return true;
-                } else {
-                    throw new Exception('Invalid date format');
+                if ($native_mime_base !== false && $native_mime_base !== $mime_type_base) {
+                    throw new InvalidArgumentException('MIME type mismatch detected');
                 }
-            } catch (Exception $e) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be a valid date in the format ' . DEFAULT_DATE_FORMAT . '.';
-                return false;
             }
         }
-
-        return false;
     }
 
     /**
-     * Validates a datepicker value by invoking the valid_datepicker() function.
-     * This function serves as an alias for valid_datepicker().
+     * Validates whether there is sufficient memory available to process a file.
      *
-     * @param array $validation_data An array containing validation data.
-     * @return bool Returns true if the datepicker value is valid, false otherwise.
-     * @throws Exception If the posted value is not a valid date in the expected format.
+     * This method checks if the system has enough memory to handle the file by comparing
+     * the file size (with a processing buffer) to the available memory. It returns an array
+     * indicating the validation status and an optional error message.
+     *
+     * @param string $filename The path to the file to be validated.
+     * @return array An associative array containing:
+     *               - 'status': (bool) Whether there is sufficient memory (true) or not (false).
+     *               - 'message': (string) An error message if memory is insufficient (empty string otherwise).
      */
-    private function valid_datepicker_us(array $validation_data): bool {
-        return $this->valid_datepicker($validation_data);
+    private function validate_memory_requirements(string $filename): array {
+        $result = ['status' => true, 'message' => ''];
+        
+        if (!function_exists('memory_get_usage')) {
+            return $result;
+        }
+
+        $memory_limit = ini_get('memory_limit');
+        if ($memory_limit === '-1') {
+            return $result;
+        }
+
+        // Convert memory limit to bytes
+        $memory_limit = $this->convert_to_bytes($memory_limit);
+        $file_size = filesize($filename);
+        $needed_memory = $file_size * 2.1; // Buffer for processing
+
+        $memory_available = $memory_limit - memory_get_usage();
+        
+        if ($needed_memory > $memory_available) {
+            return [
+                'status' => false,
+                'message' => 'Insufficient memory to process file'
+            ];
+        }
+
+        return $result;
     }
 
     /**
-     * Validates a datepicker value by invoking the valid_datepicker() function.
-     * This function serves as an alias for valid_datepicker().
+     * Returns a user-friendly error message based on the provided file upload error code.
      *
-     * @param array $validation_data An array containing validation data.
-     * @return bool Returns true if the datepicker value is valid, false otherwise.
-     * @throws Exception If the posted value is not a valid date in the expected format.
+     * This method maps PHP's file upload error codes to descriptive error messages.
+     * It is used to provide meaningful feedback when a file upload fails.
+     *
+     * @param int $error_code The file upload error code (e.g., UPLOAD_ERR_INI_SIZE).
+     * @return string A user-friendly error message corresponding to the error code.
      */
-    private function valid_datepicker_eu(array $validation_data): bool {
-        return $this->valid_datepicker($validation_data);
+    private function get_upload_error_message(int $error_code): string {
+        return match($error_code) {
+            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive',
+            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive',
+            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+            default => 'Unknown upload error'
+        };
     }
 
     /**
-     * Validates the datetimepicker input.
-     *
-     * @param array $validation_data The validation data containing key, label, and posted value.
+     * Converts memory value strings (like '128M', '1G') to bytes
      * 
-     * @return bool Returns true if the input is a valid date and time, otherwise adds an error message and returns false.
+     * @param string $memory_value The memory value with unit suffix
+     * @return int The value in bytes
      */
-    private function valid_datetimepicker(array $validation_data): bool {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            $parsed_datetime = parse_datetime($posted_value);
-
-            if ($parsed_datetime instanceof DateTime) {
-                return true;
-            } else {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be a valid date and time in the format ' . DEFAULT_DATE_FORMAT . ', HH:ii.';
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Alias of valid_datetimepicker().
-     *
-     * @param array $validation_data The validation data containing key, label, and posted value.
-     * @return bool Returns true if the input is a valid date and time, otherwise adds an error message and returns false.
-     */
-    private function valid_datetimepicker_us(array $validation_data): bool {
-        return $this->valid_datetimepicker($validation_data);
-    }
-
-    /**
-     * Alias of valid_datetimepicker().
-     *
-     * @param array $validation_data The validation data containing key, label, and posted value.
-     * @return bool Returns true if the input is a valid date and time, otherwise adds an error message and returns false.
-     */
-    private function valid_datetimepicker_eu(array $validation_data): bool {
-        return $this->valid_datetimepicker($validation_data);
-    }
-
-    /**
-     * Validates the time input.
-     *
-     * @param array $validation_data The validation data containing key, label, and posted value.
-     * @return bool Returns true if the input is a valid time, otherwise adds an error message and returns false.
-     */
-    private function valid_time(array $validation_data): bool {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            $pattern = '/^(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/'; // Regex pattern for HH:MM format
-
-            if (preg_match($pattern, $posted_value, $matches)) {
-                return true;
-            }
-
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must contain a valid time value.';
-            return false;
-        }
-
-        return false;
-    }
-
-    /**
-     * Validates if the posted value matches a specified target field's value.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be compared.
-     * @param string $target_field The target field to compare against.
-     * @return void
-     */
-    private function matches(string $key, string $label, string $posted_value, string $target_field): void {
-        $got_error = false;
+    private function convert_to_bytes(string $memory_value): int {
+        $unit = strtolower(substr($memory_value, -1));
+        $value = (int) substr($memory_value, 0, -1);
         
-        $target_value = post($target_field, true);
-        if ($target_value === '') {
-            $got_error = true;
-        } else if ($posted_value !== $target_value) {
-            $got_error = true;
-        }
-
-        if ($got_error) {
-            $target_label = $this->posted_fields[$target_field] ?? $target_field;
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field does not match the ' . $target_label . ' field.';
-        }
-    }
-
-    /**
-     * Validates if the posted value differs from a specified target field's value.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be compared.
-     * @param string $target_field The target field to compare against.
-     * @return void
-     */
-    private function differs(string $key, string $label, string $posted_value, string $target_field): void {
-        $got_error = false;
-        
-        $target_value = post($target_field, true);
-        if ($target_value === '') {
-            $got_error = true;
-        } else if ($posted_value == $target_value) {
-            $got_error = true;
-        }
-
-        if ($got_error) {
-            $target_label = $this->posted_fields[$target_field] ?? $target_field;
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must not match the ' . $target_label . ' field.';
-        }
-    }
-
-    /**
-     * Validates if the posted value meets a minimum length requirement.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be checked.
-     * @param int $inner_value The minimum length requirement.
-     * @return void
-     */
-    private function min_length(string $key, string $label, string $posted_value, int $inner_value): void {
-        if ((strlen($posted_value) < $inner_value) && ($posted_value !== '')) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be at least ' . $inner_value . ' characters in length.';
-        }
-    }
-
-    /**
-     * Validates if the posted value meets a maximum length requirement.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be checked.
-     * @param int $inner_value The maximum length requirement.
-     * @return void
-     */
-    private function max_length(string $key, string $label, string $posted_value, int $inner_value): void {
-        if ((strlen($posted_value) > $inner_value) && ($posted_value !== '')) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be no more than  ' . $inner_value . ' characters in length.';
-        }
-    }
-
-    /**
-     * Validates if the posted value is greater than a specified inner value.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be compared.
-     * @param int $inner_value The value for comparison.
-     * @return void
-     */
-    private function greater_than(string $key, string $label, string $posted_value, int $inner_value): void {
-        if ((is_numeric($posted_value) && ($posted_value <= $inner_value)) && ($posted_value !== '')) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be greater than ' . $inner_value . '.';
-        }
-    }
-
-    /**
-     * Validates if the posted value is less than a specified inner value.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be compared.
-     * @param int $inner_value The value for comparison.
-     * @return void
-     */
-    private function less_than(string $key, string $label, string $posted_value, int $inner_value): void {
-        if ((is_numeric($posted_value) && ($posted_value >= $inner_value)) && ($posted_value !== '')) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' field must be less than ' . $inner_value . '.';
-        }
-    }
-
-    /**
-     * Validates the provided email address.
-     *
-     * @param array $validation_data The validation data containing key, label, and posted value.
-     * @return void
-     */
-    private function valid_email(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-
-        if ($posted_value !== '') {
-            if (!filter_var($posted_value, FILTER_VALIDATE_EMAIL)) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field must contain a valid email address.';
-                return;
-            }
-
-            // Make sure the email address is not too long
-            if (strlen($posted_value) > 254) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' is too long.';
-                return;
-            }
-
-            // Optional: Check domain has valid MX or A record
-            $domain = substr(strrchr($posted_value, "@"), 1);
-            if (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A")) {
-                $this->form_submission_errors[$key][] = 'The ' . $label . ' field contains a domain with no valid DNS records.';
-                return;
-            }
-        }
-    }
-
-    /**
-     * Validates if the posted value matches the exact length specified.
-     *
-     * @param string $key The key associated with the posted value.
-     * @param string $label The label/name of the posted value.
-     * @param string $posted_value The posted value to be checked for length.
-     * @param int $inner_value The expected length of the posted value.
-     * @return void
-     */
-    private function exact_length(string $key, string $label, string $posted_value, int $inner_value): void {
-        if ((strlen($posted_value) !== $inner_value) && ($posted_value !== '')) {
-            $error_msg = 'The ' . $label . ' field must be ' . $inner_value . ' characters in length.';
-
-            if ($inner_value == 1) {
-                $error_msg = str_replace('characters in length.', 'character in length.', $error_msg);
-            }
-
-            $this->form_submission_errors[$key][] = $error_msg;
-        }
-    }
-
-    /**
-     * Runs a special validation test based on the provided test name and value within square brackets.
-     *
-     * @param array $validation_data The validation data containing key, label, posted value, and test to run.
-     * @return void
-     */
-    private function run_special_test(array $validation_data): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $posted_value = $validation_data['posted_value'];
-        $test_to_run = $validation_data['test_to_run'];
-
-        $pos = strpos($test_to_run, '[');
-
-        if (is_numeric($pos)) {
-            if ($posted_value === '') {
-                return; // No need to perform tests if no value is submitted
-            }
-
-            // Get the value between the square brackets
-            $inner_value = $this->_extract_content($test_to_run, '[', ']');
-            $test_name = $this->_get_test_name($test_to_run);
-
-            // Validating based on the test name and inner value
-            switch ($test_name) {
-                case 'matches':
-                    $this->matches($key, $label, $posted_value, $inner_value);
-                    break;
-                case 'differs':
-                    $this->differs($key, $label, $posted_value, $inner_value);
-                    break;
-                case 'min_length':
-                    $this->min_length($key, $label, $posted_value, intval($inner_value));
-                    break;
-                case 'max_length':
-                    $this->max_length($key, $label, $posted_value, intval($inner_value));
-                    break;
-                case 'greater_than':
-                    $this->greater_than($key, $label, $posted_value, intval($inner_value));
-                    break;
-                case 'less_than':
-                    $this->less_than($key, $label, $posted_value, intval($inner_value));
-                    break;
-                case 'exact_length':
-                    $this->exact_length($key, $label, $posted_value, intval($inner_value));
-                    break;
-            }
-        } else {
-            $this->attempt_invoke_callback($key, $label, $posted_value, $test_to_run);
-        }
-    }
-
-    /**
-     * Extracts content between specified start and end strings within a given string.
-     *
-     * @param string $string The input string to search within.
-     * @param string $start The starting string to search for.
-     * @param string $end The ending string to search for.
-     * @return string Returns the extracted content.
-     */
-    private function _extract_content(string $string, string $start, string $end): string {
-        $pos = stripos($string, $start);
-        $str = substr($string, $pos);
-        $str_two = substr($str, strlen($start));
-        $second_pos = stripos($str_two, $end);
-        $str_three = substr($str_two, 0, $second_pos);
-        $content = trim($str_three); // Remove whitespaces
-        return $content;
-    }
-
-    /**
-     * Gets the test name from the test to run string containing square brackets.
-     *
-     * @param string $test_to_run The string containing the test name and parameters.
-     * @return string Returns the extracted test name.
-     */
-    private function _get_test_name(string $test_to_run): string {
-        $pos = stripos($test_to_run, '[');
-        $test_name = substr($test_to_run, 0, $pos);
-        return $test_name;
-    }
-
-    /**
-     * Attempts to invoke a callback method for validation.
-     *
-     * @param string $key The key associated with the input field.
-     * @param string $label The label for the input field.
-     * @param mixed $posted_value The value posted for validation.
-     * @param string $test_to_run The name of the test to run.
-     * @return void
-     */
-    private function attempt_invoke_callback(string $key, string $label, $posted_value, string $test_to_run): void {
-        $chars = substr($test_to_run, 0, 9);
-        if ($chars === 'callback_') {
-            $target_module = ucfirst($this->url_segment(1));
-            $module_name = strtolower($target_module); // Get the lowercase module name
-            $target_method = str_replace('callback_', '', $test_to_run);
-
-            if (!class_exists($target_module)) {
-                $modules_bits = explode('-', $target_module);
-                $target_module = ucfirst(end($modules_bits));
-                $module_name = strtolower(end($modules_bits));
-            }
-
-            if (class_exists($target_module)) {
-                $static_check = new ReflectionMethod($target_module, $target_method);
-                if ($static_check->isStatic()) {
-                    // STATIC METHOD
-                    $outcome = $target_module::$target_method($posted_value);
-                } else {
-                    // INSTANTIATED - Pass the module name to the constructor
-                    $callback = new $target_module($module_name);
-                    $outcome = $callback->$target_method($posted_value);
-                }
-                if (is_string($outcome)) {
-                    $outcome = str_replace('{label}', $label, $outcome);
-                    $this->form_submission_errors[$key][] = $outcome;
-                }
-            }
-        }
-    }
-
-    /**
-     * Retrieves a segment from the URL.
-     *
-     * @param int $num The segment number to retrieve.
-     * @return string The requested URL segment.
-     */
-    private function url_segment(int $num): string {
-        $segments = SEGMENTS;
-
-        if (isset($segments[$num])) {
-            $value = $segments[$num];
-        } else {
-            $value = '';
-        }
-
-        return $value;
-    }
-
-    /**
-     * Protects against Cross-Site Request Forgery (CSRF) attacks.
-     *
-     * @return void
-     */
-    private function csrf_protect(): void {
-        // 1. Fast exit if the opt-out constant exists and is boolean true.
-        if (defined('API_SKIP_CSRF') && constant('API_SKIP_CSRF') === true) {
-            return;
-        }
-
-        // 2. Standard CSRF check for everything else.
-        $posted_csrf_token = post('csrf_token');
-
-        if ($posted_csrf_token === '') {
-            $this->csrf_block_request();
-        } else {
-            $expected = $_SESSION['csrf_token'] ?? '';
-
-            if (!is_string($posted_csrf_token) || !hash_equals($expected, $posted_csrf_token)) {
-                $this->csrf_block_request();
-            }
-
-        }
-    }
-
-    /**
-     * Handles blocking of CSRF requests.
-     *
-     * This method is invoked when Trongate's CSRF protection is triggered.
-     * If the request originates from Trongate MX, it sends a 403 response code and provides
-     * additional debugging information in development mode. Otherwise, it redirects to the base URL.
-     *
-     * @return void
-     */
-    private function csrf_block_request(): void {
-
-        if (from_trongate_mx() === true) {
-            http_response_code(403);
-            if (strtolower(ENV) === 'dev') {
-                echo 'Trongate\'s CSRF protection has blocked the request. For more details, refer to: https://trongate.io/documentation/read/trongate_mx/trongate-mx-security/csrf-protection ***  This message will NOT be displayed unless ENV is not set to a value of \'DEV\' or \'dev\'';
-            }
-            die();
-        }
-
-        header("location: " . BASE_URL);
-        die();
-    }
-
-    /**
-     * Get file validation tests to run based on provided rules.
-     *
-     * @param string $rules A string containing validation rules separated by '|'.
-     * @return array An array containing file validation tests to run.
-     */
-    private function get_file_validation_tests(string $rules): array {
-        $tests = [];
-        $rules_array = explode('|', $rules);
-        
-        foreach ($rules_array as $rule) {
-            if (strpos($rule, '[') !== false) {
-                // Extract rule name without the parameters
-                $rule_name = substr($rule, 0, strpos($rule, '['));
-                $tests[] = $rule_name;
-            } else {
-                $tests[] = $rule;
-            }
-        }
-        
-        return $tests;
-    }
-
-    /**
-     * Validates if the uploaded file type is allowed.
-     *
-     * @param array $validation_data The validation data array.
-     * @param string $rules The complete rules string.
-     * @return void
-     */
-    private function check_allowed_file_types(array $validation_data, string $rules): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $file = $validation_data['posted_value'];
-        
-        // Extract allowed types from rules string
-        $allowed_types = $this->_extract_content($rules, 'allowed_types[', ']');
-        $allowed_types = explode(',', $allowed_types);
-        
-        $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        
-        if (!in_array($file_extension, $allowed_types)) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' must be one of the following types: ' . implode(', ', $allowed_types);
-        }
-    }
-
-    /**
-     * Validates if the uploaded file size is within limits.
-     *
-     * @param array $validation_data The validation data array.
-     * @param string $rules The complete rules string.
-     * @return void
-     */
-    private function check_file_size(array $validation_data, string $rules): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $file = $validation_data['posted_value'];
-        
-        // Extract max size from rules string
-        $max_size = (float) $this->_extract_content($rules, 'max_size[', ']');
-        $file_size = $file['size'] / 1024; // Convert to KB
-        
-        if ($file_size > $max_size) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' exceeds the maximum allowed size of ' . $max_size . ' KB';
-        }
-    }
-
-    /**
-     * Validates image dimensions according to the specified rules.
-     *
-     * @param array $validation_data The validation data array.
-     * @param string $rules The complete rules string.
-     * @return void
-     */
-    private function check_image_dimensions(array $validation_data, string $rules): void {
-        $key = $validation_data['key'];
-        $label = $validation_data['label'];
-        $file = $validation_data['posted_value'];
-        
-        // First verify it's an image file
-        if (!getimagesize($file['tmp_name'])) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' must be a valid image file';
-            return;
-        }
-        
-        $dimensions = getimagesize($file['tmp_name']);
-        $width = $dimensions[0];
-        $height = $dimensions[1];
-        
-        // Extract dimension rules
-        foreach (['max_width', 'max_height', 'min_width', 'min_height'] as $rule) {
-            if (strpos($rules, $rule) !== false) {
-                $value = (int) $this->_extract_content($rules, $rule . '[', ']');
-                
-                switch ($rule) {
-                    case 'max_width':
-                        if ($width > $value) {
-                            $this->form_submission_errors[$key][] = 'The ' . $label . ' width cannot exceed ' . $value . ' pixels';
-                        }
-                        break;
-                    case 'max_height':
-                        if ($height > $value) {
-                            $this->form_submission_errors[$key][] = 'The ' . $label . ' height cannot exceed ' . $value . ' pixels';
-                        }
-                        break;
-                    case 'min_width':
-                        if ($width < $value) {
-                            $this->form_submission_errors[$key][] = 'The ' . $label . ' width must be at least ' . $value . ' pixels';
-                        }
-                        break;
-                    case 'min_height':
-                        if ($height < $value) {
-                            $this->form_submission_errors[$key][] = 'The ' . $label . ' height must be at least ' . $value . ' pixels';
-                        }
-                        break;
-                }
-            }
-        }
-        
-        // Check for square image requirement
-        if (strpos($rules, 'square') !== false && $width !== $height) {
-            $this->form_submission_errors[$key][] = 'The ' . $label . ' must be square (width must equal height)';
-        }
-    }
-
-    /**
-     * Validates the content of an uploaded file to detect potential security threats.
-     *
-     * This method reads the first 256 bytes of the file and scans for dangerous patterns,
-     * such as PHP code, CDATA sections, or dangerous functions like `eval` and `exec`.
-     * If a threat is detected, an error is added to the form submission errors array.
-     *
-     * @param array $file An associative array containing file information, including:
-     *                    - 'tmp_name': The temporary file path.
-     *                    - 'field_name': The name of the file upload field.
-     * @return void
-     * @throws RuntimeException If the file cannot be opened for scanning.
-     */
-    private function validate_file_content(array $file): void {
-        // This replaces both is_text_file() and scan_text_file() from File class
-        if (($file_handle = @fopen($file['tmp_name'], 'rb')) === FALSE) {
-            throw new RuntimeException('Unable to open file for security scanning');
-        }
-
-        $content = fread($file_handle, 256); // Read first 256 bytes
-        fclose($file_handle);
-
-        // These are the same patterns from the old scan_text_file() method
-        $dangerous_patterns = [
-            '/<\?php/i',
-            '/\<\!\[CDATA\[/i',
-            '/\<\!DOCTYPE/i',
-            '/\<\!ENTITY/i',
-            '/\beval\s*\(/i',
-            '/\bexec\s*\(/i',
-            '/\bshell_exec\s*\(/i'
-        ];
-
-        foreach ($dangerous_patterns as $pattern) {
-            if (preg_match($pattern, $content)) {
-                $this->form_submission_errors[$file['field_name']][] = 
-                    'Potential security threat detected in file';
-                return;
-            }
-        }
+        return match($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => (int) $memory_value,
+        };
     }
 
 }

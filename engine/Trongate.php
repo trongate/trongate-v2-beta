@@ -50,7 +50,6 @@ class Trongate {
         // Handle core framework classes with lazy loading
         $core_instance = match($key) {
             'model' => new Model($this->module_name),
-            'file' => new File(),
             'image' => new Image(),
             default => null
         };
@@ -155,19 +154,6 @@ class Trongate {
      */
     protected function upload_picture(array $config): ?array {
         return $this->image->upload($config);
-    }
-
-    /**
-     * Upload a file using the upload method from the File class.
-     *
-     * This method serves as an alternative way of invoking the upload method from the File class.
-     * It simply uses the lazy-loaded File instance and calls its upload method with the provided configuration data.
-     *
-     * @param array $config The configuration data for handling the upload.
-     * @return array|null The information of the uploaded file.
-     */
-    protected function upload_file(array $config): ?array {
-        return $this->file->upload($config);
     }
 
     /**

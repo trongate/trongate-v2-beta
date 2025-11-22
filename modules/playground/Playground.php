@@ -1,6 +1,11 @@
 <?php
 class Playground extends Trongate {
 
+    public function test_file() {
+        // Test that $this->file is accessible
+        $this->file->rock();
+    }
+
     public function test() {
         $data = $this->get_data_from_post();
     	$this->view('test', $data);

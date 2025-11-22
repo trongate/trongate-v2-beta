@@ -11,7 +11,7 @@
  * Users of this class are advised to be aware of the security implications associated with file handling in a web environment,
  * particularly to ensure that operations do not inadvertently expose sensitive application areas.
  */
-class File {
+class File extends Trongate {
 
     /**
      * Handles the file upload process with specified configuration.
