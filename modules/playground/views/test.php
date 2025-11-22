@@ -10,9 +10,8 @@
 <body>
 	<div class="container">
 		<h1 class="text-center">Headline</h1>
-		
-
 		<?= Modules::run('pagination/display', $pagination_data) ?>
+		<?= json($rows[0]) ?>
 	</div>
 </body>
 </html>

@@ -2,17 +2,13 @@
 class Playground extends Trongate {
 
     public function test() {
-    	$data['rows'] = $this->db->get('id', 'plural_maker');
+    	$rows = $this->db->get('id', 'plural_maker');
+    	echo count($rows);
+    }
 
-		$pagination_data["total_rows"] = count($data['rows']);
-		$pagination_data["limit"] = 10;
-		$pagination_data["record_name_plural"] = "books";
-		$pagination_data["include_showing_statement"] = true;
-		$pagination_data["include_css"] = true;
-		$data["pagination_data"] = $pagination_data;
-
-
-        $this->view('test', $data);
+    public function test2() {
+    	$num_rows = $this->model->count();
+    	var_dump($num_rows);
     }
 
 }
