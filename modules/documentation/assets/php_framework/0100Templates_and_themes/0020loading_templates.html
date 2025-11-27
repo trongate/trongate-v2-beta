@@ -1,0 +1,92 @@
+<h1>Loading Templates</h1>
+
+<p>One method. Zero surprises.</p>
+
+<p>From any controller, load a template like this:</p>
+
+[code=php]
+$this-&gt;template('public', $data);
+[/code]
+
+<p>That's it. Trongate finds the right method in <code>Templates.php</code>, loads the matching view file from <code>templates/views/</code>, injects your view content, and renders the page.</p>
+
+<h2>What You Usually Pass</h2>
+
+[code=php]
+$data['view_file'] = 'welcome';        // required – the view to inject
+$data['view_module'] = 'welcome';      // optional – defaults to current module
+$data['page_title'] = 'Hello World';   // whatever you want in the template
+
+$this-&gt;template('public', $data);
+[/code]
+
+<div class="alert alert-success">
+  <p>Always set <code>view_module</code> explicitly. Future-you will thank present-you when routing gets spicy.</p>
+</div>
+
+<h2>Behind the Scenes</h2>
+
+<p>When you call <code>$this-&gt;template('public', $data)</code>, Trongate:</p>
+<ul>
+  <li>Looks for <code>Templates::public($data)</code> in the <a href="https://github.com/trongate/trongate-framework/blob/master/templates/controllers/Templates.php" target="_blank">Templates class</a></li>
+  <li>Runs the extra include magic (top + bottom assets)</li>
+  <li>Calls <span class="feature-ref">helpers-Utilities_Helpers-load()</span> → pulls <code>templates/views/public.php</code></li>
+  <li>Inside that file, <code>Template::display($data)</code> injects your actual view content</li>
+</ul>
+
+<h2>What a Template File Looks Like</h2>
+
+<p>Here's a typical template (<code>public.php</code>):</p>
+
+[code=html]
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;link rel="stylesheet" href="css/trongate.css"&gt;
+    &lt;title&gt;&lt;?= $page_title ?? WEBSITE_NAME ?&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;
+        &lt;nav&gt;
+            &lt;?= anchor(BASE_URL, 'Home') ?&gt;
+            &lt;?= anchor('about', 'About') ?&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+
+    &lt;main class="container"&gt;
+        &lt;?= Template::display($data) ?&gt;
+    &lt;/main&gt;
+
+    &lt;footer&gt;
+        &lt;div&gt;&amp;copy; &lt;?= date('Y') . ' ' . OUR_NAME ?&gt;&lt;/div&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+[/code]
+
+<p><code>Template::display($data)</code> is where your view content appears. Everything else stays consistent across pages.</p>
+
+<div class="alert alert-info">
+    <p>The <span class="feature-ref">class_reference-The_Template_Class-display()</span> method, as shown above, is  responsible for loading and displaying view files from module directories.</p>
+</div>
+
+<h2>Quick Example</h2>
+
+[code=php]
+class Dashboard extends Trongate {
+
+    function index() {
+        $data['view_file'] = 'dashboard_home';
+        $data['view_module'] = 'dashboard';
+        $data['page_title'] = 'My Dashboard';
+        
+        $this-&gt;template('admin', $data);  // loads the admin theme instantly
+    }
+
+}
+[/code]
+
+<p>One line. Full page. Theme or regular template - works exactly the same.</p>

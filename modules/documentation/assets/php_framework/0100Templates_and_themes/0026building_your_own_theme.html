@@ -1,0 +1,112 @@
+<h1>Building Your Own Theme</h1>
+
+<p>You've seen how themes load. Now make one. It's stupidly simple.</p>
+
+<h2 class="mt-1">Step 1 – Choose a Theme Name</h2>
+
+<p>First, decide on a name for your theme. For this example, we'll assume a theme name of, "<b>modern</b>".</p>
+
+<p>Your theme name must be a <b>valid directory name</b>. This means:</p>
+
+<ul>
+    <li>No spaces (use underscores instead: <code>new_age</code> not <code>new age</code>)</li>
+    <li>No special characters (stick to letters, numbers, and underscores)</li>
+    <li>Use lowercase for consistency</li>
+</ul>
+
+<p><strong>Good theme names:</strong> <code>modern</code>, <code>admin_dark</code>, <code>new_age</code>, <code>retro_80s</code></p>
+
+<p><strong>Bad theme names:</strong> <code>My Theme</code>, <code>super-cool!</code>, <code>theme#1</code></p>
+
+<h2 class="mt-3">Step 2 – Create the Theme Folder</h2>
+
+<p>Create your theme folder inside <code>public/themes/</code> using your theme name:</p>
+
+[code]
+public/themes/
+    modern/
+        css/
+        js/
+[/code]
+
+<div class="alert alert-info">
+    <p>For this example, we're assuming that you have a CSS file and a JavaScript file prepared for your theme, hence the sub directories "css" and "js". In a real world example, you can have any filetype of your choosing added to your theme directory. This includes things like images, fonts and so on.</p>
+    <p>We won't bother giving you sample code for those files. The purpose of this page is merely to show you how themes get structured. It's for you to come with your own design ideas.</p>
+</div>
+
+<h2 class="mt-3">Step 3 – Create the Template File</h2>
+
+<p>Create <code>public/themes/modern/modern.php</code>:</p>
+
+[code=html]
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;base href="&lt;?= BASE_URL ?&gt;"&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    
+    &lt;link rel="stylesheet" href="css/trongate.css"&gt;
+    &lt;link rel="stylesheet" href="&lt;?= THEME_DIR ?&gt;css/modern.css"&gt;
+    
+    &lt;?= $additional_includes_top ?? '' ?&gt;
+    &lt;title&gt;&lt;?= $page_title ?? 'Modern Theme' ?&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="header"&gt;
+        &lt;h1&gt;My App&lt;/h1&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="container"&gt;
+        &lt;?= Template::display($data) ?&gt;
+    &lt;/div&gt;
+    
+    &lt;?= $additional_includes_btm ?? '' ?&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+[/code]
+
+<h2 class="mt-3">Step 4 – Register the Theme</h2>
+
+<p>Open <code>config/themes.php</code> and add:</p>
+
+[code=php]
+&lt;?php
+$themes = [
+    'modern' =&gt; [
+        'dir'      =&gt; 'modern',
+        'template' =&gt; 'modern.php',
+    ],
+];
+define('THEMES', $themes);
+[/code]
+
+<p>The theme key (<code>'modern'</code>) must match your theme directory name.</p>
+
+<h2 class="mt-3">Step 5 – Create the Template Method</h2>
+
+<p>Add a method in <code>templates/controllers/Templates.php</code> and give the method the <b>same name as your theme</b>.</p> 
+<p>For example:</p>
+
+[code=php]
+public function modern(array $data): void {
+    $data['additional_includes_top'] = $this-&gt;build_additional_includes($data['additional_includes_top'] ?? []);
+    $data['additional_includes_btm'] = $this-&gt;build_additional_includes($data['additional_includes_btm'] ?? []);
+    load('modern', $data);
+}
+[/code]
+
+<p>The method name must match your theme key from <code>config/themes.php</code>.</p>
+
+<h2 class="mt-3">Step 6 – Use Your Theme</h2>
+
+<p>In any controller, load your theme using Trongate's <span class="feature-ref">template()</span> method:</p>
+
+[code=php]
+public function index(): void {
+    $data['view_file'] = 'welcome';
+    $this-&gt;template('modern', $data);
+}
+[/code]
+
+<p class="mt-3">Done. Your theme is live!</p>

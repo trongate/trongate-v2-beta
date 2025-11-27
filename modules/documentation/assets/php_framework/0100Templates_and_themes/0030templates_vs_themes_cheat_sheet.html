@@ -1,0 +1,83 @@
+<h1>Templates vs Themes – Cheat Sheet</h1>
+
+<p>Everything you need to know, at a glance.</p>
+
+<h2>The Quick Comparison</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Templates</th>
+      <th>Themes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Where they live</strong></td>
+      <td><code>templates/views/</code></td>
+      <td><code>public/themes/your_folder/</code></td>
+    </tr>
+    <tr>
+      <td><strong>Contains assets?</strong></td>
+      <td>No</td>
+      <td>Yes—everything</td>
+    </tr>
+    <tr>
+      <td><strong>Portable?</strong></td>
+      <td>Copy-paste code</td>
+      <td>Copy entire folder → done</td>
+    </tr>
+    <tr>
+      <td><strong>Color variations</strong></td>
+      <td>Manual CSS changes</td>
+      <td>Just swap sub-folder</td>
+    </tr>
+    <tr>
+      <td><strong>THEME_DIR available?</strong></td>
+      <td>No</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><strong>Best for</strong></td>
+      <td>Simple sites, quick prototypes</td>
+      <td>Admin areas, client projects, reusable designs</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Loading Pattern (Same Method, Different Results)</h2>
+
+<p><strong>Regular Template:</strong></p>
+[code=php]
+$this-&gt;template('public', $data);
+// Loads: templates/views/public.php
+[/code]
+
+<p><strong>Theme:</strong></p>
+[code=php]
+$this-&gt;template('admin', $data);
+// Checks: config/themes.php
+// Loads: public/themes/default_admin/blue/admin.php
+// Sets: THEME_DIR constant
+[/code]
+
+<h2>Quick Decision</h2>
+
+<p><strong>Need multiple color schemes?</strong> → Theme</p>
+
+<p><strong>Want to copy design to another project?</strong> → Theme</p>
+
+<p><strong>Just need consistent layout?</strong> → Template</p>
+
+<p>99% of the time you'll use regular templates for public-facing pages and themes for anything that needs a full design system (admin, member area, SaaS dashboard).</p>
+
+<h2>The Bottom Line</h2>
+
+<ul>
+  <li>Both use the same <span class="feature-ref">template()</span> method.</li>
+  <li>Both inject views the same way.</li>
+  <li>Templates = structure only.</li>
+  <li>Themes = structure + complete visual package.</li>
+  <li>Switch between them anytime—no drama.</li>
+</ul>

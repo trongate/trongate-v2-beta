@@ -1,3 +1,7 @@
+<<<<<<< HEAD
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="115 150 2170 2064" width="24" height="24">
+=======
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2260 2260" width="24" height="24">
+>>>>>>> 1812b796f7c3086fff759fc5fd48c63bc5af4250
 	<path d="M1200 200l247 750h788l-638 464 244 750-641-466-641 466 244-750-638-464h788z"/>
 </svg>
