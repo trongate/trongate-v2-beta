@@ -28,6 +28,40 @@ function ip_address(): string {
 }
 
 /**
+ * Display content view within a template
+ * 
+ * @param array $data Data containing view_module and view_file
+ * @return void
+ */
+function display(array $data): void {
+    // Auto-detect view_module from URL if not provided
+    if (!isset($data['view_module'])) {
+        $data['view_module'] = segment(1) ?? 'welcome';
+    }
+    
+    // Default view_file if not provided
+    if (!isset($data['view_file'])) {
+        $data['view_file'] = 'index';
+    }
+    
+    // Build path to content view
+    $content_view_path = APPPATH . "modules/{$data['view_module']}/views/{$data['view_file']}.php";
+    
+    // Check if view exists
+    if (!file_exists($content_view_path)) {
+        echo "<div style='color: red; padding: 1rem; border: 2px solid red;'>";
+        echo "<h2>View Not Found</h2>";
+        echo "<p>Looking for: <code>{$content_view_path}</code></p>";
+        echo "</div>";
+        return;
+    }
+    
+    // Extract data and include view
+    extract($data);
+    require $content_view_path;
+}
+
+/**
  * Extract file name and extension from a given file path.
  *
  * @param string $file_string The file path from which to extract information.
@@ -40,37 +74,6 @@ function return_file_info(string $file_string): array {
     $file_name = str_replace("." . $file_extension, "", $file_string);
     // Return an array containing the file name and file extension
     return array("file_name" => $file_name, "file_extension" => "." . $file_extension);
-}
-
-/**
- * Loads a template file with optional data for use within the template.
- *
- * @param string $template_file The filename of the template to load.
- * @param array|null $data (Optional) The data to be passed to the template as an associative array. Defaults to null.
- * 
- * @return void
- */
-function load(string $template_file, ?array $data = null): void {
-    // Attempt load template view file
-    if (isset(THEMES[$template_file])) {
-        $theme_dir = THEMES[$template_file]['dir'];
-        $template = THEMES[$template_file]['template'];
-        $file_path = APPPATH . 'public/themes/' . $theme_dir . '/' . $template;
-        define('THEME_DIR', BASE_URL . 'themes/' . $theme_dir . '/');
-    } else {
-        $file_path = APPPATH . 'templates/views/' . $template_file . '.php';
-    }
-
-    if (file_exists($file_path)) {
-        // Extract data if provided
-        if (isset($data)) {
-            extract($data);
-        }
-
-        require_once($file_path);
-    } else {
-        die('<br><b>ERROR:</b> View file does not exist at: ' . $file_path);
-    }
 }
 
 /**

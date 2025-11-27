@@ -4,7 +4,7 @@
  * Trongate Base Controller Class
  * 
  * The foundation class that all application controllers extend.
- * Provides core functionality for templates, views, modules, and file uploads.
+ * Provides core functionality for views, modules, and file uploads.
  */
 class Trongate {
 
@@ -49,12 +49,7 @@ class Trongate {
 
         // Handle core framework classes with lazy loading
         $core_instance = match($key) {
-            'db' => new DB($this->module_name),
             'model' => new Model($this->module_name),
-            'validation' => new Validation(),
-            'file' => new File(),
-            'image' => new Image(),
-            'template' => new Template(),
             default => null
         };
 
@@ -69,37 +64,6 @@ class Trongate {
         } catch (Exception $e) {
             throw new Exception("Undefined property: " . get_class($this) . "::$key");
         }
-    }
-
-    /**
-     * Renders a specific template view by calling a corresponding method in the Templates controller class.
-     *
-     * @param string $template_name The name of the template method to be called.
-     * @param array $data An associative array containing data to be passed to the template method.
-     * @return void
-     * @throws Exception If template controller or method is not found.
-     */
-    protected function template(string $template_name, array $data = []): void {
-        $template_controller_path = '../templates/Templates.php';
-        
-        if (!file_exists($template_controller_path)) {
-            $template_controller_path = str_replace('../', APPPATH, $template_controller_path);
-            throw new Exception('ERROR: Unable to find Templates controller at ' . $template_controller_path . '.');
-        }
-        
-        require_once $template_controller_path;
-        $templates = new Templates;
-
-        if (!method_exists($templates, $template_name)) {
-            $template_controller_path = str_replace('../', APPPATH, $template_controller_path);
-            throw new Exception('ERROR: Unable to find ' . $template_name . ' method in ' . $template_controller_path . '.');
-        }
-
-        if (!isset($data['view_file'])) {
-            $data['view_file'] = DEFAULT_METHOD;
-        }
-
-        $templates->$template_name($data);
     }
 
     /**
@@ -176,32 +140,6 @@ class Trongate {
         }
 
         throw new Exception("Module controller not found: {$target_module}");
-    }
-
-    /**
-     * Upload a picture file using the upload method from the Image class.
-     *
-     * This method serves as an alternative way of invoking the upload method from the Image class.
-     * It simply uses the lazy-loaded Image instance and calls its upload method with the provided configuration data.
-     *
-     * @param array $config The configuration data for handling the upload.
-     * @return array|null The information of the uploaded file.
-     */
-    protected function upload_picture(array $config): ?array {
-        return $this->image->upload($config);
-    }
-
-    /**
-     * Upload a file using the upload method from the File class.
-     *
-     * This method serves as an alternative way of invoking the upload method from the File class.
-     * It simply uses the lazy-loaded File instance and calls its upload method with the provided configuration data.
-     *
-     * @param array $config The configuration data for handling the upload.
-     * @return array|null The information of the uploaded file.
-     */
-    protected function upload_file(array $config): ?array {
-        return $this->file->upload($config);
     }
 
     /**
