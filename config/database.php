@@ -5,6 +5,10 @@ $databases = [
         'port' => '3306',
         'user' => 'root',
         'password' => '',
+<<<<<<< HEAD
         'database' => 'trongate_v2_beta'
+=======
+        'database' => 'trongate_live6'
+>>>>>>> cp3
     ]
 ];

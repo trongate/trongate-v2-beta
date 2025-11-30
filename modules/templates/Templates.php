@@ -8,6 +8,23 @@ class Templates extends Trongate {
         }
     }
 
+<<<<<<< HEAD
+=======
+
+    /**
+     * Loads the 'docs_ahoy' view with provided data.
+     *
+     * @param mixed $data Data array to be passed to the view.
+     * @return void
+     */
+    public function docs_ahoy($data): void {
+        $data['theme'] = (isset($data['theme'])) ? $data['theme'] : 'blue';
+        $data['additional_includes_top'] = $this->build_additional_includes($data['additional_includes_top'] ?? []);
+        $data['additional_includes_btm'] = $this->build_additional_includes($data['additional_includes_btm'] ?? []);
+        $this->display('docs_ahoy', $data);
+    }
+
+>>>>>>> cp3
     /**
      * Display admin theme template with provided data.
      *
