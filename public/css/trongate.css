@@ -124,6 +124,18 @@ button:hover,
   color: var(--primary-color);
 }
 
+.danger {
+    background-color: var(--danger);
+    border: 1px solid var(--danger-dark);
+    color: var(--primary-color);
+}
+
+.danger:hover {
+    background-color: var(--danger-dark);
+    border: 1px solid var(--danger-dark);
+    color: var(--primary-color);
+}
+
 .warning {
     background-color: var(--warning);
     border: 1px solid var(--warning);
@@ -235,42 +247,49 @@ body .text-center, html .text-center { text-align: center; }
   width: 90%;
   max-width: 940px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-xxs {
   width: 90%;
   max-width: 450px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-xs {
   width: 90%;
   max-width: 640px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-sm {
   width: 90%;
   max-width: 760px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-md {
   width: 90%;
   max-width: 820px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-lg {
   width: 90%;
   max-width: 960px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-xl {
   width: 90%;
   max-width: 1100px;
   margin: 0 auto;
+  padding: 1em;
 }
 
 .container-xxl {

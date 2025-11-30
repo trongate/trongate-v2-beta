@@ -1,0 +1,65 @@
+<div class="container">
+  <h1>_draw_summary_panel()</h1>
+  <p class="signature"> function _draw_summary_panel(int $update_id, array $filezone_settings): void </p>
+  <h2>Description</h2>
+  <div class="description">
+    <p>Renders the summary panel for a given update ID and Filezone settings.</p>
+  </div>
+  <h2>Parameters</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>$update_id</td>
+        <td>int</td>
+        <td>The ID of the update.</td>
+        <td>N/A</td>
+      </tr>
+      <tr>
+        <td>$filezone_settings</td>
+        <td>array</td>
+        <td>Settings related to the Filezone.</td>
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Return Value</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>void</td>
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Example Usage</h2>
+  <p>The code below demonstrates how to render a Filezone summary panel, within a view file.</p>
+  <div>
+    <pre>&lt;?= Modules::run('filezone/_draw_summary_panel', $update_id, $filezone_settings) ?&gt;</pre>
+  </div>
+  <p>NOTE:  In order for the summary panel to be succesfully rendered, the code above would be passed into a view file.  Also, an array of key / value pairs (in this instance, named as <b>$filezone_settings</b>) should also be passed into the view file.   The code sample below shows an example of Filezone settings being initialized from within a controller file.</p>
+<div>
+    <pre>public function _init_filezone_settings() {
+    $data['targetModule'] = 'tasks';
+    $data['destination'] = 'tasks_pictures';
+    $data['max_file_size'] = 1200;
+    $data['max_width'] = 2500;
+    $data['max_height'] = 1400;
+    $data['upload_to_module'] = true;
+    return $data;
+}</pre>
+  </div>
+</div>

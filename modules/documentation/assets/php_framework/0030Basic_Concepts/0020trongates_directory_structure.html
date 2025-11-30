@@ -1,0 +1,35 @@
+<h1>Trongate's Directory Structure</h1>
+<div class="text-center">
+    <figure>
+        <img src="https://trongate.io/docs/images/21/trongateS9Tm.png" alt="Trongate folders – yes, that's all of them" style="max-width: 450px;">
+        <figcaption>Five folders. Zero bloat. That's it.</figcaption>
+    </figure>
+</div>
+<h2>engine/</h2>
+<p>The beating heart. Routing, DB, helpers, magic. All written in modern PHP.</p>
+<p><strong>Don't touch the files in this folder ...or else!</strong></p>
+<h2>config/</h2>
+<p>Plain PHP files. No YAML. No ENV complexity.</p>
+<p><code>config.php</code> • <code>database.php</code> • <code>custom_routing.php</code> • etc.</p>
+<h2>modules/</h2>
+<p>Your app lives here. One folder per feature. No sub-folders named "controllers", because that's unnecessary nesting.</p>
+[code]
+modules/
+  users/
+    Users.php              ← controller (the boss)
+    Users_model.php        ← optional
+    views/                 ← pure PHP (no template engine)
+      welcome.php
+      login.php
+[/code]
+<div class="alert alert-info">
+    <p><strong>Trongate v2 killed the controllers/ subfolder.</strong> You're welcome.</p>
+</div>
+<h2>templates/</h2>
+<p>Pure PHP templates. No template languages. No "learning a new syntax" tax.</p>
+<p>If you know PHP → you know templating. Done.</p>
+<h2>public/</h2>
+<p>The only folder the internet sees. Drop your CSS, JS, images, <code>index.php</code>, and that one favicon you keep forgetting.</p>
+<div class="alert alert-info">
+    <p>Trongate has <strong>no third-party dependencies</strong>.</p>
+</div>

@@ -1,0 +1,192 @@
+#module-requests-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 1em;
+}
+
+#module-requests-grid>div>div:nth-child(odd),
+#job-details {
+  background-color: #ffffff;
+  color: #333;
+}
+
+#module-requests-grid>div>div:nth-child(even) {
+  background-color: #ffffffdd;
+  color: #111;
+}
+
+.job-card .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.job-card,
+#job-details {
+  border: 2px var(--primary) solid;
+  border-radius: 6px;
+  font-family: Consolas, "courier new";
+}
+
+#jobs-feed>div:hover {
+  background-color: #fff !important;
+}
+
+.job-card h2,
+#job-details h2 {
+  font-family: Tahoma, Geneva, sans-serif;
+  font-size: 21px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.job-card h2,
+.job-card p {
+  margin: 0 0 4px 0;
+}
+
+.job-card h2:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.job-card p,
+.job-card li {
+  font-size: 14px;
+}
+
+.job-card .bigger {
+  font-size: 16px;
+}
+
+.job-card .smaller {
+  font-size: 12px;
+}
+
+.job-desc-short {
+  margin: 0 auto !important;
+  padding: 24px 0;
+  width: 90%;
+  display: block;
+}
+
+.newjob {
+  color: #770000 !important;
+}
+
+#job-details {
+  padding: 12px;
+}
+
+#jobs-feed a.alt,
+#job-details button.alt {
+  border: 1px var(--primary) solid;
+  background-color: #fff;
+}
+
+#job-details a.alt {
+  border: 1px var(--primary) solid;
+  background-color: #fff;
+  margin-top: 0;
+}
+
+.response-row {
+  border-bottom: 1px #ccc solid;
+}
+
+.response-row:nth-last-child(1) {
+  border-bottom: none;
+}
+
+div.responses-grid {
+  margin-top: 12px;
+}
+
+#record-responses>div.responses-grid>div {
+  padding: 12px;
+}
+
+#record-responses>div.responses-grid>div:nth-child(even) {
+  background-color: #eee;
+}
+
+#record-responses>div.responses-grid>div>div div:nth-child(1) {
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 0;
+  display: inline-block;
+  padding: 3px 7px;
+  text-transform: uppercase;
+  font-family: tahoma;
+  border-radius: 3px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.posted-by {
+  font-weight: bold;
+  font-size: 14px;
+  padding: 7px 0;
+}
+
+.offer-value {
+  font-weight: bold;
+  font-size: 21px;
+  padding: 7px 0;
+}
+
+.offer-currency {
+  font-size: 14px;
+}
+
+#record-responses>div.responses-grid>div>div:nth-child(3) {
+  padding: 7px 0;
+}
+
+.offer {
+  background-color: #5e5e5e;
+}
+
+.question {
+  background-color: #6035aa;
+}
+
+.answer {
+  background-color: #2d62aa;
+}
+
+.winning-offer {
+  background-color: #1e621e;
+}
+
+#record-responses>div.responses-grid>div>p>a {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.row-upper {
+  width: 100%;
+  display: flex !important;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hidden-answer {
+  display: none;
+}
+
+.two-col {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.accepted-info {
+  background-color: #4781b15c;
+  padding: 3px 7px !important;
+  font-size: 14px;
+}

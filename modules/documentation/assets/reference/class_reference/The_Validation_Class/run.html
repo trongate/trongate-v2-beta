@@ -1,0 +1,46 @@
+<div class="container">
+  <h1>run()</h1>
+  <p class="signature">public function run(): bool</p>
+  
+  <h2>Description</h2>
+  <div class="description">
+    <p>Executes the validation rules that have been previously defined using the <code>set_rules()</code> method. If all fields pass their respective validation rules, the method returns <code>true</code>. Otherwise, it returns <code>false</code> and populates error messages that can be displayed to the user.</p>
+  </div>
+  
+  <h2>Parameters</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>None</td>
+        <td>n/a</td>
+        <td>This method does not accept any parameters.</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <h2>Return Value</h2>
+  <div class="description">
+    <p>Returns <code>true</code> if all validation rules pass. Otherwise, returns <code>false</code>.</p>
+  </div>
+  
+  <h2>Example Usage</h2>
+  <div>
+    <pre>
+$this->validation->set_rules('username', 'Username', 'required|min_length[5]|max_length[20]');
+$this->validation->set_rules('email', 'Email', ['required', 'valid_email']);
+
+if ($this->validation->run()) {
+  // Proceed with processing the data
+} else {
+  // Display validation errors
+  $errors = $this->validation->get_errors();
+}</pre>
+  </div>
+</div>

@@ -8,8 +8,6 @@ class Templates extends Trongate {
         }
     }
 
-<<<<<<< HEAD
-=======
 
     /**
      * Loads the 'docs_ahoy' view with provided data.
@@ -24,7 +22,6 @@ class Templates extends Trongate {
         $this->display('docs_ahoy', $data);
     }
 
->>>>>>> cp3
     /**
      * Display admin theme template with provided data.
      *

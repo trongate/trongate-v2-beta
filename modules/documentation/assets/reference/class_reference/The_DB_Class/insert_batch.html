@@ -1,0 +1,97 @@
+<div class="container">
+  <h1>insert_batch()</h1>
+  <p class="signature">public function insert_batch(string $table, array $records): int</p>
+  <h2>Description</h2>
+  <div class="description">
+    <p>
+      Insert multiple records into the specified table in a batch using a single SQL statement. This method is designed for efficiency when inserting a large number of records at once.
+    </p>
+  </div>
+  <h2>Parameters</h2>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+        <th>Required</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>table</td>
+        <td>string</td>
+        <td>The name of the table to insert records into.</td>
+        <td>N/A</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>records</td>
+        <td>array</td>
+        <td>An array containing associative arrays representing records to be inserted.</td>
+        <td>N/A</td>
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Return Value</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>int</td>
+        <td>The number of records successfully inserted.</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Throws</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Exception</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="alert-danger">PDOException</td>
+        <td class="alert-danger">If an error occurs during the database operation.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert alert-warning">
+      <p>
+        This method should only be used in controlled environments to prevent potential security vulnerabilities arising from direct user input.
+      </p>   
+  </div>
+
+  <h2>Example Usage</h2>
+  <p>Below is an example of how to insert three records into an 'employees' table in a single batch:</p>
+[code=php]$employee_records = [
+    [
+        'name' => 'John Doe',
+        'position' => 'Software Engineer',
+        'salary' => 80000
+    ],
+    [
+        'name' => 'Jane Smith',
+        'position' => 'UX Designer',
+        'salary' => 75000
+    ],
+    [
+        'name' => 'Mike Johnson',
+        'position' => 'Data Analyst',
+        'salary' => 70000
+    ]
+];
+
+$num_inserted = $this->db->insert_batch('employees', $employee_records);
+echo "Successfully inserted $num_inserted records into the 'employees' table.";
+[/code]
+</div>

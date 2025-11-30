@@ -1,87 +1,101 @@
 <?php
 class Documentation_model extends Model {
 
-    public function fetch_docs_books() {
-        $sql = 'SELECT * FROM documentation_books ORDER BY priority';
-        return $this->db->query($sql, 'object');
-    }
+	private $docs_db = 'default';
 
-    public function get_chapters($book_id, $include_pages = false) {
-        $params = ['book_id' => $book_id];
+	public function get_books() {
+	    $db = $this->docs_db;
+	    $books = $this->$db->get('priority', 'documentation_books');
+	    return $books;
+	}
 
-        $sql = '
-            SELECT
-                b.book_title, b.url_string, b.description, b.cover,
-                c.chapter_number, c.chapter_title, c.chapter_url_string, c.book_id
-            FROM documentation_books b
-            INNER JOIN documentation_chapters c ON b.id = c.book_id
-            WHERE b.id = :book_id
-            ORDER BY c.chapter_number
-        ';
+	public function get_chapters($book_url_string) {
 
-        $rows = $this->db->query_bind($sql, $params, 'object');
+		// Get the book_id
+		$url_string = str_replace('_', '-', $book_url_string);
+		$db = $this->docs_db;
+		$book_obj = $this->$db->get_one_where('url_string', $url_string, 'documentation_books');
+		
+		if ($book_obj === false) {
+			return false;
+		}
 
-        if ($include_pages && !empty($rows)) {
-            $rows = $this->add_pages_to_chapters($rows);
-        }
+		// Get the chapters for this book.
+		$params['book_id'] = (int) $book_obj->id;
+		$sql = 'SELECT * FROM documentation_chapters WHERE book_id = :book_id ORDER BY chapter_number';
+		$db = $this->docs_db;
+		$rows = $this->$db->query_bind($sql, $params, 'object');
+		$chapters = $this->add_pages_to_chapters($params['book_id'], $rows);
 
-        return $rows ?: [];
-    }
+		if (isset($chapters[1])) {
+			$chapters[1]->book_obj = $book_obj;
+		}
 
-    private function add_pages_to_chapters($chapter_rows) {
-        $chapters = [];
+		return $chapters;
+	}
 
-        foreach ($chapter_rows as $row) {
-            $num = (int) $row->chapter_number;
-            $row->pages = [];
-            $chapters[$num] = $row;
-        }
+	private function add_pages_to_chapters($book_id, $chapters) {
 
-        $book_id = (int) reset($chapter_rows)->book_id;
-        $book_url_string = reset($chapter_rows)->url_string; // Get the book's url_string
+		// Give each chapter an arary of pages.
+		$all_chapters = [];
+		foreach($chapters as $k => $v) {
+			$chapter_number = (int) $v->chapter_number;
+			$v->pages = [];
+			$all_chapters[$chapter_number] = $v;
+		}
 
-        // FIXED: Order by page_number, NOT id
-        $sql = "SELECT * FROM documentation_pages WHERE book_id = ? ORDER BY page_number";
+		// Fetch all of the pages for this book, ordered by chapter_number, page_number
+		$params['book_id'] = $book_id;
+		$sql = 'SELECT * FROM documentation_pages WHERE book_id = :book_id ORDER BY chapter_number, page_number';
+		$db = $this->docs_db;
 
-        $pages = $this->db->query_bind($sql, [$book_id], 'object');
+		$current_chapter_number = 0;
+		$page_counter = 0;
+		$all_book_pages = $this->$db->query_bind($sql, $params, 'object');
+		foreach($all_book_pages as $key => $page_obj) {
+			$page_counter++;
+			$this_chapter_number = (int) $page_obj->chapter_number;
 
-        foreach ($pages as $page) {
-            // Add the book_url_string to each page object
-            $page->book_url_string = $book_url_string;
-            $num = (int) $page->chapter_number;
-            if (isset($chapters[$num])) {
-				$chapter_url_string = $chapters[$num]->chapter_url_string;
-				$book_url_string = str_replace('-', '_', $book_url_string);
-            	$page->page_url = BASE_URL.'documentation/'.$book_url_string.'/'.$chapter_url_string.'/'.$page->page_url_string;
-                $chapters[$num]->pages[] = $page;
-            }
-        }
+			if ($this_chapter_number !== $current_chapter_number) {
+				$current_chapter_number = $this_chapter_number;
+				$page_counter++;
+			}
 
-        ksort($chapters);
-        return array_values($chapters);
-    }
+			$page_obj->page_number = $page_counter;
+			if (isset($all_chapters[$this_chapter_number])) {
+				$page_obj->page_content = $this->hide_code_blocks($page_obj->page_content);
+				$chapter_url_string = $all_chapters[$this_chapter_number]->chapter_url_string;
+				$page_obj->page_url = 'documentation/'.segment(2).'/'.$chapter_url_string.'/'.$page_obj->page_url_string;
+				$all_chapters[$this_chapter_number]->pages[] = $page_obj;
+			}
+		}
 
-    public function extract_page_obj($data, $target_chapter_url_string, $target_page_url_string) {
+		return $all_chapters;
+	}
 
-        $chapters = $data['chapters'];
-        foreach($chapters as $chapter) {
-            $chapter_url_string = $chapter->chapter_url_string;
-            if ($chapter_url_string === $target_chapter_url_string) {
-                $chapter_pages = $chapter->pages;
-                foreach($chapter_pages as $chapter_page) {
-                    $page_url_string = $chapter_page->page_url_string;
-                    if ($page_url_string === $target_page_url_string) {
-                        $chapter_page->page_content = $this->hide_code_blocks($chapter_page->page_content);
-                        $chapter_page->chapter_title = $chapter->chapter_title;
-                        return $chapter_page;
-                    }
-                }
-                
-            }
-        }
+	public function get_current_chapter($target_chapter_url_string, $chapters) {
+		foreach($chapters as $chapter_obj) {
+			$chapter_url_string = $chapter_obj->chapter_url_string;
+			if ($chapter_url_string === $target_chapter_url_string) {
+				return $chapter_obj;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
+
+	public function get_current_page($target_page_url_string, $chapter_obj) {
+		$chapter_pages = $chapter_obj->pages;
+		
+		foreach($chapter_pages as $page_obj) {
+			$page_url_string = $page_obj->page_url_string;
+			if ($page_url_string === $target_page_url_string) {
+				return $page_obj;
+			}
+		}
+
+		return false;
+	}
 
     /**
      * Hides code blocks in the comment by replacing them with a hidden <div> element.
@@ -93,7 +107,7 @@ class Documentation_model extends Model {
      * @param string $comment The comment containing the [code]...[/code] tags to be processed.
      * @return string The processed comment with code blocks hidden inside <div> elements.
      */
-    private function hide_code_blocks(string $comment): string {
+    public function hide_code_blocks(string $comment): string {
         // First, validate and process only properly matched code blocks
         $pattern = '/\[code(?:=(\w+))?\]((?:(?!\[code).)*?)\[\/code\]/si';
         $processed_comment = preg_replace_callback($pattern, function ($matches) {
@@ -121,222 +135,76 @@ class Documentation_model extends Model {
         return $processed_comment;
     }
 
-    public function build_prev_next_array($data) {
-        $prev_url = '';
-        $next_url = '';
+    public function build_prev_next_array($current_chapter_obj, $chapters, $data) {
 
-        $current_chapter = $this->extract_current_chapter($data); 
-        $current_chapter_url_string = $current_chapter->chapter_url_string;
-        $current_chapter_number = (int) $current_chapter->chapter_number;
-        $num_pages_in_chapter = count($current_chapter->pages);
-        $page_type = $this->get_page_type($data['current_page_number'], $num_pages_in_chapter);
+    	$view_file = $data['view_file'];
 
-        if ($page_type === 'first') {
-            $prev_next_array = $this->est_prev_next_first($current_chapter_number, $data);
-        } elseif($page_type === 'middle') {
-            $prev_next_array = $this->est_prev_next_middle($data['current_page_number'], $current_chapter);
-        } else {
-            $prev_next_array = $this->est_prev_next_last($data['current_page_number'], $current_chapter, $data);
-        }
+    	if ($view_file === 'docs_page') {
+    		$current_page_url_string = segment(4);
+    		foreach($current_chapter_obj->pages as $key => $page_obj) {
 
-        return $prev_next_array;
+    			if ($page_obj->page_url_string === $current_page_url_string) {
+
+    				if (isset($current_chapter_obj->pages[$key-1])) {
+    					$prev_url = $current_chapter_obj->pages[$key-1]->page_url;
+    				} else {
+    					// Must be the first normal page in the chapter -> attempt get intro page of chapter
+    					$prev_chapter_number = $current_chapter_obj->chapter_number - 1;
+    					$prev_url = 'documentation/'.segment(2).'/'.segment(3);	
+    				}
+
+    				if (isset($current_chapter_obj->pages[$key+1])) {
+    					$next_url = $current_chapter_obj->pages[$key+1]->page_url;
+    				} else {
+    					// Must be the last page in the chapter -> attempt get first page of next chapter
+    					$next_chapter_number = $current_chapter_obj->chapter_number + 1;
+    					$next_url = $this->attempt_get_chapter_intro_page_url($next_chapter_number, $chapters);
+    				}
+    				
+    			}
+
+    		}
+
+    		
+    	} else {
+    		// Docs intro page
+    		$chapter_number = $current_chapter_obj->chapter_number;
+    		$prev_chapter_number = $chapter_number - 1;
+    		$prev_url = $this->attempt_get_last_chapter_page_url($prev_chapter_number, $chapters);
+    		$next_url = $current_chapter_obj->pages[0]->page_url;
+    	}
+
+		$result = [
+			'prev_url' => $prev_url,
+			'next_url' => $next_url
+		];
+
+    	return $result;
     }
 
-    private function get_page_type($page_number, $num_pages_in_chapter) {
-        switch ($page_number) {
-            case 1:
-                $page_type = 'first';
-                break;
-            case $num_pages_in_chapter:
-                $page_type = 'last';
-                break;
-            default:
-                $page_type = 'middle';
-                break;
-        }
+    private function attempt_get_chapter_intro_page_url($chapter_number, $chapters) {
 
-        return $page_type;
+    	if (isset($chapters[$chapter_number])) {
+    		$page_url = 'documentation/'.segment(2).'/'.$chapters[$chapter_number]->chapter_url_string;
+    	} else {
+    		$page_url = '';
+    	}
+
+    	return $page_url;
     }
 
-    /**
-     * Extracts the current chapter object from the data array based on URL string match.
-     *
-     * @param array $data Associative array containing chapter data and target URL string
-     *                    Expected keys:
-     *                    - 'chapter_url_string' (string): The target chapter URL string to match
-     *                    - 'chapters' (array): Array of chapter objects to search through
-     * 
-     * @return object|false Returns the matching chapter object (with cover and pages unset) 
-     *                      if found, false otherwise
-     */
-    private function extract_current_chapter(array $data): object|false {
-        $target_chapter_url_string = $data['chapter_url_string'];
-        foreach($data['chapters'] as $key => $chapter_obj) {
-            $chapter_url_string = $chapter_obj->chapter_url_string;
-            if ($target_chapter_url_string === $chapter_url_string) {
-                return $chapter_obj;
-            }
-        }
+    private function attempt_get_last_chapter_page_url($chapter_number, $chapters) {
 
-        return false;
-    }
+    	if (isset($chapters[$chapter_number])) {
+    		$prev_chapter_pages = $chapters[$chapter_number]->pages;
+    		$target_index = count($prev_chapter_pages) - 1;
+			$last_chapter_page = $prev_chapter_pages[$target_index];
+			$page_url = $last_chapter_page->page_url;
+    	} else {
+    		$page_url = 'documentation/'.segment(2);
+    	}
 
-    private function est_prev_next_first($current_chapter_number, $data) {
-
-        // If on first page, the previous page should be the chapter intro
-        $current_page_number = 1;
-        $result['prev_url'] = BASE_URL.'documentation/'.segment(2).'/'.segment(3);
-
-        // The next link should be the next page in the chapter (assuming more than one page in each chapter)
-        $current_chapter = $this->get_current_chapter($current_chapter_number, $data);
-        $next_page = $this->get_next_page($current_chapter, $current_page_number);
-        $result['next_url'] = $next_page->page_url;
-        return $result;
-    }
-
-    private function est_prev_next_middle($current_page_number, $current_chapter) {
-
-        // Previous page is just the preceding page.
-        $target_page_number_prev = $current_page_number - 1;
-        $target_page_number_next = $current_page_number + 1;
-        foreach($current_chapter->pages as $page) {
-            $page_number = (int) $page->page_number;
-            if ($page_number === $target_page_number_prev) {
-                $result['prev_url'] = $page->page_url;
-            } elseif ($page_number === $target_page_number_next) {
-                $result['next_url'] = $page->page_url;
-            }
-        }
-
-        return $result;
-    }
-
-    private function est_prev_next_last($current_page_number, $current_chapter, $data) {
-        // If on last page of a chapter, the previous page should be the chapter intro
-
-        // Previous page is just the preceding page.
-        $target_page_number_prev = $current_page_number - 1;
-        $target_page_number_next = $current_page_number + 1;
-        foreach($current_chapter->pages as $page) {
-            $page_number = (int) $page->page_number;
-            if ($page_number === $target_page_number_prev) {
-                $result['prev_url'] = $page->page_url;
-            }
-        }
-
-        // Now get the next chapter
-        $next_chapter = $this->get_next_chapter($current_chapter->chapter_number, $data);
-        $next_chapter_url_string = str_replace('-', '_', $next_chapter->url_string);
-        $result['next_url'] = BASE_URL.'documentation/'.$next_chapter_url_string.'/'.$next_chapter->chapter_url_string;
-        return $result;
-    }
-
-    /**
-     * Retrieve the chapter object that precedes the current chapter.
-     *
-     * @param int   $current_chapter_number The current chapter number.
-     * @param array $data                   The dataset containing chapter objects under 'chapters'.
-     *
-     * @return object|false Returns the preceding chapter object if found, or false otherwise.
-     */
-    private function get_preceding_chapter(int $current_chapter_number, array $data): object|false {
-        $target_chapter_number = $current_chapter_number - 1;
-        foreach($data['chapters'] as $chapter_obj) {
-            $chapter_number = (int) $chapter_obj->chapter_number;
-            if ($chapter_number === $target_chapter_number) {
-                return $chapter_obj;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Retrieve the current chapter object.
-     *
-     * @param int   $current_chapter_number The current chapter number.
-     * @param array $data                   The dataset containing chapter objects under 'chapters'.
-     *
-     * @return object|false Returns the current chapter object if found, or false otherwise.
-     */
-    private function get_current_chapter(int $current_chapter_number, array $data): object|false {
-        foreach ($data['chapters'] as $chapter_obj) {
-            if ((int) $chapter_obj->chapter_number === $current_chapter_number) {
-                return $chapter_obj;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Retrieve the chapter object that follows the current chapter.
-     *
-     * @param int   $current_chapter_number The current chapter number.
-     * @param array $data                   The dataset containing chapter objects under 'chapters'.
-     *
-     * @return object|false Returns the next chapter object if found, or false otherwise.
-     */
-    private function get_next_chapter(int $current_chapter_number, array $data): object|false {
-        $target_chapter_number = $current_chapter_number + 1;
-        foreach($data['chapters'] as $chapter_obj) {
-            $chapter_number = (int) $chapter_obj->chapter_number;
-            if ($chapter_number === $target_chapter_number) {
-                return $chapter_obj;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Retrieve the first page object of a chapter.
-     *
-     * @param object $chapter_obj The chapter object containing a 'pages' array.
-     *
-     * @return object|false Returns the first page object if available, or false if no pages exist.
-     */
-    private function get_first_page(object $chapter_obj): object|false {
-        if (!empty($chapter_obj->pages) && is_array($chapter_obj->pages)) {
-            return $chapter_obj->pages[0];
-        }
-        return false;
-    }
-
-    /**
-     * Retrieve the last page object of a chapter.
-     *
-     * @param object $chapter_obj The chapter object containing a 'pages' array.
-     *
-     * @return object|false Returns the last page object if available, or false if no pages exist.
-     */
-    private function get_last_page(object $chapter_obj): object|false {
-        if (!empty($chapter_obj->pages) && is_array($chapter_obj->pages)) {
-            return $chapter_obj->pages[count($chapter_obj->pages) - 1];
-        }
-        return false;
-    }
-
-    /**
-     * Retrieve the next page object within the current chapter.
-     *
-     * @param object $chapter_obj The current chapter object containing a 'pages' array.
-     * @param int    $current_page_number The current page number within the chapter.
-     *
-     * @return object|false Returns the next page object if available, or false if on the last page.
-     */
-    private function get_next_page(object $chapter_obj, int $current_page_number): object|false {
-        if (empty($chapter_obj->pages) || !is_array($chapter_obj->pages)) {
-            return false;
-        }
-
-        foreach ($chapter_obj->pages as $index => $page) {
-            if ((int) $page->page_number === $current_page_number) {
-                return $chapter_obj->pages[$index + 1] ?? false;
-            }
-        }
-
-        return false;
+    	return $page_url;
     }
 
 }

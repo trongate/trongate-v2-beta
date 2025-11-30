@@ -213,3 +213,9 @@ Contributions are always welcome!
 ## :warning: License
 
 See LICENSE.txt for more information.
+
+<!-- Contact -->
+
+## :handshake: Contact
+
+David Connelly - [@davidjconnelly](https://twitter.com/davidjconnelly) - [Get In Touch](https://trongate.io/your_messages/compose)

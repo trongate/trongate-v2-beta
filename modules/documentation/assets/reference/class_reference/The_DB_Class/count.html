@@ -1,0 +1,53 @@
+<div class="container">
+  <h1>count()</h1>
+  <p class="signature">public function count(?string $target_tbl = null): int</p>
+  
+  <h2>Description</h2>
+  <div class="description">
+    <p>
+      Counts the number of rows in a database table. This method constructs and executes an SQL query to count the rows in the specified table. It returns the number of rows found in the table.
+    </p>
+  </div>
+  
+  <h2>Parameters</h2>
+  <table class="params-table">
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+        <th>Required</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>target_tbl</td>
+        <td>string|null</td>
+        <td>The name of the database table to count rows from. If not explicitly passed, the table name is assumed to be the value of the first URL segment.</td>
+        <td>'First URL segment'</td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <h2>Return Value</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>int</td>
+        <td>The number of rows in the specified table.</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <h2>Example Usage</h2>
+  [code=php]$num_users = $this->db->count('users');[/code]
+  
+</div>

@@ -1,0 +1,50 @@
+<h1>The Module Import Wizard</h1>
+<p>Trongate's module import wizard lets you steal features like a pirate.</p>
+<ol>
+  <li>Copy a module.</li>
+  <li>Paste it into your app.</li>
+  <li>Activate.</li>
+  <li>Done.</li>
+</ol>
+<p>No package managers. No dependency chains. No third-party gatekeepers.</p>
+<hr>
+<h2>How It Works</h2>
+<p>Move features between apps like you're sharing photos:</p>
+<ol>
+  <li>Grab module folder from App A</li>
+  <li>Drop it into <code>modules/</code> in App B</li>
+  <li>Visit <code>https://yoursite.com/module_name</code> — SQL runs automatically</li>
+</ol>
+<p>Got SQL tables? Drop <code>.sql</code> files in the module. The wizard handles them.</p>
+<hr>
+<h2>Video Demo</h2>
+<p>Watch it work:</p>
+[youtube]I8wM4AdA0k4[/youtube]
+<hr>
+<h2>Child Modules? Same Deal.</h2>
+<p>Child modules import just like regular modules:</p>
+[code]
+modules/
+  shop/
+    product_reviews/ ← copy this entire folder
+      Product_reviews.php
+      views/
+      setup.sql ← SQL? Drop it here
+[/code]
+<p>Visit: <code>https://yoursite.com/shop-product_reviews</code></p>
+<p>The wizard detects child modules automatically.</p>
+<h2>Security First</h2>
+<div class="alert alert-danger">
+  <p><strong>Never run the wizard on production.</strong></p>
+  <p>Import on localhost. Test thoroughly. Then deploy.</p>
+</div>
+<hr>
+<h2>Tips</h2>
+<ul>
+  <li><strong>Module dependencies?</strong> Document them in a <code>README.md</code> inside the module</li>
+  <li><strong>Config changes needed?</strong> Add instructions in <code>INSTALL.txt</code></li>
+  <li><strong>Assets?</strong> They're already in the module. Just works.</li>
+</ul>
+<div class="alert alert-info">
+  <p>The wizard runs once per module. After setup, it disables itself automatically.
+</div>
