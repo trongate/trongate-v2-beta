@@ -1,8 +1,0 @@
-<h1>Dashboard</h1>
-<p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Vel sit aliquam, voluptas quae animi maiores aspernatur ex nulla expedita dolor vitae ad libero autem, tenetur quod soluta officiis ullam. Cum!
-Unde vitae exercitationem dolore quod dolor libero repudiandae quisquam quas eum asperiores quibusdam saepe aperiam expedita iste cupiditate dolorem ea laboriosam a, ab rem nisi soluta non tempore? Expedita, est.
-Unde error mollitia porro, voluptates, molestias maxime rerum tenetur dolorem animi veniam libero ipsa consequatur cupiditate deleniti, aliquam vitae delectus autem facere architecto repellendus, dolor quod nam consectetur? Iste, ut.
-Est eveniet quo asperiores, nulla delectus mollitia aliquam quisquam, a sint pariatur, enim hic excepturi, facere cum. Exercitationem, commodi hic est, quia esse praesentium optio eaque? Eum facilis perferendis asperiores.
-Aliquam maiores vitae commodi porro assumenda impedit odit harum inventore mollitia eveniet aliquid dolorum doloremque labore pariatur rem eligendi ullam in, iste unde eum, hic totam. Sequi fuga harum vitae.
-Minus quibusdam, quas autem ab architecto beatae quidem ullam distinctio veniam quis eligendi pariatur labore repudiandae veritatis tempora unde dicta earum excepturi velit voluptatem mollitia animi nisi voluptatum. Amet, ut?
-Quisquam vitae autem eveniet delectus maiores, maxime ad reiciendis, ducimus. Aut, inventore, quod necessitatibus consectetur laboriosam aperiam non, dolorem labore unde eveniet neque est facilis nostrum, libero architecto porro nihil.</p>
