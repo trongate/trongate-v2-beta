@@ -12,7 +12,7 @@ class Model {
     // Cache for loaded model instances
     private array $loaded_models = [];
 
-    // Cache for DB instances (default and alternative database groups)
+    // Cache for Db instances (default and alternative database groups)
     private array $db_instances = [];
 
     // The module that instantiated this Model instance
@@ -38,10 +38,10 @@ class Model {
      * This enforces proper architectural separation.
      *
      * @param string $key The property name (e.g., 'db', 'analytics', 'legacy').
-     * @return DB The DB instance for the requested database group.
+     * @return Db The Db instance for the requested database group.
      * @throws Exception If the property is not a valid database connection.
      */
-    public function __get(string $key): DB {
+    public function __get(string $key): Db {
         // Check if already instantiated (cache hit)
         if (isset($this->db_instances[$key])) {
             return $this->db_instances[$key];
@@ -49,13 +49,13 @@ class Model {
 
         // Handle primary database (always accessible)
         if ($key === 'db') {
-            return $this->db_instances[$key] = new DB($this->current_module);
+            return $this->db_instances[$key] = new Db($this->current_module);
         }
 
         // Handle alternative database groups
         // Check if this key corresponds to a configured database group
         if ($this->is_database_group($key)) {
-            return $this->db_instances[$key] = new DB($this->current_module, $key);
+            return $this->db_instances[$key] = new Db($this->current_module, $key);
         }
 
         // Not a valid database connection

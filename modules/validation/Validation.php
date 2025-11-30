@@ -1,16 +1,5 @@
 <?php
-/**
- * Trongate Validation Class
- *
- * Provides server-side form and file validation with built-in CSRF protection.
- * To bypass CSRF for API endpoints:
- *     define('API_SKIP_CSRF', true);
- *
- * All input is retrieved via the global post() helper so JSON,
- * multipart/form-data, x-www-form-urlencoded and dot/bracket notation all work
- * identically.
- */
-class Validation {
+class Validation extends Trongate {
 
     /** @var array Holds the form submission errors. */
     public array $form_submission_errors = [];

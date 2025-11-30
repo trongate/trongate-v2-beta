@@ -98,12 +98,6 @@ class Core {
             return $child_path;
         }
 
-        // Try custom 404 intercept
-        $intercept_path = $this->try_404_intercept();
-        if ($intercept_path !== null) {
-            return $intercept_path;
-        }
-
         // All options exhausted
         $this->draw_error_page();
     }
@@ -132,26 +126,24 @@ class Core {
     }
 
     /**
-     * Attempt to use custom 404 intercept.
+     * Draw an error page for a given HTTP response code.
+     * Loads the error handler defined in ERROR_404 config.
      *
-     * @return string|null The controller path if found, null otherwise
+     * @param int $http_response_code
+     * @return void
      */
-    private function try_404_intercept(): ?string {
-        if (defined('INTERCEPT_404')) {
-            $intercept_bits = explode('/', INTERCEPT_404);
-            $this->current_module = $intercept_bits[0];
-            // Derive controller name from module name
-            $this->current_controller = ucfirst($intercept_bits[0]);
-            $this->current_method = $intercept_bits[1];
-            
-            $controller_path = '../modules/' . $this->current_module . '/' . $this->current_controller . '.php';
-            
-            if (file_exists($controller_path)) {
-                return $controller_path;
-            }
-        }
+    private function draw_error_page(int $http_response_code = 404): void {
+        http_response_code($http_response_code);
 
-        return null;
+        $handler_parts = explode('/', ERROR_404);
+        list($module, $method) = $handler_parts;
+
+        $controller_path = '../modules/' . $module . '/' . ucfirst($module) . '.php';
+
+        require_once $controller_path;
+        $controller = new $module();
+        $controller->$method();
+        die();
     }
 
     /**
@@ -578,28 +570,6 @@ class Core {
         }
 
         return $real_path;
-    }
-
-    /**
-     * Draw an error page.
-     *
-     * @return void
-     */
-    private function draw_error_page(): void {
-        // Load the Templates controller
-        $template_controller_path = '../templates/Templates.php';
-
-        if (!file_exists($template_controller_path)) {
-            // Fallback if Templates.php doesn't exist
-            die('404 - Page Not Found');
-        }
-
-        require_once $template_controller_path;
-        $templates = new Templates();
-
-        // Call the error_404 method without any arguments
-        $templates->error_404();
-        die();
     }
 
 }

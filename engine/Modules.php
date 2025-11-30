@@ -74,16 +74,4 @@ class Modules {
         $this->modules[$target_module] = new $target_controller($target_module);
     }
 
-    /**
-     * Lists all existing modules.
-     *
-     * @param bool $recursive Determines whether the listing should be recursive. Default is false.
-     * @return array Returns an array containing the list of existing modules.
-     */
-    public function list(bool $recursive = false): array {
-        $target_path = APPPATH . 'modules';
-        $file = new File;
-        $existing_modules = $file->list_directory($target_path, $recursive);
-        return $existing_modules;
-    }
 }

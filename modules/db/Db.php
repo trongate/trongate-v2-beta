@@ -7,7 +7,7 @@
  *
  * Supports multiple database connections via the $databases array in /config/database.php
  */
-class DB {
+class Db extends Trongate {
 
     private $host;
     private $port;
@@ -24,7 +24,7 @@ class DB {
     private $current_module;
 
     /**
-     * Constructor for the DB class.
+     * Constructor for the Db class.
      *
      * @param string|null $current_module (optional) The current module name. Default is null.
      * @param string|null $db_group (optional) The database group name from $databases array. Default is 'default'.

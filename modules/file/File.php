@@ -6,12 +6,12 @@
  * This class provides a comprehensive suite of methods designed for efficient and secure file management.
  * It supports functionalities like uploading, deleting, reading, writing files, and managing directories.
  * Access restrictions are in place to prevent reading and manipulation of critical directories such as 
- * 'config', 'engine', and 'templates', as well as any files directly under the root application level (e.g., '.htaccess').
+ * 'config' and 'engine', as well as any files directly under the root application level (e.g., '.htaccess').
  *
  * Users of this class are advised to be aware of the security implications associated with file handling in a web environment,
  * particularly to ensure that operations do not inadvertently expose sensitive application areas.
  */
-class File {
+class File extends Trongate {
 
     /**
      * Handles the file upload process with specified configuration.
@@ -459,17 +459,44 @@ class File {
     *    full_name: string      The complete filename with extension
     * }
     */
+
+    /**
+     * Generates a secure filename for an uploaded file, either randomized or sanitized from original.
+     *
+     * This method creates a safe filename suitable for filesystem storage by either generating
+     * a random name or by sanitizing the original filename using the sanitize_filename() helper.
+     * The sanitize_filename() approach provides null byte protection, proper internationalization
+     * via transliteration, and consistent filename handling across the framework.
+     *
+     * When random names are generated, a 10-character lowercase alphanumeric string is created
+     * while preserving the original file extension. When using the original name, the entire
+     * filename (including extension) is processed through sanitize_filename() for comprehensive
+     * security and character handling.
+     *
+     * @param string $original_name The original filename from the file upload.
+     * @param bool $make_rand_name Whether to generate a random filename (true) or sanitize the original (false).
+     * 
+     * @return array{name: string, extension: string, full_name: string} An associative array containing:
+     *               - 'name' (string): The base filename without extension
+     *               - 'extension' (string): The lowercase file extension including the dot (e.g., '.jpg')
+     *               - 'full_name' (string): The complete filename with extension
+     */
     private function generate_secure_filename(string $original_name, bool $make_rand_name): array {
-        $file_info = return_file_info($original_name);
         
         if ($make_rand_name === true) {
+            // Generate random filename, preserve original extension
+            $file_info = return_file_info($original_name);
             $file_name = strtolower(make_rand_str(10));
+            $extension = strtolower($file_info['file_extension']);
         } else {
-            $file_name = url_title($file_info['file_name']); 
+            // IMPROVED: Use sanitize_filename() helper
+            $sanitized = sanitize_filename($original_name);
+            
+            // Extract the sanitized parts
+            $file_info = return_file_info($sanitized);
+            $file_name = $file_info['file_name'];
+            $extension = $file_info['file_extension']; // Already lowercase
         }
-        
-        // Whitelist of allowed extensions could be added here
-        $extension = strtolower($file_info['file_extension']);
         
         return [
             'name' => $file_name,
@@ -492,7 +519,7 @@ class File {
      * @return bool Returns true if the path is valid, false otherwise.
      */
     private function is_path_valid(string $path): bool {
-        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine', APPPATH . 'templates'];
+        $restricted_dirs = [APPPATH . 'config', APPPATH . 'engine'];
         
         // If the path exists, validate it directly
         if (file_exists($path)) {

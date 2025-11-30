@@ -8,7 +8,7 @@
  *
  * Requires GD extension to be enabled in the PHP configuration.
  */
-class Image {
+class Image extends Trongate {
 
     /**
      * Holds the GD image resource instance.
@@ -65,7 +65,7 @@ class Image {
      * Handles the upload and processing of an image file.
      *
      * This method manages the entire process of uploading an image file, including:
-     * - Delegating the initial file upload to the File class.
+     * - Validating and moving the uploaded file.
      * - Loading the uploaded image for further processing.
      * - Resizing the image if its dimensions exceed the specified maximum width or height.
      * - Generating a thumbnail if requested.
@@ -80,6 +80,7 @@ class Image {
      *                    - 'upload_to_module' (bool, optional): Whether to upload the file to a module-specific directory (default: false).
      *                    - 'make_rand_name' (bool, optional): Whether to generate a random name for the uploaded file (default: false).
      *                    - 'targetModule' (string, optional): The target module for module-specific uploads (default: segment(1)).
+     *                    - 'file_input_name' (string, optional): The name of the file input field (default: 'file').
      *
      * @return array An associative array containing details about the uploaded file, including:
      *               - 'file_name' (string): The name of the uploaded file.
@@ -91,7 +92,6 @@ class Image {
      * @throws Exception If the file upload fails or if there are issues during image processing.
      */
     public function upload(array $data): array {
-
         // Extract configuration data
         $destination = $data['destination'] ?? '';
         $max_width = $data['max_width'] ?? 450;
@@ -101,24 +101,65 @@ class Image {
         $thumbnail_max_height = $data['thumbnail_max_height'] ?? 0;
         $upload_to_module = $data['upload_to_module'] ?? false;
         $make_rand_name = $data['make_rand_name'] ?? false;
+        $target_module = $data['targetModule'] ?? segment(1);
+        $file_input_name = $data['file_input_name'] ?? 'file';
 
-        // Validate and upload the file using the File class
-        $file = new File();
-        $upload_config = [
-            'destination' => $destination,
-            'target_module' => $data['targetModule'] ?? segment(1),
-            'upload_to_module' => $upload_to_module,
-            'make_rand_name' => $make_rand_name,
-        ];
-
-        try {
-            $file_info = $file->upload($upload_config);
-        } catch (Exception $e) {
-            throw new Exception("File upload failed: " . $e->getMessage());
+        // Validate file upload
+        if (!isset($_FILES[$file_input_name]) || $_FILES[$file_input_name]['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("File upload failed or no file was uploaded.");
         }
 
+        $uploaded_file = $_FILES[$file_input_name];
+        
+        // Validate it's an image
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $uploaded_file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mime_type, $allowed_types)) {
+            throw new Exception("Invalid file type. Only image files are allowed.");
+        }
+
+        // Determine destination directory
+        if ($upload_to_module === true) {
+            $destination = APPPATH . 'modules/' . $target_module . '/' . ltrim($destination, '/');
+        }
+
+        // Create destination directory if it doesn't exist
+        if (!is_dir($destination)) {
+            if (!mkdir($destination, 0755, true)) {
+                throw new Exception("Failed to create destination directory: {$destination}");
+            }
+        }
+
+        // Generate file name
+        if ($make_rand_name === true) {
+            $extension = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid('img_', true) . '.' . $extension;
+        } else {
+            // Use sanitize_filename() for robust cleaning and consistency with File module
+            $file_name = sanitize_filename($uploaded_file['name']);
+        }
+
+        // Full file path
+        $file_path = rtrim($destination, '/') . '/' . $file_name;
+
+        // Move uploaded file
+        if (!move_uploaded_file($uploaded_file['tmp_name'], $file_path)) {
+            throw new Exception("Failed to move uploaded file to destination.");
+        }
+
+        // Build file info array
+        $file_info = [
+            'file_name' => $file_name,
+            'file_path' => $file_path,
+            'file_type' => $mime_type,
+            'file_size' => $uploaded_file['size']
+        ];
+
         // Load the uploaded image for further processing
-        $this->load($file_info['file_path']);
+        $this->load($file_path);
 
         // Resize the image if necessary
         if (($max_width > 0 && $this->get_width() > $max_width) || ($max_height > 0 && $this->get_height() > $max_height)) {
@@ -132,16 +173,27 @@ class Image {
             }
 
             // Save the resized image
-            $this->save($file_info['file_path']);
+            $this->save($file_path);
         }
 
         // Generate a thumbnail if requested
         if ($thumbnail_max_width > 0 && $thumbnail_max_height > 0 && $thumbnail_dir !== '') {
-            $thumbnail_path = str_replace($destination, $thumbnail_dir, $file_info['file_path']);
+            $thumbnail_path = str_replace($destination, $thumbnail_dir, $file_path);
+            
+            // Create thumbnail directory if it doesn't exist
+            $thumbnail_directory = dirname($thumbnail_path);
+            if (!is_dir($thumbnail_directory)) {
+                if (!mkdir($thumbnail_directory, 0755, true)) {
+                    throw new Exception("Failed to create thumbnail directory: {$thumbnail_directory}");
+                }
+            }
+            
             $thumbnail_data = [
                 'new_file_path' => $thumbnail_path,
                 'max_width' => $thumbnail_max_width,
                 'max_height' => $thumbnail_max_height,
+                'tmp_file_width' => $this->get_width(),
+                'tmp_file_height' => $this->get_height(),
                 'image' => $this,
             ];
             $this->save_image($thumbnail_data);

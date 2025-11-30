@@ -144,6 +144,74 @@ function url_title(string $value, bool $transliteration = true): string {
 }
 
 /**
+ * Sanitizes a filename for safe storage and usage.
+ *
+ * This function leverages url_title() to handle international characters, special characters,
+ * and whitespace while preserving the file extension. The result is a clean, URL-safe filename
+ * that's safe to store on the filesystem and serve via HTTP.
+ *
+ * Features:
+ * - Transliterates international characters (e.g., "Москва.jpg" → "moskva.jpg")
+ * - Removes or replaces special characters and whitespace
+ * - Preserves and normalizes file extensions
+ * - Prevents null byte attacks
+ * - Generates fallback names for edge cases
+ * - Limits filename length to prevent filesystem issues
+ *
+ * Examples:
+ *   sanitize_filename('My Photo (1).jpg')        → 'my-photo-1.jpg'
+ *   sanitize_filename('Москва 2024.png')         → 'moskva-2024.png' (with intl)
+ *   sanitize_filename('café résumé.pdf')         → 'cafe-resume.pdf' (with intl)
+ *   sanitize_filename('北京_beijing.jpg')         → 'bei-jing-beijing.jpg' (with intl)
+ *   sanitize_filename('file@#$%.txt')            → 'file.txt'
+ *   sanitize_filename('my   multiple   spaces')  → 'my-multiple-spaces'
+ *
+ * @param string $filename The filename to sanitize.
+ * @param bool $transliteration Whether to transliterate international characters to ASCII (default: true).
+ * @param int $max_length Maximum length for the base filename, excluding extension (default: 200).
+ * @return string The sanitized filename with preserved extension.
+ * @throws InvalidArgumentException If filename contains null bytes.
+ */
+function sanitize_filename(string $filename, bool $transliteration = true, int $max_length = 200): string {
+    // Security: Prevent null byte attacks
+    if (strpos($filename, "\0") !== false) {
+        throw new InvalidArgumentException("Filename contains null bytes");
+    }
+    
+    // Extract components
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    $basename = pathinfo($filename, PATHINFO_FILENAME);
+    
+    // Handle empty basename (e.g., hidden files like ".htaccess")
+    if (empty($basename)) {
+        $basename = 'file_' . uniqid();
+    }
+    
+    // Use url_title() for robust string cleaning
+    // This handles international characters, HTML entities, special chars, etc.
+    $clean_basename = url_title($basename, $transliteration);
+    
+    // Fallback if url_title() returns empty (very rare edge case)
+    if (empty($clean_basename)) {
+        $clean_basename = 'file_' . uniqid();
+    }
+    
+    // Limit length to prevent filesystem issues
+    // Most filesystems support 255 bytes, but leave room for extension
+    if (strlen($clean_basename) > $max_length) {
+        $clean_basename = substr($clean_basename, 0, $max_length);
+        // Remove any trailing dashes created by the substring
+        $clean_basename = rtrim($clean_basename, '-');
+    }
+    
+    // Clean and normalize extension (alphanumeric only, lowercase)
+    $clean_extension = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $extension));
+    
+    // Reconstruct filename
+    return $clean_extension ? "{$clean_basename}.{$clean_extension}" : $clean_basename;
+}
+
+/**
  * Safely escape and format a string for various output contexts.
  *
  * @param string $input The string to be escaped.

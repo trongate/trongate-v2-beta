@@ -1,9 +1,5 @@
 <?php
-
-/**
- * Class Pagination - Handles pagination functionality for displaying paginated data.
- */
-class Pagination {
+class Pagination extends Trongate {
 
     // Required properties with their expected types
     private static $required_properties = [

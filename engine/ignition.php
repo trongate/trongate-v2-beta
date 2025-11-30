@@ -6,7 +6,6 @@ require_once '../config/config.php';
 require_once '../config/custom_routing.php';
 require_once '../config/database.php';
 require_once '../config/site_owner.php';
-require_once '../config/themes.php';
 
 // Make the $databases array globally accessible
 // This is required for multi-database functionality
