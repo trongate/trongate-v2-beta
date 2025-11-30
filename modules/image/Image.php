@@ -138,7 +138,8 @@ class Image extends Trongate {
             $extension = pathinfo($uploaded_file['name'], PATHINFO_EXTENSION);
             $file_name = uniqid('img_', true) . '.' . $extension;
         } else {
-            $file_name = basename($uploaded_file['name']);
+            // Use sanitize_filename() for robust cleaning and consistency with File module
+            $file_name = sanitize_filename($uploaded_file['name']);
         }
 
         // Full file path

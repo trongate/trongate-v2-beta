@@ -5,4 +5,3 @@ define('OUR_NAME', 'Your Company Name');
 define('OUR_TELNUM', '');
 define('OUR_ADDRESS', '');
 define('OUR_EMAIL_ADDRESS', '');
-define('GITHUB_URL', 'https://github.com/trongate/trongate-framework/');

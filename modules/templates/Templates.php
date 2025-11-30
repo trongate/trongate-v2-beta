@@ -9,41 +9,28 @@ class Templates extends Trongate {
     }
 
     /**
-     * Display documentation theme template with provided data.
-     * This method is prefixed with underscore to prevent direct URL access.
-     * Loads the docs_ahoy template with optional theme variation support.
+     * Display admin theme template with provided data.
      *
      * @param array $data The data to pass to the template view
      * @return void
      */
-    public function docs_ahoy(array $data): void {
-        $data['theme'] = (isset($data['theme'])) ? $data['theme'] : 'blue';
+    public function admin(array $data): void {
+        $data['theme'] = (isset($data['theme'])) ? $data['theme'] : 'default';
         $data['additional_includes_top'] = $this->build_additional_includes($data['additional_includes_top'] ?? []);
         $data['additional_includes_btm'] = $this->build_additional_includes($data['additional_includes_btm'] ?? []);
-        // Display the admin template
-        $this->display('docs_ahoy', $data);
-    }
-
-    /**
-     * Display an admin template with provided data.
-     * This method is prefixed with underscore to prevent direct URL access.
-     *
-     * @param array $data The data to pass to the template view
-     * @return void
-     */
-    public function _admin(array $data): void {        
-        // Display the admin template
         $this->display('admin', $data);
     }
 
     /**
-     * Display a public template with provided data.
-     * This method is prefixed with underscore to prevent direct URL access.
+     * Display public theme template with provided data.
+     * Loads the public template with optional theme variation support.
      *
      * @param array $data The data to pass to the template view
      * @return void
      */
-    public function _public(array $data): void {
+    public function public(array $data): void {
+        $data['additional_includes_top'] = $this->build_additional_includes($data['additional_includes_top'] ?? []);
+        $data['additional_includes_btm'] = $this->build_additional_includes($data['additional_includes_btm'] ?? []);
         $this->display('public', $data);
     }
 
@@ -70,7 +57,7 @@ class Templates extends Trongate {
         if (!file_exists($template_path)) {
             throw new Exception("Template '{$template_name}' not found at {$template_path}");
         }
-        
+
         extract($data);
         require $template_path;
     }

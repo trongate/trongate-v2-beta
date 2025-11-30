@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<base href="<?= BASE_URL ?>">
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="css/trongate.css">
-	<title>Public Template</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Trongate</title>
+    <link rel="stylesheet" href="<?= BASE_URL ?>css/trongate.css">
 </head>
 <body>
-	<div class="container">
-		<?= Modules::run('templates/display', $data) ?>
-	</div>
+    <div class="container">
+        <div class="text-center mt-7"><?= display($data) ?></div>
+    </div>
 </body>
 </html>
