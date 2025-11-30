@@ -2,6 +2,7 @@
 class Welcome extends Trongate {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	/**
 	 * Display the default welcome page.
 	 *
@@ -32,6 +33,8 @@ class Welcome extends Trongate {
 	    $this->view('database_setup');
 	}
 =======
+=======
+>>>>>>> ditch_templates
     /**
      * Renders the (default) homepage for public access.
      *
@@ -40,6 +43,9 @@ class Welcome extends Trongate {
     public function index(): void {
         $this->view('stealth_homepage');
     }
+<<<<<<< HEAD
 >>>>>>> cp3
+=======
+>>>>>>> ditch_templates
 
 }
